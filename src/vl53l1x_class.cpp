@@ -100,7 +100,7 @@ const uint8_t VL51L1X_DEFAULT_CONFIGURATION[] = {
 0x00, /* 0x5c : not user-modifiable */
 0x00, /* 0x5d : not user-modifiable */
 0x01, /* 0x5e : not user-modifiable */
-0xdb, /* 0x5f : not user-modifiable */
+0xcc, /* 0x5f : not user-modifiable */
 0x0f, /* 0x60 : not user-modifiable */
 0x01, /* 0x61 : not user-modifiable */
 0xf1, /* 0x62 : not user-modifiable */
@@ -413,6 +413,8 @@ VL53L1X_ERROR VL53L1X::VL53L1X_SetDistanceMode(uint16_t DM)
 	VL53L1X_ERROR status = 0;
 
 	status = VL53L1X_GetTimingBudgetInMs(&TB);
+	
+	
 	switch (DM) {
 	case 1:
 		status = VL53L1_WrByte(Device, PHASECAL_CONFIG__TIMEOUT_MACROP, 0x14);
