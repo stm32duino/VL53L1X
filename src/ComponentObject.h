@@ -55,19 +55,19 @@
 class ComponentObject
 {
 public:
-    /**
-     * @brief     Initializing the component.
-     * @param[in] init pointer to device specific initalization structure.
-     * @retval    "0" in case of success, an error code otherwise.
-     */
-    virtual int Init() = 0;
+   /**
+    * @brief     Initializing the component.
+    * @param[in] init pointer to device specific initalization structure.
+    * @retval    "0" in case of success, an error code otherwise.
+    */
+   virtual int Init() = 0;
 
-    /**
-     * @brief      Getting the ID of the component.
-     * @param[out] id pointer to an allocated variable to store the ID into.
-     * @retval     "0" in case of success, an error code otherwise.
-     */
-    virtual int ReadID() = 0;
+   /**
+    * @brief      Getting the ID of the component.
+    * @param[out] id pointer to an allocated variable to store the ID into.
+    * @retval     "0" in case of success, an error code otherwise.
+    */
+   virtual int ReadID() = 0;
 };
 
 #endif /* __COMPONENT_OBJECT_CLASS_H */
