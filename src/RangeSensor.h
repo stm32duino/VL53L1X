@@ -48,13 +48,13 @@
  */
 class RangeSensor : public ComponentObject
 {
- public:
-    /**
-     * @brief       Get current range [mm]
-     * @param[out]  piData Pointer to where to store range to
-     * @return      0 in case of success, an error code otherwise
-     */
-    virtual int GetDistance(uint32_t *piData) = 0;
+public:
+   /**
+    * @brief       Get current range [mm]
+    * @param[out]  piData Pointer to where to store range to
+    * @return      0 in case of success, an error code otherwise
+    */
+   virtual int GetDistance(uint32_t *piData) = 0;
 };
 
 #endif /* __RANGE_SENSOR_CLASS_H */
