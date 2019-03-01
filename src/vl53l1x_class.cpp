@@ -521,7 +521,7 @@ VL53L1X_ERROR VL53L1X::VL53L1X_GetSensorId(uint16_t *sensorId)
 VL53L1X_ERROR VL53L1X::VL53L1X_GetDistance(uint16_t *distance)
 {
    VL53L1X_ERROR status = 0;
-   uint16_t tmp;
+   uint16_t tmp = 0;
 
    status = (VL53L1_RdWord(Device,
                            VL53L1_RESULT__FINAL_CROSSTALK_CORRECTED_RANGE_MM_SD0, &tmp));
@@ -1011,7 +1011,7 @@ VL53L1X_ERROR VL53L1X::VL53L1_RdDWord(VL53L1_DEV Dev, uint16_t index, uint32_t *
    status = VL53L1_I2CRead(Dev->I2cDevAddr, index, buffer, 4);
    if(!status)
    {
-      *data = (buffer[0] << 24) + (buffer[1] << 16) + (buffer[2] << 8) + buffer[3];
+      *data = ((uint32_t)buffer[0] << 24) + ((uint32_t)buffer[1] << 16) + ((uint32_t)buffer[2] << 8) + (uint32_t)buffer[3];
    }
    return status;
 
@@ -1047,7 +1047,7 @@ VL53L1X_ERROR VL53L1X::VL53L1_I2CWrite(uint8_t DeviceAddr, uint16_t RegisterAddr
    buffer[0]=(uint8_t) RegisterAddr>>8;
    buffer[1]=(uint8_t) RegisterAddr&0xFF;
    dev_i2c->write(buffer, 2);
-   for (int i = 0 ; i < NumByteToWrite ; i++)
+   for (uint16_t i = 0 ; i < NumByteToWrite ; i++)
       dev_i2c->write(pBuffer[i]);
 
    dev_i2c->endTransmission(true);
