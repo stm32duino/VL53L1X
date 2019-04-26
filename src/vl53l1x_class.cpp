@@ -1044,8 +1044,8 @@ VL53L1X_ERROR VL53L1X::VL53L1_I2CWrite(uint8_t DeviceAddr, uint16_t RegisterAddr
    Serial.println(RegisterAddr);
 #endif
    uint8_t buffer[2];
-   buffer[0]=(uint8_t) RegisterAddr>>8;
-   buffer[1]=(uint8_t) RegisterAddr&0xFF;
+   buffer[0]=(uint8_t) (RegisterAddr>>8);
+   buffer[1]=(uint8_t) (RegisterAddr&0xFF);
    dev_i2c->write(buffer, 2);
    for (uint16_t i = 0 ; i < NumByteToWrite ; i++)
       dev_i2c->write(pBuffer[i]);
@@ -1070,8 +1070,8 @@ VL53L1X_ERROR VL53L1X::VL53L1_I2CRead(uint8_t DeviceAddr, uint16_t RegisterAddr,
       Serial.println(RegisterAddr);
 #endif
       uint8_t buffer[2];
-      buffer[0]=(uint8_t) RegisterAddr>>8;
-      buffer[1]=(uint8_t) RegisterAddr&0xFF;
+      buffer[0]=(uint8_t) (RegisterAddr>>8);
+      buffer[1]=(uint8_t) (RegisterAddr&0xFF);
       dev_i2c->write(buffer, 2);
       status = dev_i2c->endTransmission(false);
 //Fix for some STM32 boards
