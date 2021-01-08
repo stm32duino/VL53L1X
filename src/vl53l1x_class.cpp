@@ -786,6 +786,22 @@ VL53L1X_ERROR VL53L1X::VL53L1X_GetROI_XY(uint16_t *ROI_X, uint16_t *ROI_Y)
    return status;
 }
 
+VL53L1X_ERROR VL53L1X::VL53L1X_SetROICenter(uint8_t ROICenter)
+{
+   VL53L1X_ERROR status = 0;
+   status = VL53L1_WrByte(Device,ROI_CONFIG__USER_ROI_CENTRE_SPAD,ROICenter);
+   return status;
+}
+
+VL53L1X_ERROR VL53L1X::VL53L1X_GetROICenter(uint8_t *ROICenter)
+{
+   VL53L1X_ERROR status = 0;
+   uint8_t tmp;
+   status = VL53L1_RdByte(Device,ROI_CONFIG__USER_ROI_CENTRE_SPAD,&tmp);
+   *ROICenter = tmp;
+   return status;
+}
+
 VL53L1X_ERROR VL53L1X::VL53L1X_SetSignalThreshold(uint16_t Signal)
 {
    VL53L1X_ERROR status = 0;

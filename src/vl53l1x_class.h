@@ -470,6 +470,17 @@ public:
    VL53L1X_ERROR VL53L1X_GetROI_XY(uint16_t *ROI_X, uint16_t *ROI_Y);
 
    /**
+    *@brief This function programs the new user ROI center, please to be aware that there is no check in this function.
+    *if the ROI center vs ROI size is out of border the ranging function return error #13
+    */
+   VL53L1X_ERROR VL53L1X_SetROICenter(uint8_t ROICenter);
+
+   /**
+    *@brief This function returns the current user ROI center
+    */
+   VL53L1X_ERROR VL53L1X_GetROICenter(uint8_t *ROICenter);
+
+   /**
     * @brief This function programs a new signal threshold in kcps (default=1024 kcps\n
     */
    VL53L1X_ERROR VL53L1X_SetSignalThreshold(uint16_t signal);
