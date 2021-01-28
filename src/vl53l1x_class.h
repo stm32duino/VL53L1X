@@ -45,7 +45,7 @@
 #include "Arduino.h"
 #include "Wire.h"
 #include "RangeSensor.h"
-#include "vl53l1_error_codes.h"
+#include "vl53l1x_error_codes.h"
 
 
 #define VL53L1X_IMPLEMENTATION_VER_MAJOR       1
@@ -55,8 +55,8 @@
 
 typedef int8_t VL53L1X_ERROR;
 
-#define VL53L1_I2C_SLAVE__DEVICE_ADDRESS					0x0001
-#define VL53L1_VHV_CONFIG__TIMEOUT_MACROP_LOOP_BOUND        0x0008
+#define VL53L1X_I2C_SLAVE__DEVICE_ADDRESS					0x0001
+#define VL53L1X_VHV_CONFIG__TIMEOUT_MACROP_LOOP_BOUND        0x0008
 #define ALGO__CROSSTALK_COMPENSATION_PLANE_OFFSET_KCPS 		0x0016
 #define ALGO__CROSSTALK_COMPENSATION_X_PLANE_GRADIENT_KCPS 	0x0018
 #define ALGO__CROSSTALK_COMPENSATION_Y_PLANE_GRADIENT_KCPS 	0x001A
@@ -75,7 +75,7 @@ typedef int8_t VL53L1X_ERROR;
 #define RANGE_CONFIG__SIGMA_THRESH 							0x0064
 #define RANGE_CONFIG__MIN_COUNT_RATE_RTN_LIMIT_MCPS			0x0066
 #define RANGE_CONFIG__VALID_PHASE_HIGH      				0x0069
-#define VL53L1_SYSTEM__INTERMEASUREMENT_PERIOD				0x006C
+#define VL53L1X_SYSTEM__INTERMEASUREMENT_PERIOD				0x006C
 #define SYSTEM__THRESH_HIGH 								0x0072
 #define SYSTEM__THRESH_LOW 									0x0074
 #define SD_CONFIG__WOI_SD0                  				0x0078
@@ -83,18 +83,18 @@ typedef int8_t VL53L1X_ERROR;
 #define ROI_CONFIG__USER_ROI_CENTRE_SPAD					0x007F
 #define ROI_CONFIG__USER_ROI_REQUESTED_GLOBAL_XY_SIZE		0x0080
 #define SYSTEM__SEQUENCE_CONFIG								0x0081
-#define VL53L1_SYSTEM__GROUPED_PARAMETER_HOLD 				0x0082
+#define VL53L1X_SYSTEM__GROUPED_PARAMETER_HOLD 				0x0082
 #define SYSTEM__INTERRUPT_CLEAR       						0x0086
 #define SYSTEM__MODE_START                 					0x0087
-#define VL53L1_RESULT__RANGE_STATUS							0x0089
-#define VL53L1_RESULT__DSS_ACTUAL_EFFECTIVE_SPADS_SD0		0x008C
+#define VL53L1X_RESULT__RANGE_STATUS							0x0089
+#define VL53L1X_RESULT__DSS_ACTUAL_EFFECTIVE_SPADS_SD0		0x008C
 #define RESULT__AMBIENT_COUNT_RATE_MCPS_SD					0x0090
-#define VL53L1_RESULT__FINAL_CROSSTALK_CORRECTED_RANGE_MM_SD0				0x0096
-#define VL53L1_RESULT__PEAK_SIGNAL_COUNT_RATE_CROSSTALK_CORRECTED_MCPS_SD0 	0x0098
-#define VL53L1_RESULT__OSC_CALIBRATE_VAL					0x00DE
-#define VL53L1_FIRMWARE__SYSTEM_STATUS                      0x00E5
-#define VL53L1_IDENTIFICATION__MODEL_ID                     0x010F
-#define VL53L1_ROI_CONFIG__MODE_ROI_CENTRE_SPAD				0x013E
+#define VL53L1X_RESULT__FINAL_CROSSTALK_CORRECTED_RANGE_MM_SD0				0x0096
+#define VL53L1X_RESULT__PEAK_SIGNAL_COUNT_RATE_CROSSTALK_CORRECTED_MCPS_SD0 	0x0098
+#define VL53L1X_RESULT__OSC_CALIBRATE_VAL					0x00DE
+#define VL53L1X_FIRMWARE__SYSTEM_STATUS                      0x00E5
+#define VL53L1X_IDENTIFICATION__MODEL_ID                     0x010F
+#define VL53L1X_ROI_CONFIG__MODE_ROI_CENTRE_SPAD				0x013E
 
 
 #define VL53L1X_DEFAULT_DEVICE_ADDRESS						0x52
@@ -121,13 +121,13 @@ typedef struct
    uint8_t   I2cDevAddr;
    TwoWire *I2cHandle;
 
-} VL53L1_Dev_t;
+} VL53L1X_Dev_t;
 
-typedef VL53L1_Dev_t *VL53L1_DEV;
+typedef VL53L1X_Dev_t *VL53L1X_DEV;
 
 
 /* Classes -------------------------------------------------------------------*/
-/** Class representing a VL53L1 sensor component
+/** Class representing a VL53L1X sensor component
  */
 class VL53L1X : public RangeSensor
 {
@@ -137,22 +137,37 @@ public:
     * @param[in] &pin_gpio1 pin Mbed InterruptIn PinName to be used as component GPIO_1 INT
     * @param[in] DevAddr device address, 0x52 by default
     */
-   VL53L1X(TwoWire *i2c, int pin, int pin_gpio1) : RangeSensor(), dev_i2c(i2c), gpio0(pin), gpio1Int(pin_gpio1)
+   VL53L1X(TwoWire *i2c, int pin) : RangeSensor(), dev_i2c(i2c), gpio0(pin)
    {
+      Device = &MyDevice;
+      memset((void *)Device, 0x0, sizeof(VL53L1X_Dev_t));
       MyDevice.I2cDevAddr=VL53L1X_DEFAULT_DEVICE_ADDRESS;
       MyDevice.I2cHandle = i2c;
-      Device = &MyDevice;
-      if(gpio0 >= 0)
-      {
-         pinMode(gpio0, OUTPUT);
-      }
    }
 
    /** Destructor
     */
    virtual ~VL53L1X() {}
-   /* warning: VL53L1 class inherits from GenericSensor, RangeSensor and LightSensor, that haven`t a destructor.
+   /* warning: VL53L1X class inherits from GenericSensor, RangeSensor and LightSensor, that haven`t a destructor.
       The warning should request to introduce a virtual destructor to make sure to delete the object */
+
+    virtual int begin()
+    {
+       if(gpio0 >= 0)
+       {
+          pinMode(gpio0, OUTPUT);
+       }
+       return 0;
+    }
+
+    virtual int end()
+    {
+       if(gpio0 >= 0)
+       {
+          pinMode(gpio0, INPUT);
+       }
+       return 0;
+    }
 
    /*** Interface Methods ***/
    /*** High level API ***/
@@ -161,7 +176,7 @@ public:
     * @return      void
     */
    /* turns on the sensor */
-   virtual void VL53L1_On(void)
+   virtual void VL53L1X_On(void)
    {
       if(gpio0 >= 0)
       {
@@ -175,7 +190,7 @@ public:
     * @return      void
     */
    /* turns off the sensor */
-   virtual void VL53L1_Off(void)
+   virtual void VL53L1X_Off(void)
    {
       if(gpio0 >= 0)
       {
@@ -193,18 +208,18 @@ public:
    {
       VL53L1X_ERROR status = 0;
       uint8_t sensorState = 0;
-      VL53L1_Off();
-      VL53L1_On();
+      VL53L1X_Off();
+      VL53L1X_On();
       status = VL53L1X_SetI2CAddress(address);
 
 #ifdef DEBUG_MODE
       uint8_t byteData;
       uint16_t wordData;
-      status = VL53L1_RdByte(Device, 0x010F, &byteData);
+      status = VL53L1X_RdByte(Device, 0x010F, &byteData);
       Serial.println("VL53L1X Model_ID: " + String(byteData));
-      status = VL53L1_RdByte(Device, 0x0110, &byteData);
+      status = VL53L1X_RdByte(Device, 0x0110, &byteData);
       Serial.println("VL53L1X Module_Type: " + String(byteData));
-      status = VL53L1_RdWord(Device, 0x010F, &wordData);
+      status = VL53L1X_RdWord(Device, 0x010F, &wordData);
       Serial.println("VL53L1X: " + String(wordData));
 #endif
 
@@ -543,24 +558,24 @@ protected:
 
    /* Write and read functions from I2C */
 
-   VL53L1X_ERROR VL53L1_WrByte(VL53L1_DEV dev, uint16_t index, uint8_t data);
-   VL53L1X_ERROR VL53L1_WrWord(VL53L1_DEV dev, uint16_t index, uint16_t data);
-   VL53L1X_ERROR VL53L1_WrDWord(VL53L1_DEV dev, uint16_t index, uint32_t data);
-   VL53L1X_ERROR VL53L1_RdByte(VL53L1_DEV dev, uint16_t index, uint8_t *data);
-   VL53L1X_ERROR VL53L1_RdWord(VL53L1_DEV dev, uint16_t index, uint16_t *data);
-   VL53L1X_ERROR VL53L1_RdDWord(VL53L1_DEV dev, uint16_t index, uint32_t *data);
-   VL53L1X_ERROR VL53L1_UpdateByte(VL53L1_DEV dev, uint16_t index, uint8_t AndData, uint8_t OrData);
+   VL53L1X_ERROR VL53L1X_WrByte(VL53L1X_DEV dev, uint16_t index, uint8_t data);
+   VL53L1X_ERROR VL53L1X_WrWord(VL53L1X_DEV dev, uint16_t index, uint16_t data);
+   VL53L1X_ERROR VL53L1X_WrDWord(VL53L1X_DEV dev, uint16_t index, uint32_t data);
+   VL53L1X_ERROR VL53L1X_RdByte(VL53L1X_DEV dev, uint16_t index, uint8_t *data);
+   VL53L1X_ERROR VL53L1X_RdWord(VL53L1X_DEV dev, uint16_t index, uint16_t *data);
+   VL53L1X_ERROR VL53L1X_RdDWord(VL53L1X_DEV dev, uint16_t index, uint32_t *data);
+   VL53L1X_ERROR VL53L1X_UpdateByte(VL53L1X_DEV dev, uint16_t index, uint8_t AndData, uint8_t OrData);
 
-   VL53L1X_ERROR VL53L1_WriteMulti(VL53L1_DEV Dev, uint16_t index, uint8_t *pdata, uint32_t count);
-   VL53L1X_ERROR VL53L1_ReadMulti(VL53L1_DEV Dev, uint16_t index, uint8_t *pdata, uint32_t count);
+   VL53L1X_ERROR VL53L1X_WriteMulti(VL53L1X_DEV Dev, uint16_t index, uint8_t *pdata, uint32_t count);
+   VL53L1X_ERROR VL53L1X_ReadMulti(VL53L1X_DEV Dev, uint16_t index, uint8_t *pdata, uint32_t count);
 
-   VL53L1X_ERROR VL53L1_I2CWrite(uint8_t dev, uint16_t index, uint8_t *data, uint16_t number_of_bytes);
-   VL53L1X_ERROR VL53L1_I2CRead(uint8_t dev, uint16_t index, uint8_t *data, uint16_t number_of_bytes);
-   VL53L1X_ERROR VL53L1_GetTickCount(uint32_t *ptick_count_ms);
-   VL53L1X_ERROR VL53L1_WaitUs(VL53L1_Dev_t *pdev, int32_t wait_us);
-   VL53L1X_ERROR VL53L1_WaitMs(VL53L1_Dev_t *pdev, int32_t wait_ms);
+   VL53L1X_ERROR VL53L1X_I2CWrite(uint8_t dev, uint16_t index, uint8_t *data, uint16_t number_of_bytes);
+   VL53L1X_ERROR VL53L1X_I2CRead(uint8_t dev, uint16_t index, uint8_t *data, uint16_t number_of_bytes);
+   VL53L1X_ERROR VL53L1X_GetTickCount(uint32_t *ptick_count_ms);
+   VL53L1X_ERROR VL53L1X_WaitUs(VL53L1X_Dev_t *pdev, int32_t wait_us);
+   VL53L1X_ERROR VL53L1X_WaitMs(VL53L1X_Dev_t *pdev, int32_t wait_ms);
 
-   VL53L1X_ERROR VL53L1_WaitValueMaskEx(VL53L1_Dev_t *pdev, uint32_t timeout_ms, uint16_t index, uint8_t value, uint8_t mask, uint32_t poll_delay_ms);
+   VL53L1X_ERROR VL53L1X_WaitValueMaskEx(VL53L1X_Dev_t *pdev, uint32_t timeout_ms, uint16_t index, uint8_t value, uint8_t mask, uint32_t poll_delay_ms);
 
 
 
@@ -570,10 +585,9 @@ protected:
    TwoWire *dev_i2c;
    /* Digital out pin */
    int gpio0;
-   int gpio1Int;
    /* Device data */
-   VL53L1_Dev_t MyDevice;
-   VL53L1_DEV Device;
+   VL53L1X_Dev_t MyDevice;
+   VL53L1X_DEV Device;
 };
 
 
