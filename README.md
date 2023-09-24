@@ -5,3 +5,7 @@ I made the following modifications:
 
 * Made the library header-only
 
+* Replaced ```#define``` with typed static constants
+
+* Added support for non-Arduino platforms via subclassing
+
