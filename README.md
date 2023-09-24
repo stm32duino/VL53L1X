@@ -18,4 +18,4 @@ I have tested this library with the following MCUs:
 
 * [Dragonfly STM32L4](https://www.tindie.com/products/tleracorp/dragonfly-stm32l47696-development-board)
   
-
+* [TinyPICO ESP32](https://www.tinypico.com/)
