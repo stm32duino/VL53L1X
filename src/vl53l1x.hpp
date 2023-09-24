@@ -414,7 +414,8 @@ class VL53L1X_Abstract
 
         /** Constructor
          * @param[in] &i2c device I2C to be used for communication
-         * @param[in] &pin_gpio1 pin Mbed InterruptIn PinName to be used as component GPIO_1 INT
+         * @param[in] &pin_gpio1 pin Mbed InterruptIn PinName to be used as component 
+                      GPIO_1 INT
          * @param[in] DevAddr device address, 0x52 by default
          */
         VL53L1X_Abstract(void)
@@ -429,42 +430,24 @@ class VL53L1X_Abstract
         }
 
         /**
-         * @brief Get ranging result and only that
-         * @param pRange_mm Pointer to range distance
-         * @return 0 on success
-         */
-        uint16_t getDistance(uint32_t *piData)
-        {
-            int status;
-            uint16_t distance;
-            status = getDistance(&distance);
-            *piData = (uint32_t) distance;
-            return status;
-        }
-
-        /**
          * @brief This function returns the SW driver version
          */
-        error_t getSWVersion(version_t *pVersion)
+        void getSWVersion(version_t *pVersion)
         {
-            error_t Status = 0;
-
             pVersion->major = IMPLEMENTATION_VER_MAJOR;
             pVersion->minor = IMPLEMENTATION_VER_MINOR;
             pVersion->build = IMPLEMENTATION_VER_SUB;
             pVersion->revision = IMPLEMENTATION_VER_REVISION;
-            return Status;
         }
 
         /**
          * @brief This function sets the sensor I2C address used in case
          * multiple devices application, default address 0x52
          */
-        error_t setI2CAddress(uint8_t new_i2c_addr)
+        error_t setI2CAddress(const uint8_t new_i2c_addr)
         {
-            error_t status = 0;
+            error_t status = WrByte(I2C_SLAVE__DEVICE_ADDRESS, new_i2c_addr >> 1);
 
-            status = WrByte(I2C_SLAVE__DEVICE_ADDRESS, new_i2c_addr >> 1);
             _i2c_addr = new_i2c_addr;
 
             return status;
@@ -1463,7 +1446,7 @@ class VL53L1X_Abstract
         {
             uint8_t buffer[2] = {};
 
-            int status = i2c_read(_i2c_addr, index, buffer, 2);
+            auto status = i2c_read(_i2c_addr, index, buffer, 2);
 
             if (!status) {
                 *data = (buffer[0] << 8) + buffer[1];
@@ -1475,10 +1458,12 @@ class VL53L1X_Abstract
         {
             uint8_t buffer[4] = {};
 
-            int status = i2c_read(_i2c_addr, index, buffer, 4);
+            auto status = i2c_read(_i2c_addr, index, buffer, 4);
             if (!status) {
-                *data = (buffer[0] << 24) + (buffer[1] << 16U) + (buffer[2] << 8) + buffer[3];
+                *data = (buffer[0] << 24) + (buffer[1] << 16U) + (buffer[2] << 8) + 
+                    buffer[3]; 
             }
+
             return status;
         }
 
@@ -1487,7 +1472,7 @@ class VL53L1X_Abstract
             uint8_t buffer = 0;
 
             /* read data direct onto buffer */
-            int status = i2c_read(_i2c_addr, index, &buffer, 1);
+            auto status = i2c_read(_i2c_addr, index, &buffer, 1);
             if (!status) {
                 buffer = (buffer & AndData) | OrData;
                 status = i2c_write(_i2c_addr, index, &buffer, (uint16_t)1);
