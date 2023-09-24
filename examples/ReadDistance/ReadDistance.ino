@@ -1,16 +1,5 @@
 /*
   Reading distance from the laser based VL53L1X
-  By: Nathan Seidle
-  SparkFun Electronics
-  Date: April 4th, 2018
-  License: This code is public domain but you buy me a beer if you use this and we meet someday (Beerware license).
-
-  SparkFun labored with love to create this code. Feel like supporting open source hardware?
-  Buy a board from SparkFun! https://www.sparkfun.com/products/14667
-
-  This example prints the distance to an object.
-
-  Are you getting weird readings? Be sure the vacuum tape has been removed from the sensor.
 */
 
 #include <Wire.h>
