@@ -4,7 +4,7 @@
 
 #include <Wire.h>
 
-#include "vl53l1x_i2c.hpp"
+#include "vl53l1x_arduino.hpp"
 
 static VL53L1X sensor = VL53L1X(&Wire);
 
