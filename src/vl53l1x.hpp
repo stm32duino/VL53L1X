@@ -1076,18 +1076,20 @@ class VL53L1X_Abstract
 
 
         /**
-         * @brief This function returns the current programmed xtalk correction value in cps
+         * @brief This function returns the current programmed xtalk correction
+         * value in cps
          */
         error_t getXtalk(uint16_t *xtalk)
         {
-            error_t status = 0;
             uint16_t tmp = 0;
 
-            status = RdWord(ALGO__CROSSTALK_COMPENSATION_PLANE_OFFSET_KCPS, &tmp);
-            *xtalk = (tmp * 1000) >> 9; /* * 1000 to convert kcps to cps and >> 9 (7.9 format) */
+            auto status = RdWord(ALGO__CROSSTALK_COMPENSATION_PLANE_OFFSET_KCPS, &tmp);
+
+
+            // * 1000 to convert kcps to cps and >> 9 (7.9 format)
+            *xtalk = (tmp * 1000) >> 9; 
             return status;
         }
-
 
         /**
          * @brief This function programs the threshold detection mode\n
@@ -1108,23 +1110,21 @@ class VL53L1X_Abstract
                 uint16_t ThreshHigh, uint8_t Window,
                 uint8_t IntOnNoTarget)
     {
-        error_t status = 0;
         uint8_t Temp = 0;
 
-        status = RdByte(SYSTEM__INTERRUPT_CONFIG_GPIO, &Temp);
+        auto status = RdByte(SYSTEM__INTERRUPT_CONFIG_GPIO, &Temp);
         Temp = Temp & 0x47;
-        if (IntOnNoTarget == 0)
-        {
-            status = WrByte(SYSTEM__INTERRUPT_CONFIG_GPIO,
+        if (IntOnNoTarget == 0) {
+            status |= WrByte(SYSTEM__INTERRUPT_CONFIG_GPIO,
                     (Temp | (Window & 0x07)));
         }
-        else
-        {
-            status = WrByte(SYSTEM__INTERRUPT_CONFIG_GPIO,
+        else {
+            status |= WrByte(SYSTEM__INTERRUPT_CONFIG_GPIO,
                     ((Temp | (Window & 0x07)) | 0x40));
         }
-        status = WrWord(SYSTEM__THRESH_HIGH, ThreshHigh);
-        status = WrWord(SYSTEM__THRESH_LOW, ThreshLow);
+        status |= WrWord(SYSTEM__THRESH_HIGH, ThreshHigh);
+        status |= WrWord(SYSTEM__THRESH_LOW, ThreshLow);
+
         return status;
     }
 
@@ -1135,11 +1135,10 @@ class VL53L1X_Abstract
          */
         error_t getDistanceThresholdWindow(uint16_t *window)
         {
-            error_t status = 0;
             uint8_t tmp = 0;
-            status = RdByte(SYSTEM__INTERRUPT_CONFIG_GPIO, &tmp);
+            auto status = RdByte(SYSTEM__INTERRUPT_CONFIG_GPIO, &tmp);
             *window = (uint16_t)(tmp & 0x7);
-            return status = 0;
+            return status;
         }
 
 
@@ -1148,10 +1147,9 @@ class VL53L1X_Abstract
          */
         error_t getDistanceThresholdLow(uint16_t *low)
         {
-            error_t status = 0;
             uint16_t tmp = 0;
 
-            status = RdWord(SYSTEM__THRESH_LOW, &tmp);
+            auto status = RdWord(SYSTEM__THRESH_LOW, &tmp);
             *low = tmp;
             return status;
         }
@@ -1162,10 +1160,9 @@ class VL53L1X_Abstract
          */
         error_t getDistanceThresholdHigh(uint16_t *high)
         {
-            error_t status = 0;
             uint16_t tmp = 0;
 
-            status = RdWord(SYSTEM__THRESH_HIGH, &tmp);
+            auto status = RdWord(SYSTEM__THRESH_HIGH, &tmp);
             *high = tmp;
             return status;
         }
@@ -1179,7 +1176,6 @@ class VL53L1X_Abstract
          */
         error_t setROI(uint8_t X, uint8_t Y, uint8_t opticalCenter)
         {
-            error_t status = 0;
 
             if (X > 16)
                 X = 16;
@@ -1189,9 +1185,10 @@ class VL53L1X_Abstract
             {
                 opticalCenter = 199;
             }
-            status = WrByte(ROI_CONFIG__USER_ROI_CENTRE_SPAD, opticalCenter);
-            status = WrByte(ROI_CONFIG__USER_ROI_REQUESTED_GLOBAL_XY_SIZE,
+            auto status = WrByte(ROI_CONFIG__USER_ROI_CENTRE_SPAD, opticalCenter);
+            status |= WrByte(ROI_CONFIG__USER_ROI_REQUESTED_GLOBAL_XY_SIZE,
                     (Y - 1) << 4 | (X - 1));
+
             return status;
         }
 
@@ -1200,12 +1197,13 @@ class VL53L1X_Abstract
          */
         error_t getROI_XY(uint16_t *ROI_X, uint16_t *ROI_Y)
         {
-            error_t status = 0;
             uint8_t tmp = 0;
 
-            status = RdByte(ROI_CONFIG__USER_ROI_REQUESTED_GLOBAL_XY_SIZE, &tmp);
+            auto status = RdByte(ROI_CONFIG__USER_ROI_REQUESTED_GLOBAL_XY_SIZE, &tmp);
+
             *ROI_X = ((uint16_t)tmp & 0x0F) + 1;
             *ROI_Y = (((uint16_t)tmp & 0xF0) >> 4) + 1;
+
             return status;
         }
 
@@ -1216,10 +1214,7 @@ class VL53L1X_Abstract
          */
         error_t setSignalThreshold(uint16_t Signal)
         {
-            error_t status = 0;
-
-            WrWord(RANGE_CONFIG__MIN_COUNT_RATE_RTN_LIMIT_MCPS, Signal >> 3);
-            return status;
+            return WrWord(RANGE_CONFIG__MIN_COUNT_RATE_RTN_LIMIT_MCPS, Signal >> 3);
         }
 
 
@@ -1228,10 +1223,9 @@ class VL53L1X_Abstract
          */
         error_t getSignalThreshold(uint16_t *signal)
         {
-            error_t status = 0;
             uint16_t tmp = 0;
 
-            status = RdWord(RANGE_CONFIG__MIN_COUNT_RATE_RTN_LIMIT_MCPS, &tmp);
+            auto status = RdWord(RANGE_CONFIG__MIN_COUNT_RATE_RTN_LIMIT_MCPS, &tmp);
             *signal = tmp << 3;
             return status;
         }
@@ -1242,15 +1236,12 @@ class VL53L1X_Abstract
          */
         error_t setSigmaThreshold(uint16_t Sigma)
         {
-            error_t status = 0;
-
-            if (Sigma > (0xFFFF >> 2))
-            {
+            if (Sigma > (0xFFFF >> 2)) {
                 return 1;
             }
+
             /* 16 bits register 14.2 format */
-            status = WrWord(RANGE_CONFIG__SIGMA_THRESH, Sigma << 2);
-            return status;
+            return WrWord(RANGE_CONFIG__SIGMA_THRESH, Sigma << 2);
         }
 
 
@@ -1259,10 +1250,9 @@ class VL53L1X_Abstract
          */
         error_t getSigmaThreshold(uint16_t *sigma)
         {
-            error_t status = 0;
             uint16_t tmp = 0;
 
-            status = RdWord(RANGE_CONFIG__SIGMA_THRESH, &tmp);
+            auto status = RdWord(RANGE_CONFIG__SIGMA_THRESH, &tmp);
             *sigma = tmp >> 2;
             return status;
         }
@@ -1276,21 +1266,26 @@ class VL53L1X_Abstract
          */
         error_t startTemperatureUpdate()
         {
-            error_t status = 0;
             uint8_t tmp = 0;
 
-            status = WrByte(VHV_CONFIG__TIMEOUT_MACROP_LOOP_BOUND, 0x81); /* full VHV */
-            status = WrByte(0x0B, 0x92);
-            status = startRanging();
+
+            // full VHV 
+            auto status = WrByte(VHV_CONFIG__TIMEOUT_MACROP_LOOP_BOUND, 0x81); 
+            status |= WrByte(0x0B, 0x92);
+            status |= startRanging();
             while (tmp == 0)
             {
-                status = checkForDataReady(&tmp);
+                status |= checkForDataReady(&tmp);
             }
             tmp = 0;
-            status = clearInterrupt();
-            status = stopRanging();
-            status = WrByte(VHV_CONFIG__TIMEOUT_MACROP_LOOP_BOUND, 0x09); /* two bounds VHV */
-            status = WrByte(0x0B, 0); /* start VHV from the previous temperature */
+            status |= clearInterrupt();
+            status |= stopRanging();
+
+            // two bounds VHV
+            status |= WrByte(VHV_CONFIG__TIMEOUT_MACROP_LOOP_BOUND, 0x09); 
+
+            status |= WrByte(0x0B, 0); // start VHV from the previous temperature */
+
             return status;
         }
 
@@ -1311,27 +1306,26 @@ class VL53L1X_Abstract
             uint8_t i = 0, tmp = 0;
             int16_t AverageDistance = 0;
             uint16_t distance = 0;
-            error_t status = 0;
 
-            status = WrWord(ALGO__PART_TO_PART_RANGE_OFFSET_MM, 0x0);
-            status = WrWord(MM_CONFIG__INNER_OFFSET_MM, 0x0);
-            status = WrWord(MM_CONFIG__OUTER_OFFSET_MM, 0x0);
-            status = startRanging(); /* Enable VL53L1X sensor */
+            auto status = WrWord(ALGO__PART_TO_PART_RANGE_OFFSET_MM, 0x0);
+            status |= WrWord(MM_CONFIG__INNER_OFFSET_MM, 0x0);
+            status |= WrWord(MM_CONFIG__OUTER_OFFSET_MM, 0x0);
+            status |= startRanging();
             for (i = 0; i < 50; i++)
             {
                 while (tmp == 0)
                 {
-                    status = checkForDataReady(&tmp);
+                    status |= checkForDataReady(&tmp);
                 }
                 tmp = 0;
-                status = getDistance(&distance);
-                status = clearInterrupt();
+                status |= getDistance(&distance);
+                status |= clearInterrupt();
                 AverageDistance = AverageDistance + distance;
             }
-            status = stopRanging();
+            status |= stopRanging();
             AverageDistance = AverageDistance / 50;
             *offset = TargetDistInMm - AverageDistance;
-            status = WrWord(ALGO__PART_TO_PART_RANGE_OFFSET_MM, *offset * 4);
+            status |= WrWord(ALGO__PART_TO_PART_RANGE_OFFSET_MM, *offset * 4);
             return status;
         }
 
