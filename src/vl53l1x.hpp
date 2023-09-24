@@ -275,7 +275,7 @@ class VL53L1X
             0x01, /* 0x2e : bit 0 if I2C pulled up at 1.8V, else set bit 0 to 1 (pull up at AVDD) */
             0x01, /* 0x2f : bit 0 if GPIO pulled up at 1.8V, else set bit 0 to 1 (pull up at AVDD) */
             0x01, /* 0x30 : set bit 4 to 0 for active high interrupt and 1 for active low (bits 3:0 must be 0x1), use SetInterruptPolarity() */
-            0x02, /* 0x31 : bit 1 = interrupt depending on the polarity, use CheckForDataReady() */
+            0x02, /* 0x31 : bit 1 = interrupt depending on the polarity, use checkForDataReady() */
             0x00, /* 0x32 : not user-modifiable */
             0x02, /* 0x33 : not user-modifiable */
             0x08, /* 0x34 : not user-modifiable */
@@ -360,8 +360,8 @@ class VL53L1X
             0x00, /* 0x83 : not user-modifiable */
             0x00, /* 0x84 : not user-modifiable */
             0x01, /* 0x85 : not user-modifiable */
-            0x00, /* 0x86 : clear interrupt, use ClearInterrupt() */
-            0x00 /* 0x87 : start ranging, use StartRanging() or StopRanging(), If you want an automatic start after init() call, put 0x40 in location 0x87 */
+            0x00, /* 0x86 : clear interrupt, use clearInterrupt() */
+            0x00 /* 0x87 : start ranging, use startRanging() or stopRanging(), If you want an automatic start after init() call, put 0x40 in location 0x87 */
         };
 
         /* Digital out pin */
@@ -407,11 +407,11 @@ class VL53L1X
          * @param pRange_mm Pointer to range distance
          * @return 0 on success
          */
-        int GetDistance(uint32_t *piData)
+        uint16_t getDistance(uint32_t *piData)
         {
             int status;
             uint16_t distance;
-            status = GetDistance(&distance);
+            status = getDistance(&distance);
             *piData = (uint32_t) distance;
             return status;
         }
@@ -419,7 +419,7 @@ class VL53L1X
         /**
          * @brief This function returns the SW driver version
          */
-        error_t GetSWVersion(version_t *pVersion)
+        error_t getSWVersion(version_t *pVersion)
         {
             error_t Status = 0;
 
@@ -434,7 +434,7 @@ class VL53L1X
          * @brief This function sets the sensor I2C address used in case
          * multiple devices application, default address 0x52
          */
-        error_t SetI2CAddress(uint8_t new_address)
+        error_t setI2CAddress(uint8_t new_address)
         {
             error_t status = 0;
 
@@ -458,19 +458,19 @@ class VL53L1X
             for (Addr = 0x2D; Addr <= 0x87; Addr++) {
                 status = WrByte(Device, Addr, DEFAULT_CONFIGURATION[Addr - 0x2D]);
             }
-            status = StartRanging();
+            status = startRanging();
 
             //We need to wait at least the default intermeasurement period of 103ms before dataready will occur
             //But if a unit has already been powered and polling, it may happen much faster
             while (dataReady == 0)
             {
-                status = CheckForDataReady(&dataReady);
+                status = checkForDataReady(&dataReady);
                 if (timeout++ > 150)
                     return ERROR_TIME_OUT;
                 delay(1);
             }
-            status = ClearInterrupt();
-            status = StopRanging();
+            status = clearInterrupt();
+            status = stopRanging();
             status = WrByte(Device, VHV_CONFIG__TIMEOUT_MACROP_LOOP_BOUND, 0x09); /* two bounds VHV */
             status = WrByte(Device, 0x0B, 0); /* start VHV from the previous temperature */
             return status;
@@ -481,7 +481,7 @@ class VL53L1X
          * ranging data reading to arm the interrupt for the next data ready
          * event.
          */
-        error_t ClearInterrupt()
+        error_t clearInterrupt()
         {
             error_t status = 0;
 
@@ -493,7 +493,7 @@ class VL53L1X
          * @brief This function programs the interrupt polarity
          * 1=active high (default), 0=active low
          */
-        error_t SetInterruptPolarity(uint8_t NewPolarity)
+        error_t setInterruptPolarity(uint8_t NewPolarity)
         {
             uint8_t Temp;
             error_t status = 0;
@@ -508,7 +508,7 @@ class VL53L1X
          * @brief This function returns the current interrupt polarity\n
          * 1=active high (default), 0=active low
          */
-        error_t GetInterruptPolarity(uint8_t *pInterruptPolarity)
+        error_t getInterruptPolarity(uint8_t *pInterruptPolarity)
         {
             uint8_t Temp;
             error_t status = 0;
@@ -528,7 +528,7 @@ class VL53L1X
          * 1=active high (default), 0=active low, use SetInterruptPolarity() to
          * change the interrupt polarity if required.
          */
-        error_t StartRanging()
+        error_t startRanging()
         {
             error_t status = 0;
             WrByte(Device, SYSTEM__INTERRUPT_CLEAR, 0x01); /* clear interrupt trigger */
@@ -539,7 +539,7 @@ class VL53L1X
         /**
          * @brief This function starts a one-shot ranging distance operation\n
          */
-        error_t StartOneshotRanging()
+        error_t startOneshotRanging()
         {
             error_t status = 0;
             WrByte(Device, SYSTEM__INTERRUPT_CLEAR, 0x01); /* clear interrupt trigger */
@@ -550,7 +550,7 @@ class VL53L1X
         /**
          * @brief This function stops the ranging.
          */
-        error_t StopRanging()
+        error_t stopRanging()
         {
             error_t status = 0;
 
@@ -563,13 +563,13 @@ class VL53L1X
          * polling the dedicated register.
          * @param : isDataReady==0 -> not ready; isDataReady==1 -> ready
          */
-        error_t CheckForDataReady(uint8_t *isDataReady)
+        error_t checkForDataReady(uint8_t *isDataReady)
         {
             uint8_t Temp;
             uint8_t IntPol;
             error_t status = 0;
 
-            status = GetInterruptPolarity(&IntPol);
+            status = getInterruptPolarity(&IntPol);
             status = RdByte(Device, GPIO__TIO_HV_STATUS, &Temp);
             /* Read in the register to check if a new value is available */
             if (status == 0)
@@ -586,12 +586,12 @@ class VL53L1X
          * @brief This function programs the timing budget in ms.
          * Predefined values = 15, 20, 33, 50, 100(default), 200, 500.
          */
-        error_t SetTimingBudgetInMs(uint16_t TimingBudgetInMs)
+        error_t setTimingBudgetInMs(uint16_t TimingBudgetInMs)
         {
             uint16_t DM;
             error_t status = 0;
 
-            status = GetDistanceMode(&DM);
+            status = getDistanceMode(&DM);
             if (DM == 0)
                 return 1;
             else if (DM == 1)
@@ -697,7 +697,7 @@ class VL53L1X
         /**
          * @brief This function returns the current timing budget in ms.
          */
-        error_t GetTimingBudgetInMs(uint16_t *pTimingBudget)
+        error_t getTimingBudgetInMs(uint16_t *pTimingBudget)
         {
             uint16_t Temp = 0;
             error_t status = 0;
@@ -745,12 +745,12 @@ class VL53L1X
          * Short mode max distance is limited to 1.3 m but better ambient immunity.\n
          * Long mode can range up to 4 m in the dark with 200 ms timing budget.
          */
-        error_t SetDistanceMode(uint16_t DM)
+        error_t setDistanceMode(uint16_t DM)
         {
             uint16_t TB = 0;
             error_t status = 0;
 
-            status = GetTimingBudgetInMs(&TB);
+            status = getTimingBudgetInMs(&TB);
             switch (DM)
             {
                 case 1:
@@ -772,7 +772,7 @@ class VL53L1X
                 default:
                     break;
             }
-            status = SetTimingBudgetInMs(TB);
+            status = setTimingBudgetInMs(TB);
             return status;
         }
 
@@ -780,7 +780,7 @@ class VL53L1X
         /**
          * @brief This function returns the current distance mode (1=short, 2=long).
          */
-        error_t GetDistanceMode(uint16_t *DM)
+        error_t getDistanceMode(uint16_t *DM)
         {
             uint8_t TempDM = 0, status = 0;
 
@@ -799,7 +799,7 @@ class VL53L1X
          * not checked by the API, the customer has the duty to check the
          * condition. Default = 100 ms
          */
-        error_t SetInterMeasurementInMs(uint16_t InterMeasMs)
+        error_t setInterMeasurementInMs(uint16_t InterMeasMs)
         {
             uint16_t ClockPLL = 0;
             error_t status = 0;
@@ -815,7 +815,7 @@ class VL53L1X
         /**
          * @brief This function returns the Intermeasurement period in ms.
          */
-        error_t GetInterMeasurementInMs(uint16_t *pIM)
+        error_t getInterMeasurementInMs(uint16_t *pIM)
         {
             uint16_t ClockPLL = 0;
             error_t status = 0;
@@ -834,7 +834,7 @@ class VL53L1X
          * @brief This function returns the boot state of the device (1:booted,
          * 0:not booted)
          */
-        error_t BootState(uint8_t *state)
+        error_t bootState(uint8_t *state)
         {
             error_t status = 0;
             uint8_t tmp = 0;
@@ -848,7 +848,7 @@ class VL53L1X
         /**
          * @brief This function returns the sensor id, sensor Id must be 0xEEAC
          */
-        error_t GetSensorId(uint16_t *sensorId)
+        error_t getSensorId(uint16_t *sensorId)
         {
             error_t status = 0;
             uint16_t tmp = 0;
@@ -862,7 +862,7 @@ class VL53L1X
         /**
          * @brief This function returns the distance measured by the sensor in mm
          */
-        error_t GetDistance(uint16_t *distance)
+        error_t getDistance(uint16_t *distance)
         {
             error_t status = 0;
             uint16_t tmp = 0;
@@ -878,7 +878,7 @@ class VL53L1X
          * @brief This function returns the returned signal per SPAD in kcps/SPAD.
          * With kcps stands for Kilo Count Per Second
          */
-        error_t GetSignalPerSpad(uint16_t *signalRate)
+        error_t getSignalPerSpad(uint16_t *signalRate)
         {
             error_t status = 0;
             uint16_t SpNb = 1, signal = 0;
@@ -895,7 +895,7 @@ class VL53L1X
         /**
          * @brief This function returns the ambient per SPAD in kcps/SPAD
          */
-        error_t GetAmbientPerSpad(uint16_t *ambPerSp)
+        error_t getAmbientPerSpad(uint16_t *ambPerSp)
         {
             error_t status = 0;
             uint16_t AmbientRate = 0, SpNb = 1;
@@ -910,7 +910,7 @@ class VL53L1X
         /**
          * @brief This function returns the returned signal in kcps.
          */
-        error_t GetSignalRate(uint16_t *signal)
+        error_t getSignalRate(uint16_t *signal)
         {
             error_t status = 0;
             uint16_t tmp = 0;
@@ -925,7 +925,7 @@ class VL53L1X
         /**
          * @brief This function returns the current number of enabled SPADs
          */
-        error_t GetSpadNb(uint16_t *spNb)
+        error_t getSpadNb(uint16_t *spNb)
         {
             error_t status = 0;
             uint16_t tmp = 0;
@@ -940,7 +940,7 @@ class VL53L1X
         /**
          * @brief This function returns the ambient rate in kcps
          */
-        error_t GetAmbientRate(uint16_t *ambRate)
+        error_t getAmbientRate(uint16_t *ambRate)
         {
             error_t status = 0;
             uint16_t tmp = 0;
@@ -955,7 +955,7 @@ class VL53L1X
          * @brief This function returns the ranging status error \n
          * (0:no error, 1:sigma failed, 2:signal failed, ..., 7:wrap-around)
          */
-        error_t GetRangeStatus(uint8_t *rangeStatus)
+        error_t getRangeStatus(uint8_t *rangeStatus)
         {
             error_t status = 0;
             uint8_t RgSt = 0;
@@ -1016,7 +1016,7 @@ class VL53L1X
          * @brief This function programs the offset correction in mm
          * @param OffsetValue:the offset correction value to program in mm
          */
-        error_t SetOffset(int16_t OffsetValue)
+        error_t setOffset(int16_t OffsetValue)
         {
             error_t status = 0;
             int16_t Temp = 0;
@@ -1033,7 +1033,7 @@ class VL53L1X
         /**
          * @brief This function returns the programmed offset correction value in mm
          */
-        error_t GetOffset(int16_t *offset)
+        error_t getOffset(int16_t *offset)
         {
             error_t status = 0;
             uint16_t Temp = 0;
@@ -1051,7 +1051,7 @@ class VL53L1X
          * (Count Per Second).
          * This is the number of photons reflected back from the cover glass in cps.
          */
-        error_t SetXtalk(uint16_t XtalkValue)
+        error_t setXtalk(uint16_t XtalkValue)
         {
             /* XTalkValue in count per second to avoid float type */
             error_t status = 0;
@@ -1070,7 +1070,7 @@ class VL53L1X
         /**
          * @brief This function returns the current programmed xtalk correction value in cps
          */
-        error_t GetXtalk(uint16_t *xtalk)
+        error_t getXtalk(uint16_t *xtalk)
         {
             error_t status = 0;
             uint16_t tmp = 0;
@@ -1096,7 +1096,7 @@ class VL53L1X
          * @param Window detection mode : 0=below, 1=above, 2=out, 3=in
          * @param IntOnNoTarget = 1 (No longer used - just use 1)
          */
-        error_t SetDistanceThreshold(uint16_t ThreshLow,
+        error_t setDistanceThreshold(uint16_t ThreshLow,
                 uint16_t ThreshHigh, uint8_t Window,
                 uint8_t IntOnNoTarget)
     {
@@ -1125,7 +1125,7 @@ class VL53L1X
          * @brief This function returns the window detection mode (0=below;
          * 1=above; 2=out; 3=in)
          */
-        error_t GetDistanceThresholdWindow(uint16_t *window)
+        error_t getDistanceThresholdWindow(uint16_t *window)
         {
             error_t status = 0;
             uint8_t tmp = 0;
@@ -1138,7 +1138,7 @@ class VL53L1X
         /**
          * @brief This function returns the low threshold in mm
          */
-        error_t GetDistanceThresholdLow(uint16_t *low)
+        error_t getDistanceThresholdLow(uint16_t *low)
         {
             error_t status = 0;
             uint16_t tmp = 0;
@@ -1152,7 +1152,7 @@ class VL53L1X
         /**
          * @brief This function returns the high threshold in mm
          */
-        error_t GetDistanceThresholdHigh(uint16_t *high)
+        error_t getDistanceThresholdHigh(uint16_t *high)
         {
             error_t status = 0;
             uint16_t tmp = 0;
@@ -1169,7 +1169,7 @@ class VL53L1X
          * The smallest acceptable ROI size = 4\n
          * @param X:ROI Width; Y=ROI Height
          */
-        error_t SetROI(uint8_t X, uint8_t Y, uint8_t opticalCenter)
+        error_t setROI(uint8_t X, uint8_t Y, uint8_t opticalCenter)
         {
             error_t status = 0;
 
@@ -1190,7 +1190,7 @@ class VL53L1X
         /**
          *@brief This function returns width X and height Y
          */
-        error_t GetROI_XY(uint16_t *ROI_X, uint16_t *ROI_Y)
+        error_t getROI_XY(uint16_t *ROI_X, uint16_t *ROI_Y)
         {
             error_t status = 0;
             uint8_t tmp = 0;
@@ -1206,7 +1206,7 @@ class VL53L1X
          * @brief This function programs a new signal threshold in kcps
          * (default=1024 kcps\n
          */
-        error_t SetSignalThreshold(uint16_t Signal)
+        error_t setSignalThreshold(uint16_t Signal)
         {
             error_t status = 0;
 
@@ -1218,7 +1218,7 @@ class VL53L1X
         /**
          * @brief This function returns the current signal threshold in kcps
          */
-        error_t GetSignalThreshold(uint16_t *signal)
+        error_t getSignalThreshold(uint16_t *signal)
         {
             error_t status = 0;
             uint16_t tmp = 0;
@@ -1233,7 +1233,7 @@ class VL53L1X
         /**
          * @brief This function programs a new sigma threshold in mm (default=15 mm)
          */
-        error_t SetSigmaThreshold(uint16_t Sigma)
+        error_t setSigmaThreshold(uint16_t Sigma)
         {
             error_t status = 0;
 
@@ -1250,7 +1250,7 @@ class VL53L1X
         /**
          * @brief This function returns the current sigma threshold in mm
          */
-        error_t GetSigmaThreshold(uint16_t *sigma)
+        error_t getSigmaThreshold(uint16_t *sigma)
         {
             error_t status = 0;
             uint16_t tmp = 0;
@@ -1267,21 +1267,21 @@ class VL53L1X
          * might have changed by more than 8 deg C without sensor ranging
          * activity for an extended period.
          */
-        error_t StartTemperatureUpdate()
+        error_t startTemperatureUpdate()
         {
             error_t status = 0;
             uint8_t tmp = 0;
 
             status = WrByte(Device, VHV_CONFIG__TIMEOUT_MACROP_LOOP_BOUND, 0x81); /* full VHV */
             status = WrByte(Device, 0x0B, 0x92);
-            status = StartRanging();
+            status = startRanging();
             while (tmp == 0)
             {
-                status = CheckForDataReady(&tmp);
+                status = checkForDataReady(&tmp);
             }
             tmp = 0;
-            status = ClearInterrupt();
-            status = StopRanging();
+            status = clearInterrupt();
+            status = stopRanging();
             status = WrByte(Device, VHV_CONFIG__TIMEOUT_MACROP_LOOP_BOUND, 0x09); /* two bounds VHV */
             status = WrByte(Device, 0x0B, 0); /* start VHV from the previous temperature */
             return status;
@@ -1299,7 +1299,7 @@ class VL53L1X
          * @return 0:success, !=0: failed
          * @return offset pointer contains the offset found in mm
          */
-        int8_t CalibrateOffset(uint16_t TargetDistInMm, int16_t *offset)
+        int8_t calibrateOffset(uint16_t TargetDistInMm, int16_t *offset)
         {
             uint8_t i = 0, tmp = 0;
             int16_t AverageDistance = 0;
@@ -1309,19 +1309,19 @@ class VL53L1X
             status = WrWord(Device, ALGO__PART_TO_PART_RANGE_OFFSET_MM, 0x0);
             status = WrWord(Device, MM_CONFIG__INNER_OFFSET_MM, 0x0);
             status = WrWord(Device, MM_CONFIG__OUTER_OFFSET_MM, 0x0);
-            status = StartRanging(); /* Enable VL53L1X sensor */
+            status = startRanging(); /* Enable VL53L1X sensor */
             for (i = 0; i < 50; i++)
             {
                 while (tmp == 0)
                 {
-                    status = CheckForDataReady(&tmp);
+                    status = checkForDataReady(&tmp);
                 }
                 tmp = 0;
-                status = GetDistance(&distance);
-                status = ClearInterrupt();
+                status = getDistance(&distance);
+                status = clearInterrupt();
                 AverageDistance = AverageDistance + distance;
             }
-            status = StopRanging();
+            status = stopRanging();
             AverageDistance = AverageDistance / 50;
             *offset = TargetDistInMm - AverageDistance;
             status = WrWord(Device, ALGO__PART_TO_PART_RANGE_OFFSET_MM, *offset * 4);
@@ -1343,7 +1343,7 @@ class VL53L1X
          * @return xtalk pointer contains the xtalk value found in cps (number
          * of photons in count per second)
          */
-        int8_t CalibrateXtalk(uint16_t TargetDistInMm, uint16_t *xtalk)
+        int8_t calibrateXtalk(uint16_t TargetDistInMm, uint16_t *xtalk)
         {
             uint8_t i = 0, tmp = 0;
             float AverageSignalRate = 0;
@@ -1354,24 +1354,24 @@ class VL53L1X
             error_t status = 0;
 
             status = WrWord(Device, 0x0016, 0);
-            status = StartRanging();
+            status = startRanging();
             for (i = 0; i < 50; i++)
             {
                 while (tmp == 0)
                 {
-                    status = CheckForDataReady(&tmp);
+                    status = checkForDataReady(&tmp);
                 }
                 tmp = 0;
-                status = GetSignalRate(&sr);
-                status = GetDistance(&distance);
-                status = ClearInterrupt();
+                status = getSignalRate(&sr);
+                status = getDistance(&distance);
+                status = clearInterrupt();
                 AverageDistance = AverageDistance + distance;
-                status = GetSpadNb(&spadNum);
+                status = getSpadNb(&spadNum);
                 AverageSpadNb = AverageSpadNb + spadNum;
                 AverageSignalRate =
                     AverageSignalRate + sr;
             }
-            status = StopRanging();
+            status = stopRanging();
             AverageDistance = AverageDistance / 50;
             AverageSpadNb = AverageSpadNb / 50;
             AverageSignalRate = AverageSignalRate / 50;
@@ -1518,7 +1518,7 @@ class VL53L1X
             return 0;
         }
 
-        error_t GetTickCount(
+        error_t getTickCount(
                 uint32_t *ptick_count_ms)
         {
 
@@ -1532,21 +1532,21 @@ class VL53L1X
             return status;
         }
 
-        error_t WaitUs(dev_t *pdev, int32_t wait_us)
+        error_t waitUs(dev_t *pdev, int32_t wait_us)
         {
             (void)pdev;
             delay(wait_us / 1000);
             return ERROR_NONE;
         }
 
-        error_t WaitMs(dev_t *pdev, int32_t wait_ms)
+        error_t waitMs(dev_t *pdev, int32_t wait_ms)
         {
             (void)pdev;
             delay(wait_ms);
             return ERROR_NONE;
         }
 
-        error_t WaitValueMaskEx(
+        error_t waitValueMaskEx(
                 dev_t *pdev,
                 uint32_t timeout_ms,
                 uint16_t index,
@@ -1575,7 +1575,7 @@ class VL53L1X
 
             /* calculate time limit in absolute time */
 
-            GetTickCount(&start_time_ms);
+            getTickCount(&start_time_ms);
 
             /* remember current trace functions and temporarily disable
              * function logging
@@ -1600,13 +1600,13 @@ class VL53L1X
                 if (status == ERROR_NONE &&
                         found == 0 &&
                         poll_delay_ms > 0)
-                    status = WaitMs(
+                    status = waitMs(
                             pdev,
                             poll_delay_ms);
 
                 /* Update polling time (Compare difference rather than absolute to
                    negate 32bit wrap around issue) */
-                GetTickCount(&current_time_ms);
+                getTickCount(&current_time_ms);
                 polling_time_ms = current_time_ms - start_time_ms;
             }
 
@@ -1616,4 +1616,4 @@ class VL53L1X
             return status;
         }
 
-};
+}; // class VL53L1X

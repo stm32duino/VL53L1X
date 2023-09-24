@@ -32,22 +32,22 @@ void setup(void)
 
 void loop(void)
 {
-  sensor.StartRanging(); 
+  sensor.startRanging(); 
 
   while (true) {
       uint8_t dataReady = 0;
-      sensor.CheckForDataReady(&dataReady);
+      sensor.checkForDataReady(&dataReady);
       if (dataReady) {
           break;
       }
   }
 
   uint16_t distance = 0;
-  sensor.GetDistance(&distance);
+  sensor.getDistance(&distance);
 
-  sensor.ClearInterrupt();
+  sensor.clearInterrupt();
 
-  sensor.StopRanging();
+  sensor.stopRanging();
 
   Serial.print("Distance(mm): ");
   Serial.println(distance);
