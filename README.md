@@ -11,8 +11,11 @@ I made the following modifications:
 
 * Added support for non-Arduino platforms via subclassing
 
-I have tested this library with the following hardware:
+Using the [Pesky Products Vl53L1 sensor](https://www.tindie.com/products/onehorse/vl53l1-long-range-proximity-sensor)
+I have tested this library with the following MCUs:
 
-* [Teensy 4.0](https://www.pjrc.com/store/teensy40.html) + 
-  [Pesky Products Vl53L1 sensor](https://www.tindie.com/products/onehorse/vl53l1-long-range-proximity-sensor)
+* [Teensy 4.0](https://www.pjrc.com/store/teensy40.html)
+
+* [Dragonfly STM32L4](https://www.tindie.com/products/tleracorp/dragonfly-stm32l47696-development-board)
+  
 
