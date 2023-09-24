@@ -13,5 +13,6 @@ I made the following modifications:
 
 I have tested this library with the following hardware:
 
-* Teensy 4.0 + [Pesky Products Vl53L1 sensor](https://www.tindie.com/products/onehorse/vl53l1-long-range-proximity-sensor)
+* [Teensy 4.0](https://www.pjrc.com/store/teensy40.html) + 
+  [Pesky Products Vl53L1 sensor](https://www.tindie.com/products/onehorse/vl53l1-long-range-proximity-sensor)
 
