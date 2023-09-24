@@ -3,9 +3,7 @@
  * @brief Header-only file for the VL53L1X driver class, abstracting the 
           I^2C calls
  ******************************************************************************
- * @attention
- *
- * <h2><center>&copy; COPYRIGHT(c) 2018 STMicroelectronics</center></h2>
+ * COPYRIGHT(c) 2018, 2023 STMicroelectronics, Simon D. Levy
  *
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
@@ -461,13 +459,15 @@ class VL53L1X_Abstract
          */
         error_t begin()
         {
-            error_t status = 0;
             uint8_t Addr = 0x00, dataReady = 0, timeout = 0;
 
+            auto status = 0;
+
             for (Addr = 0x2D; Addr <= 0x87; Addr++) {
-                status = WrByte(Addr, DEFAULT_CONFIGURATION[Addr - 0x2D]);
+                WrByte(Addr, DEFAULT_CONFIGURATION[Addr - 0x2D]);
             }
-            status = startRanging();
+
+            status |= startRanging();
 
             //We need to wait at least the default intermeasurement period of
             //103ms before dataready will occur But if a unit has already been
@@ -478,14 +478,14 @@ class VL53L1X_Abstract
                     return ERROR_TIME_OUT;
                 wait_ms(1);
             }
-            status = clearInterrupt();
-            status = stopRanging();
+            status |= clearInterrupt();
+            status |= stopRanging();
 
             // two bounds VHV
-            status = WrByte(VHV_CONFIG__TIMEOUT_MACROP_LOOP_BOUND, 0x09); 
+            status |= WrByte(VHV_CONFIG__TIMEOUT_MACROP_LOOP_BOUND, 0x09); 
 
             // start VHV from the previous temperature
-            status = WrByte(0x0B, 0); 
+            status |= WrByte(0x0B, 0); 
 
             return status;
         }
@@ -497,7 +497,6 @@ class VL53L1X_Abstract
          */
         error_t clearInterrupt()
         {
-
             return WrByte(SYSTEM__INTERRUPT_CLEAR, 0x01);
         }
 
@@ -1268,7 +1267,6 @@ class VL53L1X_Abstract
         {
             uint8_t tmp = 0;
 
-
             // full VHV 
             auto status = WrByte(VHV_CONFIG__TIMEOUT_MACROP_LOOP_BOUND, 0x81); 
             status |= WrByte(0x0B, 0x92);
@@ -1350,35 +1348,37 @@ class VL53L1X_Abstract
             float AverageSignalRate = 0;
             float AverageDistance = 0;
             float AverageSpadNb = 0;
-            uint16_t distance = 0, spadNum;
+            uint16_t distance = 0, spadNum = 0;
             uint16_t sr = 0;
-            error_t status = 0;
 
-            status = WrWord(0x0016, 0);
-            status = startRanging();
+            auto status = WrWord(0x0016, 0);
+            status |= startRanging();
             for (i = 0; i < 50; i++)
             {
                 while (tmp == 0)
                 {
-                    status = checkForDataReady(&tmp);
+                    status |= checkForDataReady(&tmp);
                 }
                 tmp = 0;
-                status = getSignalRate(&sr);
-                status = getDistance(&distance);
-                status = clearInterrupt();
+                status |= getSignalRate(&sr);
+                status |= getDistance(&distance);
+                status |= clearInterrupt();
                 AverageDistance = AverageDistance + distance;
-                status = getSpadNb(&spadNum);
+                status |= getSpadNb(&spadNum);
                 AverageSpadNb = AverageSpadNb + spadNum;
                 AverageSignalRate =
                     AverageSignalRate + sr;
             }
-            status = stopRanging();
+            status |= stopRanging();
             AverageDistance = AverageDistance / 50;
             AverageSpadNb = AverageSpadNb / 50;
             AverageSignalRate = AverageSignalRate / 50;
-            /* Calculate Xtalk value */
-            *xtalk = (uint16_t)(512 * (AverageSignalRate * (1 - (AverageDistance / TargetDistInMm))) / AverageSpadNb);
-            status = WrWord(0x0016, *xtalk);
+
+            *xtalk = (uint16_t)(512 * (AverageSignalRate * (1 - 
+                            (AverageDistance / TargetDistInMm))) / AverageSpadNb);
+
+            status |= WrWord(0x0016, *xtalk);
+
             return status;
         }
 

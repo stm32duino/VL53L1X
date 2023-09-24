@@ -9,3 +9,7 @@ I made the following modifications:
 
 * Added support for non-Arduino platforms via subclassing
 
+I have tested this library with the following hardware:
+
+* Teensy 4.0 + [Pesky Products Vl53L1 sensor](https://www.tindie.com/products/onehorse/vl53l1-long-range-proximity-sensor/)
+
