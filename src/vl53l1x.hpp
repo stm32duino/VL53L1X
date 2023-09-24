@@ -480,8 +480,13 @@ class VL53L1X_Abstract
             }
             status = clearInterrupt();
             status = stopRanging();
-            status = WrByte(VHV_CONFIG__TIMEOUT_MACROP_LOOP_BOUND, 0x09); /* two bounds VHV */
-            status = WrByte(0x0B, 0); /* start VHV from the previous temperature */
+
+            // two bounds VHV
+            status = WrByte(VHV_CONFIG__TIMEOUT_MACROP_LOOP_BOUND, 0x09); 
+
+            // start VHV from the previous temperature
+            status = WrByte(0x0B, 0); 
+
             return status;
         }
 
@@ -492,10 +497,8 @@ class VL53L1X_Abstract
          */
         error_t clearInterrupt()
         {
-            error_t status = 0;
 
-            status = WrByte(SYSTEM__INTERRUPT_CLEAR, 0x01);
-            return status;
+            return WrByte(SYSTEM__INTERRUPT_CLEAR, 0x01);
         }
 
         /**
@@ -504,12 +507,10 @@ class VL53L1X_Abstract
          */
         error_t setInterruptPolarity(uint8_t NewPolarity)
         {
-            uint8_t Temp;
-            error_t status = 0;
-
-            status = RdByte(GPIO_HV_MUX__CTRL, &Temp);
+            uint8_t Temp = 0;
+            auto status = RdByte(GPIO_HV_MUX__CTRL, &Temp);
             Temp = Temp & 0xEF;
-            status = WrByte(GPIO_HV_MUX__CTRL, Temp | (!(NewPolarity & 1)) << 4);
+            status |= WrByte(GPIO_HV_MUX__CTRL, Temp | (!(NewPolarity & 1)) << 4);
             return status;
         }
 
@@ -519,10 +520,8 @@ class VL53L1X_Abstract
          */
         error_t getInterruptPolarity(uint8_t *pInterruptPolarity)
         {
-            uint8_t Temp;
-            error_t status = 0;
-
-            status = RdByte(GPIO_HV_MUX__CTRL, &Temp);
+            uint8_t Temp = 0;
+            auto status = RdByte(GPIO_HV_MUX__CTRL, &Temp);
             Temp = Temp & 0x10;
             *pInterruptPolarity = !(Temp >> 4);
             return status;
@@ -539,9 +538,12 @@ class VL53L1X_Abstract
          */
         error_t startRanging()
         {
-            error_t status = 0;
-            WrByte(SYSTEM__INTERRUPT_CLEAR, 0x01); /* clear interrupt trigger */
-            status = WrByte(SYSTEM__MODE_START, 0x40); /* Enable VL53L1X */
+            // clear interrupt trigger
+            auto status = WrByte(SYSTEM__INTERRUPT_CLEAR, 0x01); 
+
+            // Enable VL53L1X
+            status |= WrByte(SYSTEM__MODE_START, 0x40); 
+
             return status;
         }
 
@@ -550,9 +552,11 @@ class VL53L1X_Abstract
          */
         error_t startOneshotRanging()
         {
-            error_t status = 0;
-            WrByte(SYSTEM__INTERRUPT_CLEAR, 0x01); /* clear interrupt trigger */
-            status = WrByte(SYSTEM__MODE_START, 0x10); /* Enable VL53L1X one-shot ranging */
+            // clear interrupt trigger
+            auto status = WrByte(SYSTEM__INTERRUPT_CLEAR, 0x01); 
+            
+            // Enable VL53L1X one-shot ranging
+            status |= WrByte(SYSTEM__MODE_START, 0x10); 
             return status;
         }
 
@@ -561,10 +565,7 @@ class VL53L1X_Abstract
          */
         error_t stopRanging()
         {
-            error_t status = 0;
-
-            status = WrByte(SYSTEM__MODE_START, 0x00); /* Disable VL53L1X */
-            return status;
+            return WrByte(SYSTEM__MODE_START, 0x00); // Disable VL53L1X
         }
 
         /**
@@ -574,20 +575,17 @@ class VL53L1X_Abstract
          */
         error_t checkForDataReady(uint8_t *isDataReady)
         {
-            uint8_t Temp;
-            uint8_t IntPol;
-            error_t status = 0;
+            uint8_t IntPol = 0;
+            auto status = getInterruptPolarity(&IntPol);
 
-            status = getInterruptPolarity(&IntPol);
-            status = RdByte(GPIO__TIO_HV_STATUS, &Temp);
+            uint8_t Temp = 0;
+            status |= RdByte(GPIO__TIO_HV_STATUS, &Temp);
+
             /* Read in the register to check if a new value is available */
-            if (status == 0)
-            {
-                if ((Temp & 1) == IntPol)
-                    *isDataReady = 1;
-                else
-                    *isDataReady = 0;
+            if (status == 0) {
+                *isDataReady = (Temp & 1) == IntPol ? 1 : 0;
             }
+
             return status;
         }
 
@@ -597,58 +595,53 @@ class VL53L1X_Abstract
          */
         error_t setTimingBudgetInMs(uint16_t TimingBudgetInMs)
         {
-            uint16_t DM;
-            error_t status = 0;
+            uint16_t DM = 0;
 
-            status = getDistanceMode(&DM);
-            if (DM == 0)
+            auto status = getDistanceMode(&DM);
+
+            if (DM == 0) {
                 return 1;
-            else if (DM == 1)
-            { /* Short DistanceMode */
+            }
+
+            if (DM == 1)
+            { // Short DistanceMode
                 switch (TimingBudgetInMs)
                 {
                     case 15: /* only available in short distance mode */
-                        WrWord(RANGE_CONFIG__TIMEOUT_MACROP_A_HI,
-                                0x01D);
-                        WrWord(RANGE_CONFIG__TIMEOUT_MACROP_B_HI,
-                                0x0027);
+                        WrWord(RANGE_CONFIG__TIMEOUT_MACROP_A_HI, 0x01D);
+                        WrWord(RANGE_CONFIG__TIMEOUT_MACROP_B_HI, 0x0027);
                         break;
+
                     case 20:
-                        WrWord(RANGE_CONFIG__TIMEOUT_MACROP_A_HI,
-                                0x0051);
-                        WrWord(RANGE_CONFIG__TIMEOUT_MACROP_B_HI,
-                                0x006E);
+                        WrWord(RANGE_CONFIG__TIMEOUT_MACROP_A_HI, 0x0051);
+                        WrWord(RANGE_CONFIG__TIMEOUT_MACROP_B_HI, 0x006E);
                         break;
+
                     case 33:
-                        WrWord(RANGE_CONFIG__TIMEOUT_MACROP_A_HI,
-                                0x00D6);
-                        WrWord(RANGE_CONFIG__TIMEOUT_MACROP_B_HI,
-                                0x006E);
+                        WrWord(RANGE_CONFIG__TIMEOUT_MACROP_A_HI, 0x00D6);
+                        WrWord(RANGE_CONFIG__TIMEOUT_MACROP_B_HI, 0x006E);
                         break;
+
                     case 50:
-                        WrWord(RANGE_CONFIG__TIMEOUT_MACROP_A_HI,
-                                0x1AE);
-                        WrWord(RANGE_CONFIG__TIMEOUT_MACROP_B_HI,
-                                0x01E8);
+                        WrWord(RANGE_CONFIG__TIMEOUT_MACROP_A_HI, 0x1AE);
+                        WrWord(RANGE_CONFIG__TIMEOUT_MACROP_B_HI, 0x01E8);
                         break;
+
                     case 100:
-                        WrWord(RANGE_CONFIG__TIMEOUT_MACROP_A_HI,
-                                0x02E1);
-                        WrWord(RANGE_CONFIG__TIMEOUT_MACROP_B_HI,
-                                0x0388);
+                        WrWord(RANGE_CONFIG__TIMEOUT_MACROP_A_HI, 0x02E1);
+                        WrWord(RANGE_CONFIG__TIMEOUT_MACROP_B_HI, 0x0388);
                         break;
+
                     case 200:
-                        WrWord(RANGE_CONFIG__TIMEOUT_MACROP_A_HI,
-                                0x03E1);
-                        WrWord(RANGE_CONFIG__TIMEOUT_MACROP_B_HI,
-                                0x0496);
+                        WrWord(RANGE_CONFIG__TIMEOUT_MACROP_A_HI, 0x03E1);
+                        WrWord(RANGE_CONFIG__TIMEOUT_MACROP_B_HI, 0x0496);
                         break;
+
                     case 500:
-                        WrWord(RANGE_CONFIG__TIMEOUT_MACROP_A_HI,
-                                0x0591);
-                        WrWord(RANGE_CONFIG__TIMEOUT_MACROP_B_HI,
-                                0x05C1);
+                        WrWord(RANGE_CONFIG__TIMEOUT_MACROP_A_HI, 0x0591);
+                        WrWord(RANGE_CONFIG__TIMEOUT_MACROP_B_HI, 0x05C1);
                         break;
+
                     default:
                         status = 1;
                         break;
@@ -709,42 +702,49 @@ class VL53L1X_Abstract
         error_t getTimingBudgetInMs(uint16_t *pTimingBudget)
         {
             uint16_t Temp = 0;
-            error_t status = 0;
+            auto status = RdWord(RANGE_CONFIG__TIMEOUT_MACROP_A_HI, &Temp);
 
-            status = RdWord(RANGE_CONFIG__TIMEOUT_MACROP_A_HI, &Temp);
             switch (Temp)
             {
                 case 0x001D:
                     *pTimingBudget = 15;
                     break;
+
                 case 0x0051:
                 case 0x001E:
                     *pTimingBudget = 20;
                     break;
+
                 case 0x00D6:
                 case 0x0060:
                     *pTimingBudget = 33;
                     break;
+
                 case 0x1AE:
                 case 0x00AD:
                     *pTimingBudget = 50;
                     break;
+
                 case 0x02E1:
                 case 0x01CC:
                     *pTimingBudget = 100;
                     break;
+
                 case 0x03E1:
                 case 0x02D9:
                     *pTimingBudget = 200;
                     break;
+
                 case 0x0591:
                 case 0x048F:
                     *pTimingBudget = 500;
                     break;
+
                 default:
                     *pTimingBudget = 0;
                     break;
             }
+
             return status;
         }
 
@@ -757,32 +757,33 @@ class VL53L1X_Abstract
         error_t setDistanceMode(uint16_t DM)
         {
             uint16_t TB = 0;
-            error_t status = 0;
 
-            status = getTimingBudgetInMs(&TB);
+            auto status = getTimingBudgetInMs(&TB);
+
             switch (DM)
             {
                 case 1:
-                    status = WrByte(PHASECAL_CONFIG__TIMEOUT_MACROP, 0x14);
-                    status = WrByte(RANGE_CONFIG__VCSEL_PERIOD_A, 0x07);
-                    status = WrByte(RANGE_CONFIG__VCSEL_PERIOD_B, 0x05);
-                    status = WrByte(RANGE_CONFIG__VALID_PHASE_HIGH, 0x38);
-                    status = WrWord(SD_CONFIG__WOI_SD0, 0x0705);
-                    status = WrWord(SD_CONFIG__INITIAL_PHASE_SD0, 0x0606);
+                    status |= WrByte(PHASECAL_CONFIG__TIMEOUT_MACROP, 0x14);
+                    status |= WrByte(RANGE_CONFIG__VCSEL_PERIOD_A, 0x07);
+                    status |= WrByte(RANGE_CONFIG__VCSEL_PERIOD_B, 0x05);
+                    status |= WrByte(RANGE_CONFIG__VALID_PHASE_HIGH, 0x38);
+                    status |= WrWord(SD_CONFIG__WOI_SD0, 0x0705);
+                    status |= WrWord(SD_CONFIG__INITIAL_PHASE_SD0, 0x0606);
                     break;
+
                 case 2:
-                    status = WrByte(PHASECAL_CONFIG__TIMEOUT_MACROP, 0x0A);
-                    status = WrByte(RANGE_CONFIG__VCSEL_PERIOD_A, 0x0F);
-                    status = WrByte(RANGE_CONFIG__VCSEL_PERIOD_B, 0x0D);
-                    status = WrByte(RANGE_CONFIG__VALID_PHASE_HIGH, 0xB8);
-                    status = WrWord(SD_CONFIG__WOI_SD0, 0x0F0D);
-                    status = WrWord(SD_CONFIG__INITIAL_PHASE_SD0, 0x0E0E);
+                    status |= WrByte(PHASECAL_CONFIG__TIMEOUT_MACROP, 0x0A);
+                    status |= WrByte(RANGE_CONFIG__VCSEL_PERIOD_A, 0x0F);
+                    status |= WrByte(RANGE_CONFIG__VCSEL_PERIOD_B, 0x0D);
+                    status |= WrByte(RANGE_CONFIG__VALID_PHASE_HIGH, 0xB8);
+                    status |= WrWord(SD_CONFIG__WOI_SD0, 0x0F0D);
+                    status |= WrWord(SD_CONFIG__INITIAL_PHASE_SD0, 0x0E0E);
                     break;
                 default:
                     break;
             }
-            status = setTimingBudgetInMs(TB);
-            return status;
+
+            return status | setTimingBudgetInMs(TB);
         }
 
 
@@ -791,13 +792,18 @@ class VL53L1X_Abstract
          */
         error_t getDistanceMode(uint16_t *DM)
         {
-            uint8_t TempDM = 0, status = 0;
+            uint8_t TempDM = 0;
 
-            status = RdByte(PHASECAL_CONFIG__TIMEOUT_MACROP, &TempDM);
-            if (TempDM == 0x14)
+            auto status = RdByte(PHASECAL_CONFIG__TIMEOUT_MACROP, &TempDM);
+
+            if (TempDM == 0x14) {
                 *DM = 1;
-            if (TempDM == 0x0A)
+            }
+
+            if (TempDM == 0x0A) {
                 *DM = 2;
+            }
+
             return status;
         }
 
@@ -811,12 +817,14 @@ class VL53L1X_Abstract
         error_t setInterMeasurementInMs(uint16_t InterMeasMs)
         {
             uint16_t ClockPLL = 0;
-            error_t status = 0;
 
-            status = RdWord(RESULT__OSC_CALIBRATE_VAL, &ClockPLL);
+            auto status = RdWord(RESULT__OSC_CALIBRATE_VAL, &ClockPLL);
+
             ClockPLL = ClockPLL & 0x3FF;
+
             WrDWord(SYSTEM__INTERMEASUREMENT_PERIOD,
                     (uint32_t)(ClockPLL * InterMeasMs * 1.075));
+
             return status;
         }
 
@@ -827,10 +835,9 @@ class VL53L1X_Abstract
         error_t getInterMeasurementInMs(uint16_t *pIM)
         {
             uint16_t ClockPLL = 0;
-            error_t status = 0;
             uint32_t tmp = 0;
 
-            status = RdDWord(SYSTEM__INTERMEASUREMENT_PERIOD, &tmp);
+            auto status = RdDWord(SYSTEM__INTERMEASUREMENT_PERIOD, &tmp);
             *pIM = (uint16_t)tmp;
             status = RdWord(RESULT__OSC_CALIBRATE_VAL, &ClockPLL);
             ClockPLL = ClockPLL & 0x3FF;
@@ -845,10 +852,9 @@ class VL53L1X_Abstract
          */
         error_t bootState(uint8_t *state)
         {
-            error_t status = 0;
             uint8_t tmp = 0;
 
-            status = RdByte(FIRMWARE__SYSTEM_STATUS, &tmp);
+            auto status = RdByte(FIRMWARE__SYSTEM_STATUS, &tmp);
             *state = tmp;
             return status;
         }
@@ -859,10 +865,9 @@ class VL53L1X_Abstract
          */
         error_t getSensorId(uint16_t *sensorId)
         {
-            error_t status = 0;
             uint16_t tmp = 0;
 
-            status = RdWord(IDENTIFICATION__MODEL_ID, &tmp);
+            auto status = RdWord(IDENTIFICATION__MODEL_ID, &tmp);
             *sensorId = tmp;
             return status;
         }
@@ -873,10 +878,9 @@ class VL53L1X_Abstract
          */
         error_t getDistance(uint16_t *distance)
         {
-            error_t status = 0;
             uint16_t tmp = 0;
 
-            status = (RdWord(RESULT__FINAL_CROSSTALK_CORRECTED_RANGE_MM_SD0, &tmp));
+            auto status = (RdWord(RESULT__FINAL_CROSSTALK_CORRECTED_RANGE_MM_SD0, &tmp));
             *distance = tmp;
             return status;
         }
@@ -888,10 +892,9 @@ class VL53L1X_Abstract
          */
         error_t getSignalPerSpad(uint16_t *signalRate)
         {
-            error_t status = 0;
             uint16_t SpNb = 1, signal = 0;
 
-            status = RdWord(
+            auto status = RdWord(
                     RESULT__PEAK_SIGNAL_COUNT_RATE_CROSSTALK_CORRECTED_MCPS_SD0, &signal);
             status = RdWord(
                     RESULT__DSS_ACTUAL_EFFECTIVE_SPADS_SD0, &SpNb);
@@ -905,11 +908,10 @@ class VL53L1X_Abstract
          */
         error_t getAmbientPerSpad(uint16_t *ambPerSp)
         {
-            error_t status = 0;
             uint16_t AmbientRate = 0, SpNb = 1;
 
-            status = RdWord(RESULT__AMBIENT_COUNT_RATE_MCPS_SD, &AmbientRate);
-            status = RdWord(RESULT__DSS_ACTUAL_EFFECTIVE_SPADS_SD0, &SpNb);
+            auto status = RdWord(RESULT__AMBIENT_COUNT_RATE_MCPS_SD, &AmbientRate);
+            status |= RdWord(RESULT__DSS_ACTUAL_EFFECTIVE_SPADS_SD0, &SpNb);
             *ambPerSp = (uint16_t)(2000.0 * AmbientRate / SpNb);
             return status;
         }
@@ -920,10 +922,10 @@ class VL53L1X_Abstract
          */
         error_t getSignalRate(uint16_t *signal)
         {
-            error_t status = 0;
             uint16_t tmp = 0;
 
-            status = RdWord(RESULT__PEAK_SIGNAL_COUNT_RATE_CROSSTALK_CORRECTED_MCPS_SD0, &tmp);
+            auto status = RdWord(
+                    RESULT__PEAK_SIGNAL_COUNT_RATE_CROSSTALK_CORRECTED_MCPS_SD0, &tmp);
             *signal = tmp * 8;
             return status;
         }
@@ -934,10 +936,9 @@ class VL53L1X_Abstract
          */
         error_t getSpadNb(uint16_t *spNb)
         {
-            error_t status = 0;
             uint16_t tmp = 0;
 
-            status = RdWord(
+            auto status = RdWord(
                     RESULT__DSS_ACTUAL_EFFECTIVE_SPADS_SD0, &tmp);
             *spNb = tmp >> 8;
             return status;
@@ -949,10 +950,9 @@ class VL53L1X_Abstract
          */
         error_t getAmbientRate(uint16_t *ambRate)
         {
-            error_t status = 0;
             uint16_t tmp = 0;
 
-            status = RdWord(RESULT__AMBIENT_COUNT_RATE_MCPS_SD, &tmp);
+            auto status = RdWord(RESULT__AMBIENT_COUNT_RATE_MCPS_SD, &tmp);
             *ambRate = tmp * 8;
             return status;
         }
@@ -964,11 +964,12 @@ class VL53L1X_Abstract
          */
         error_t getRangeStatus(uint8_t *rangeStatus)
         {
-            error_t status = 0;
             uint8_t RgSt = 0;
 
-            status = RdByte(RESULT__RANGE_STATUS, &RgSt);
+            auto status = RdByte(RESULT__RANGE_STATUS, &RgSt);
+
             RgSt = RgSt & 0x1F;
+
             switch (RgSt)
             {
                 case 9:
@@ -1025,14 +1026,14 @@ class VL53L1X_Abstract
          */
         error_t setOffset(int16_t OffsetValue)
         {
-            error_t status = 0;
             int16_t Temp = 0;
 
             Temp = (OffsetValue * 4);
-            WrWord(ALGO__PART_TO_PART_RANGE_OFFSET_MM,
-                    (uint16_t)Temp);
-            WrWord(MM_CONFIG__INNER_OFFSET_MM, 0x0);
-            WrWord(MM_CONFIG__OUTER_OFFSET_MM, 0x0);
+
+            auto status = WrWord(ALGO__PART_TO_PART_RANGE_OFFSET_MM, (uint16_t)Temp);
+            status |= WrWord(MM_CONFIG__INNER_OFFSET_MM, 0x0);
+            status |= WrWord(MM_CONFIG__OUTER_OFFSET_MM, 0x0);
+
             return status;
         }
 
@@ -1042,10 +1043,9 @@ class VL53L1X_Abstract
          */
         error_t getOffset(int16_t *offset)
         {
-            error_t status = 0;
             uint16_t Temp = 0;
 
-            status = RdWord(ALGO__PART_TO_PART_RANGE_OFFSET_MM, &Temp);
+            auto status = RdWord(ALGO__PART_TO_PART_RANGE_OFFSET_MM, &Temp);
             Temp = Temp << 3;
             Temp = Temp >> 5;
             *offset = (int16_t)(Temp);
@@ -1061,14 +1061,16 @@ class VL53L1X_Abstract
         error_t setXtalk(uint16_t XtalkValue)
         {
             /* XTalkValue in count per second to avoid float type */
-            error_t status = 0;
+            auto status = WrWord(ALGO__CROSSTALK_COMPENSATION_X_PLANE_GRADIENT_KCPS,
+                    0x0000);
 
-            status = WrWord(ALGO__CROSSTALK_COMPENSATION_X_PLANE_GRADIENT_KCPS,
+            status |= WrWord(ALGO__CROSSTALK_COMPENSATION_Y_PLANE_GRADIENT_KCPS,
                     0x0000);
-            status = WrWord(ALGO__CROSSTALK_COMPENSATION_Y_PLANE_GRADIENT_KCPS,
-                    0x0000);
-            status = WrWord(ALGO__CROSSTALK_COMPENSATION_PLANE_OFFSET_KCPS,
-                    (XtalkValue << 9) / 1000); /* * << 9 (7.9 format) and /1000 to convert cps to kpcs */
+
+            // * << 9 (7.9 format) and /1000 to convert cps to kpcs
+            status |= WrWord(ALGO__CROSSTALK_COMPENSATION_PLANE_OFFSET_KCPS,
+                    (XtalkValue << 9) / 1000); 
+
             return status;
         }
 
