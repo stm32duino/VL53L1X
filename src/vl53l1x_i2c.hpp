@@ -31,8 +31,8 @@ class VL53L1X : public VL53L1X_Abstract
 
     protected:
 
-        virtual error_t i2c_write(uint16_t addr, uint16_t rgstr, uint8_t *buff,
-                uint16_t nbytes) override 
+        virtual error_t i2c_write(const uint16_t addr, const uint16_t rgstr,
+                uint8_t *buff, const uint16_t nbytes) override 
         {
             _twoWire->beginTransmission((addr >> 1) & 0x7F);
             uint8_t buffer[2];
@@ -46,8 +46,8 @@ class VL53L1X : public VL53L1X_Abstract
             return 0;
         }
 
-        virtual error_t i2c_read(uint16_t addr, uint16_t rgstr, uint8_t *buff,
-                uint16_t nbytes) override 
+        virtual error_t i2c_read(const uint16_t addr, const uint16_t rgstr, uint8_t *buff,
+                const uint16_t nbytes) override 
         {
             int status = 0;
 
@@ -89,10 +89,9 @@ class VL53L1X : public VL53L1X_Abstract
             return 0;
         }
 
-        virtual error_t wait_ms(int32_t wait_ms) override
+        virtual void wait_ms(const int32_t wait_ms) override
         {
             delay(wait_ms);
-            return ERROR_NONE;
         }
 
 }; // class VL53L1X

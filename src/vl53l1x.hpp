@@ -1407,13 +1407,13 @@ class VL53L1X_Abstract
 
     protected:
 
-        virtual error_t i2c_write(
-                uint16_t addr, uint16_t rgstr, uint8_t *buff, uint16_t nbytes) = 0;
+        virtual error_t i2c_write( const uint16_t addr, const uint16_t rgstr,
+                uint8_t *buff, const uint16_t nbytes) = 0;
 
-        virtual error_t i2c_read(
-                uint16_t addr, uint16_t rgstr, uint8_t *buff, uint16_t nbytes) = 0;
+        virtual error_t i2c_read(const uint16_t addr, const uint16_t rgstr,
+                uint8_t *buff, const uint16_t nbytes) = 0;
 
-        virtual error_t wait_ms(int32_t wait_ms) = 0;
+        virtual void wait_ms(const int32_t wait_ms) = 0;
 
     private:
 
@@ -1550,16 +1550,17 @@ class VL53L1X_Abstract
                     (found == 0))
             {
 
-                if (status == ERROR_NONE)
+                if (status == ERROR_NONE) {
                     status = RdByte(index, &byte_value);
+                }
 
-                if ((byte_value & mask) == value)
+                if ((byte_value & mask) == value) {
                     found = 1;
+                }
 
-                if (status == ERROR_NONE &&
-                        found == 0 &&
-                        poll_delay_ms > 0)
-                    status = wait_ms(poll_delay_ms);
+                if (status == ERROR_NONE && found == 0 && poll_delay_ms > 0) {
+                    wait_ms(poll_delay_ms);
+                }
 
                 /* Update polling time (Compare difference rather than absolute to
                    negate 32bit wrap around issue) */
