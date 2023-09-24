@@ -34,14 +34,8 @@
 
 #pragma once
 
-#include <Arduino.h>
 #include <Wire.h>
 
-
-
-/* Classes -------------------------------------------------------------------*/
-/** Class representing a VL53L1 sensor component
- */
 class VL53L1X
 {
     public:
@@ -406,76 +400,6 @@ class VL53L1X
          */
         virtual ~VL53L1X()
         {
-        }
-
-        /**
-         * @brief PowerOn the sensor
-         * @return void
-         */
-        /* turns on the sensor */
-        virtual void On(void)
-        {
-            if(gpio0 >= 0)
-            {
-                digitalWrite(gpio0, HIGH);
-            }
-            delay(10);
-        }
-
-        /**
-         * @brief PowerOff the sensor
-         * @return void
-         */
-        /* turns off the sensor */
-        virtual void Off(void)
-        {
-            if(gpio0 >= 0)
-            {
-                digitalWrite(gpio0, LOW);
-            }
-            delay(10);
-        }
-
-        /**
-         * @brief Initialize the sensor with default values
-         * @return 0 on Success
-         */
-
-        error_t InitSensor(uint8_t address){
-            error_t status = 0;
-            uint8_t sensorState = 0;
-            Off();
-            On();
-            status = SetI2CAddress(address);
-
-            while (!sensorState && !status){
-                status = BootState(&sensorState);
-                delay(2);
-            }
-            if(!status){
-                status = begin();
-            }
-            return status;
-        }
-
-        /**
-         *
-         * @brief One time device initialization
-         * @param void
-         * @return 0 on success, @a #CALIBRATION_WARNING if failed
-         */
-        virtual int Init()
-        {
-            return begin();
-        }
-
-        /* Read function of the ID device */
-        virtual int ReadID(){
-            uint16_t sensorId;
-            GetSensorId(&sensorId);
-            if (sensorId == 0xEEAC)
-                return 0;
-            return -1;
         }
 
         /**
