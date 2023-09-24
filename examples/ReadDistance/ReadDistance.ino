@@ -6,7 +6,7 @@
 
 #include "vl53l1x_i2c.hpp"
 
-static VL53L1X sensor = VL53L1X(&Wire, -1, -1);
+static VL53L1X sensor = VL53L1X(&Wire);
 
 void setup(void)
 {
