@@ -24,7 +24,8 @@ class VL53L1X : public VL53L1X_Abstract
                       component GPIO_1 INT
          * @param[in] DevAddr device address, 0x52 by default
          */
-        VL53L1X(TwoWire * twoWire) 
+        VL53L1X(TwoWire * twoWire, const uint8_t i2c_addr = 0x29) 
+            : VL53L1X_Abstract(i2c_addr)
         {
             _twoWire = twoWire;
         }

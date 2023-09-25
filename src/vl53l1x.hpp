@@ -410,17 +410,6 @@ class VL53L1X_Abstract
 
     public:
 
-        /** Constructor
-         * @param[in] &i2c device I2C to be used for communication
-         * @param[in] &pin_gpio1 pin Mbed InterruptIn PinName to be used as component 
-                      GPIO_1 INT
-         * @param[in] DevAddr device address, 0x52 by default
-         */
-        VL53L1X_Abstract(void)
-        {
-            _i2c_addr = 0x29;
-        }
-
         /** Destructor
          */
         virtual ~VL53L1X_Abstract()
@@ -1385,6 +1374,11 @@ class VL53L1X_Abstract
         uint8_t _i2c_addr;
 
     protected:
+
+        VL53L1X_Abstract(const uint8_t i2c_addr = 0x29)
+        {
+            _i2c_addr = i2c_addr;
+        }
 
         virtual error_t i2c_write( const uint16_t addr, const uint16_t rgstr,
                 const uint8_t * data, const uint16_t nbytes) = 0;
