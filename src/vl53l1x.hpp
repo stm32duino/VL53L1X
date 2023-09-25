@@ -48,6 +48,12 @@ class VL53L1X_Abstract
             uint32_t revision; /*!< revision number */
         } version_t;
 
+        enum {
+            DISTANCE_MODE_SHORT = 1,
+            DISTANCE_MODE_MEDIUM,
+            DISTANCE_MODE_LONG 
+        };
+
         typedef int8_t error_t;
 
         enum {

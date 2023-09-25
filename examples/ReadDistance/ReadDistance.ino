@@ -15,8 +15,6 @@ void setup(void)
   Serial.begin(115200);
 
   sensor.begin();
-
-  Serial.println("Sensor online!");
 }
 
 void loop(void)
