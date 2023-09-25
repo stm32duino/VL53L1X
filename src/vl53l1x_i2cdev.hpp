@@ -39,7 +39,7 @@ class VL53L1X : public VL53L1X_Abstract
             }
 
             // Attempt to make this device an I2C slave
-            if (ioctl(_fd, I2C_SLAVE, address) < 0) {
+            if (ioctl(_fd, I2C_SLAVE, _i2c_addr) < 0) {
                 fprintf(stderr, "ioctl failed on %s\n", fname);
                 exit(1);
             }        
@@ -47,16 +47,27 @@ class VL53L1X : public VL53L1X_Abstract
 
     protected:
 
-        virtual error_t i2c_write(const uint16_t addr, const uint16_t rgstr,
-                const uint8_t * data, const uint16_t nbytes) override 
-        {
-            return 0;
-        }
-
-        virtual error_t i2c_read(const uint16_t addr, const uint16_t rgstr,
-                uint8_t * data, const uint16_t nbytes) override 
+        virtual error_t i2c_write(const uint16_t rgstr, const uint8_t * data,
+                const uint16_t nbytes) override 
         {
             int status = 0;
+
+            for (uint16_t k=0; k<nbytes; ++k) {
+                i2c_smbus_write_byte(_fd, rgstr+k);
+            }
+
+            return status;
+        }
+
+        virtual error_t i2c_read(const uint16_t rgstr, uint8_t * data, 
+                const uint16_t nbytes) override 
+        {
+            int status = 0;
+
+            for (uint16_t k=0; k<nbytes; ++k) {
+                i2c_smbus_write_byte(_fd, rgstr+k);
+                data[k] = i2c_smbus_read_byte(_fd);
+            }
 
             return status;
         }
