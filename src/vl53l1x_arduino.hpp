@@ -67,13 +67,12 @@ class VL53L1X : public VL53L1X_Abstract
 
                 //Fix for some STM32 boards
                 //Reinitialize th i2c bus with the default parameters
+                if (status) {
 #ifdef ARDUINO_ARCH_STM32
-                if (status)
-                {
                     _twoWire->end();
                     _twoWire->begin();
-                }
 #endif
+                }
                 //End of fix
             }
 
