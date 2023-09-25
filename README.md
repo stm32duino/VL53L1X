@@ -21,3 +21,5 @@ I have tested this library with the following MCUs:
 * [TinyPICO ESP32](https://www.tinypico.com/)
 
 * [Adafruit Feather STM32F405 Express](https://www.adafruit.com/product/4382)
+
+* [RaspberryPi 3](https://www.raspberrypi.com/products/raspberry-pi-3-model-b/)
