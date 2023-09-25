@@ -34,7 +34,7 @@ class VL53L1X : public VL53L1X_Abstract
         virtual error_t i2c_write(const uint16_t addr, const uint16_t rgstr,
                 uint8_t *buff, const uint16_t nbytes) override 
         {
-            _twoWire->beginTransmission((addr >> 1) & 0x7F);
+            _twoWire->beginTransmission(addr);
             uint8_t buffer[2];
             buffer[0] = rgstr >> 8;
             buffer[1] = rgstr & 0xFF;
@@ -55,7 +55,7 @@ class VL53L1X : public VL53L1X_Abstract
             uint8_t maxAttempts = 5;
             for (uint8_t x = 0; x < maxAttempts; x++)
             {
-                _twoWire->beginTransmission((addr >> 1) & 0x7F);
+                _twoWire->beginTransmission(addr);
                 uint8_t buffer[2];
                 buffer[0] = rgstr >> 8;
                 buffer[1] = rgstr & 0xFF;
@@ -76,7 +76,7 @@ class VL53L1X : public VL53L1X_Abstract
                 //End of fix
             }
 
-            _twoWire->requestFrom((addr >> 1) & 0x7F, nbytes);
+            _twoWire->requestFrom(addr, nbytes);
 
             int i = 0;
             while (_twoWire->available())

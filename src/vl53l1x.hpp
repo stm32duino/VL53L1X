@@ -254,8 +254,6 @@ class VL53L1X_Abstract
         static reg_t IDENTIFICATION__MODEL_ID                                    = 0x010F;
         static reg_t ROI_CONFIG__MODE_ROI_CENTRE_SPAD                            = 0x013E;
 
-        static const uint8_t DEFAULT_DEVICE_ADDRESS = 0x52;
-
         enum {
             IMPLEMENTATION_VER_MAJOR = 1,
             IMPLEMENTATION_VER_MINOR = 0,
@@ -420,7 +418,7 @@ class VL53L1X_Abstract
          */
         VL53L1X_Abstract(void)
         {
-            _i2c_addr = DEFAULT_DEVICE_ADDRESS;
+            _i2c_addr = 0x29;
         }
 
         /** Destructor
