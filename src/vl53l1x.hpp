@@ -32,6 +32,8 @@
 
 #pragma once
 
+#include <stdint.h>
+
 class VL53L1X_Abstract
 {
     public:
