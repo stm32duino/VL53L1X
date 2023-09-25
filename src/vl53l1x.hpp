@@ -1371,20 +1371,20 @@ class VL53L1X_Abstract
             return status;
         }
 
-        uint8_t _i2c_addr;
-
     protected:
+
+        uint8_t _i2c_addr;
 
         VL53L1X_Abstract(const uint8_t i2c_addr = 0x29)
         {
             _i2c_addr = i2c_addr;
         }
 
-        virtual error_t i2c_write( const uint16_t addr, const uint16_t rgstr,
-                const uint8_t * data, const uint16_t nbytes) = 0;
+        virtual error_t i2c_write(const uint16_t rgstr, const uint8_t * data,
+                const uint16_t nbytes) = 0;
 
-        virtual error_t i2c_read(const uint16_t addr, const uint16_t rgstr,
-                uint8_t * data, const uint16_t nbytes) = 0;
+        virtual error_t i2c_read(const uint16_t rgstr, uint8_t * data, 
+                const uint16_t nbytes) = 0;
 
         virtual void wait_ms(const int32_t wait_ms) = 0;
 
@@ -1394,17 +1394,17 @@ class VL53L1X_Abstract
 
         error_t WriteMulti(uint16_t index, uint8_t *pdata, uint32_t count)
         {
-            return i2c_write(_i2c_addr, index, pdata, (uint16_t)count);
+            return i2c_write(index, pdata, (uint16_t)count);
         }
 
         error_t ReadMulti(uint16_t index, uint8_t *pdata, uint32_t count)
         {
-            return i2c_read(_i2c_addr, index, pdata, (uint16_t)count);
+            return i2c_read(index, pdata, (uint16_t)count);
         }
 
         error_t WrByte(uint16_t index, uint8_t data)
         {
-            return i2c_write(_i2c_addr, index, &data, 1);
+            return i2c_write(index, &data, 1);
         }
 
         error_t WrWord(uint16_t index, uint16_t data)
@@ -1413,7 +1413,7 @@ class VL53L1X_Abstract
 
             buffer[0] = data >> 8;
             buffer[1] = data & 0x00FF;
-            return i2c_write(_i2c_addr, index, (uint8_t *)buffer, 2);
+            return i2c_write(index, (uint8_t *)buffer, 2);
         }
 
         error_t WrDWord(uint16_t index, uint32_t data)
@@ -1424,19 +1424,19 @@ class VL53L1X_Abstract
             buffer[1] = (data >> 16) & 0xFF;
             buffer[2] = (data >> 8) & 0xFF;
             buffer[3] = (data >> 0) & 0xFF;
-            return i2c_write(_i2c_addr, index, (uint8_t *)buffer, 4);
+            return i2c_write(index, (uint8_t *)buffer, 4);
         }
 
         error_t RdByte(uint16_t index, uint8_t *data)
         {
-            return i2c_read(_i2c_addr, index, data, 1) ? -1 : 0;
+            return i2c_read(index, data, 1) ? -1 : 0;
         }
 
         error_t RdWord(uint16_t index, uint16_t *data)
         {
             uint8_t buffer[2] = {};
 
-            auto status = i2c_read(_i2c_addr, index, buffer, 2);
+            auto status = i2c_read(index, buffer, 2);
 
             if (!status) {
                 *data = (buffer[0] << 8) + buffer[1];
@@ -1448,7 +1448,7 @@ class VL53L1X_Abstract
         {
             uint8_t buffer[4] = {};
 
-            auto status = i2c_read(_i2c_addr, index, buffer, 4);
+            auto status = i2c_read(index, buffer, 4);
             if (!status) {
                 *data = (buffer[0] << 24) + (buffer[1] << 16U) + (buffer[2] << 8) + 
                     buffer[3]; 
@@ -1462,10 +1462,10 @@ class VL53L1X_Abstract
             uint8_t buffer = 0;
 
             /* read data direct onto buffer */
-            auto status = i2c_read(_i2c_addr, index, &buffer, 1);
+            auto status = i2c_read(index, &buffer, 1);
             if (!status) {
                 buffer = (buffer & AndData) | OrData;
-                status = i2c_write(_i2c_addr, index, &buffer, (uint16_t)1);
+                status = i2c_write(index, &buffer, (uint16_t)1);
             }
             return status;
         }

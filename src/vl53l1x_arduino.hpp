@@ -18,12 +18,6 @@ class VL53L1X : public VL53L1X_Abstract
 
     public:
 
-        /** Constructor
-         * @param[in] &i2c device I2C to be used for communication
-         * @param[in] &pin_gpio1 pin Mbed InterruptIn PinName to be used as 
-                      component GPIO_1 INT
-         * @param[in] DevAddr device address, 0x52 by default
-         */
         VL53L1X(TwoWire * twoWire, const uint8_t i2c_addr = 0x29) 
             : VL53L1X_Abstract(i2c_addr)
         {
@@ -32,9 +26,9 @@ class VL53L1X : public VL53L1X_Abstract
 
     private:
 
-        void beginTransmission(const uint8_t addr, const uint8_t rgstr)
+        void beginTransmission(const uint8_t rgstr)
         {
-            _twoWire->beginTransmission(addr);
+            _twoWire->beginTransmission(_i2c_addr);
 
             const uint8_t buffer[2] = {
                 (uint8_t)(rgstr >> 8), 
@@ -46,10 +40,10 @@ class VL53L1X : public VL53L1X_Abstract
 
     protected:
 
-        virtual error_t i2c_write(const uint16_t addr, const uint16_t rgstr,
-                const uint8_t * data, const uint16_t nbytes) override 
+        virtual error_t i2c_write(const uint16_t rgstr, const uint8_t * data,
+                const uint16_t nbytes) override 
         {
-            beginTransmission(addr, rgstr);
+            beginTransmission(rgstr);
 
             for (uint16_t i = 0; i < nbytes; i++)
                 _twoWire->write(data[i]);
@@ -60,8 +54,8 @@ class VL53L1X : public VL53L1X_Abstract
 
         }
 
-        virtual error_t i2c_read(const uint16_t addr, const uint16_t rgstr,
-                uint8_t * data, const uint16_t nbytes) override 
+        virtual error_t i2c_read(const uint16_t rgstr, uint8_t * data, const
+                uint16_t nbytes) override 
         {
             int status = 0;
 
@@ -69,7 +63,7 @@ class VL53L1X : public VL53L1X_Abstract
             uint8_t maxAttempts = 5;
             for (uint8_t x = 0; x < maxAttempts; x++) {
 
-                beginTransmission(addr, rgstr);
+                beginTransmission(rgstr);
 
                 status = _twoWire->endTransmission(false);
 
@@ -87,7 +81,7 @@ class VL53L1X : public VL53L1X_Abstract
                 //End of fix
             }
 
-            _twoWire->requestFrom(addr, nbytes);
+            _twoWire->requestFrom((int)_i2c_addr, nbytes);
 
             int i = 0;
             while (_twoWire->available()) {
