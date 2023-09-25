@@ -427,13 +427,9 @@ class VL53L1X_Abstract
             pVersion->revision = IMPLEMENTATION_VER_REVISION;
         }
 
-        /**
-         * @brief This function sets the sensor I2C address used in case
-         * multiple devices application, default address 0x52
-         */
         error_t setI2CAddress(const uint8_t new_i2c_addr)
         {
-            error_t status = WrByte(I2C_SLAVE__DEVICE_ADDRESS, new_i2c_addr >> 1);
+            error_t status = WrByte(I2C_SLAVE__DEVICE_ADDRESS, new_i2c_addr);
 
             _i2c_addr = new_i2c_addr;
 
