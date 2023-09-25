@@ -1387,10 +1387,10 @@ class VL53L1X_Abstract
     protected:
 
         virtual error_t i2c_write( const uint16_t addr, const uint16_t rgstr,
-                uint8_t *buff, const uint16_t nbytes) = 0;
+                const uint8_t * data, const uint16_t nbytes) = 0;
 
         virtual error_t i2c_read(const uint16_t addr, const uint16_t rgstr,
-                uint8_t *buff, const uint16_t nbytes) = 0;
+                uint8_t * data, const uint16_t nbytes) = 0;
 
         virtual void wait_ms(const int32_t wait_ms) = 0;
 
