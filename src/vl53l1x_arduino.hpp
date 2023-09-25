@@ -35,9 +35,11 @@ class VL53L1X : public VL53L1X_Abstract
         {
             _twoWire->beginTransmission(addr);
 
-            uint8_t buffer[2] = {};
-            buffer[0] = rgstr >> 8;
-            buffer[1] = rgstr & 0xFF;
+            const uint8_t buffer[2] = {
+                (uint8_t)(rgstr >> 8), 
+                (uint8_t)(rgstr & 0xFF)
+            };
+
             _twoWire->write(buffer, 2);
         }
 
