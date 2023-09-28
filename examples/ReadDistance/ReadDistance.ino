@@ -4,9 +4,9 @@
 
 #include <Wire.h>
 
-#include "vl53l1x_arduino.hpp"
+#include "vl53l1x.hpp"
 
-static VL53L1X sensor = VL53L1X(&Wire);
+static VL53L1X sensor;
 
 void setup(void)
 {
@@ -14,28 +14,37 @@ void setup(void)
 
   Serial.begin(115200);
 
-  sensor.begin();
+  sensor.begin(0x29);
+
+  sensor.stopRanging();
+  sensor.setDistanceMode(VL53L1X::DISTANCE_MODE_MEDIUM);
+  sensor.setTimingBudgetInMs(25);
+
 }
 
 void loop(void)
 {
-  sensor.startRanging(); 
+    sensor.startRanging(); 
 
-  while (true) {
-      uint8_t dataReady = 0;
-      sensor.checkForDataReady(&dataReady);
-      if (dataReady) {
-          break;
-      }
-  }
+    while (true) {
 
-  uint16_t distance = 0;
-  sensor.getDistance(&distance);
+        uint8_t dataReady = 0;
 
-  sensor.clearInterrupt();
+        sensor.checkForDataReady(&dataReady);
 
-  sensor.stopRanging();
+        if (dataReady) {
+            break;
+        }
 
-  Serial.print("Distance(mm): ");
-  Serial.println(distance);
+        delay(1);
+    }
+
+    uint16_t distance = 0;
+    sensor.getDistance(&distance);
+
+    Serial.print("Distance(mm): ");
+    Serial.println(distance);
+
+    sensor.stopRanging();
+    sensor.startRanging();
 }
