@@ -252,8 +252,6 @@ class VL53L1X {
 
                 status |= write_byte(RGSTR_SYSTEM_INTERRUPT_CLEAR, 0x01);
 
-                status |= stopRanging();
-
                 status |= write_byte(RGSTR_VHV_CONFIG_TIMEOUT_MACROP_LOOP_BOUND, 0x09); 
 
                 status |= write_byte(0x0B, 0);											

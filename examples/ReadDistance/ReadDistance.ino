@@ -29,7 +29,15 @@ void loop(void)
 {
     uint16_t distance = 0;
 
-    ranger.readDistance(&distance);
+    auto status = ranger.readDistance(&distance);
 
-    Serial.printf("%d mm\n", distance);
+    if (status) {
+        Serial.print("Error reading from sensor: ");
+        Serial.println(status);
+    }
+
+    else{ 
+        Serial.print(distance);
+        Serial.println(" mm");
+    }
 }
