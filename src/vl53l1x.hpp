@@ -98,6 +98,11 @@ class VL53L1X {
 
         typedef uint8_t DistanceModes;
 
+        VL53L1X(void * device = NULL)
+        {
+            _device = device;
+        }
+
         error_t init(const uint8_t addr=0x29)
         {
             _i2c_address = 0x29;
@@ -330,7 +335,7 @@ class VL53L1X {
             status |= i2c_encode_system_control(SYSTEM_CONTROL_I2C_SIZE_BYTES,
                     &buffer[i2c_buffer_offset_bytes]);
 
-            status |= write_bytes(RGSTR_ANA_CONFIG_VHV_REF_SEL_VDDPIX, 
+            status |= write_bytes(_device, RGSTR_ANA_CONFIG_VHV_REF_SEL_VDDPIX, 
                     i2c_buffer_size_bytes, buffer);
 
             return status;
@@ -1226,6 +1231,8 @@ class VL53L1X {
 
         } DeviceParameters_t;
 
+        void * _device;
+
         typedef uint8_t State;
 
         DeviceParameters_t CurrentParameters;
@@ -1234,7 +1241,7 @@ class VL53L1X {
         {
             uint8_t buffer[2] = {};
 
-            auto status = read_bytes(rgstr, 2, buffer);
+            auto status = read_bytes(_device, rgstr, 2, buffer);
 
             if (!status) {
                 *data = (buffer[0] << 8) + buffer[1];
@@ -1248,24 +1255,24 @@ class VL53L1X {
             uint8_t buffer[2] = {};
             buffer[0] = data >> 8;
             buffer[1] = data & 0x00FF;
-            return write_bytes(rgstr, 2, (uint8_t *)buffer);
+            return write_bytes(_device, rgstr, 2, (uint8_t *)buffer);
         }
 
         error_t read_byte(const uint16_t rgstr, uint8_t *data)
         {
-            return read_bytes(rgstr, 1, data);
+            return read_bytes(_device, rgstr, 1, data);
         }
 
         error_t write_byte(const uint16_t rgstr, const uint8_t data)
         {
-            return write_bytes(rgstr, 1, &data);
+            return write_bytes(_device, rgstr, 1, &data);
         }
 
-        error_t write_bytes(const uint16_t rgstr, const uint8_t count, 
-                const uint8_t *data);
+        error_t read_bytes(void * _device, const uint16_t rgstr, 
+                const uint8_t count, uint8_t *data);
 
-        error_t read_bytes(const uint16_t rgstr, const uint8_t count, 
-                uint8_t *data);
+        error_t write_bytes(void * device, const uint16_t rgstr, 
+                const uint8_t count, const uint8_t *data);
 
         enum {
             DEVICESTATE_POWERDOWN              ,
@@ -1461,10 +1468,8 @@ class VL53L1X {
             uint8_t comms_buffer[STATIC_NVM_MANAGED_I2C_SIZE_BYTES];
 
             if (status == ERROR_NONE) /*lint !e774 always true*/
-                status = read_bytes(
-                        RGSTR_I2C_ADDRESS,
-                        STATIC_NVM_MANAGED_I2C_SIZE_BYTES,
-                        comms_buffer);
+                status = read_bytes(_device, RGSTR_I2C_ADDRESS, 
+                        STATIC_NVM_MANAGED_I2C_SIZE_BYTES, comms_buffer);
 
             if (status == ERROR_NONE)
                 status = i2c_decode_static_nvm_managed(
@@ -1604,10 +1609,9 @@ class VL53L1X {
 
 
             if (status == ERROR_NONE) /*lint !e774 always true*/
-                status = read_bytes(
+                status = read_bytes(_device,
                         RGSTR_GLOBAL_CONFIG_SPAD_ENABLES_REF_0,
-                        CUSTOMER_NVM_MANAGED_I2C_SIZE_BYTES,
-                        comms_buffer);
+                        CUSTOMER_NVM_MANAGED_I2C_SIZE_BYTES, comms_buffer);
 
             if (status == ERROR_NONE)
                 status = i2c_decode_customer_nvm_managed(
@@ -1984,10 +1988,8 @@ class VL53L1X {
 
 
             if (status == ERROR_NONE) /*lint !e774 always true*/
-                status = read_bytes(
-                        RGSTR_IDENTIFICATION_MODEL_ID,
-                        NVM_COPY_DATA_I2C_SIZE_BYTES,
-                        comms_buffer);
+                status = read_bytes(_device, RGSTR_IDENTIFICATION_MODEL_ID,
+                        NVM_COPY_DATA_I2C_SIZE_BYTES, comms_buffer);
 
             if (status == ERROR_NONE)
                 status = i2c_decode_nvm_copy_data(
@@ -4368,7 +4370,7 @@ class VL53L1X {
         {
             static uint16_t r16data = 0;
 
-            error_t status = read_bytes(index, 2, (uint8_t *)&r16data);
+            error_t status = read_bytes(_device, index, 2, (uint8_t *)&r16data);
 
             *pdata = r16data;
 
