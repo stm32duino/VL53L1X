@@ -51,7 +51,11 @@ class VL53L1X {
         {
         }
 
-        error_t begin(const void * device=NULL, const uint8_t addr=0x29)
+        error_t begin(
+                const void * device=NULL, 
+                const uint8_t addr=0x29,
+                const distanceMode_t distanceMode=DISTANCEMODE_MEDIUM,
+                const uint32_t timingBudgetMsec=25)
         {
             _device = (void *)device;
 
@@ -203,6 +207,10 @@ class VL53L1X {
 
                 status |= write_byte(0x0B, 0);											
 
+                status |= SetMeasurementTimingBudgetMicroSeconds(timingBudgetMsec * 1000);
+
+                status |= SetDistanceMode(distanceMode);
+
                 return status; 
 
         }
@@ -229,196 +237,6 @@ class VL53L1X {
             stopRanging();
 
             return ERROR_NONE;
-        }
-
-        error_t SetMeasurementTimingBudgetMicroSeconds(
-                uint32_t MeasurementTimingBudgetMicroSeconds)
-        {
-            error_t Status = ERROR_NONE;
-            uint8_t Mm1Enabled;
-            uint8_t Mm2Enabled;
-            uint32_t TimingGuard;
-            uint32_t divisor;
-            uint32_t TimingBudget;
-            uint32_t MmTimeoutUs;
-            PresetModes PresetMode;
-            uint32_t PhaseCalTimeoutUs;
-            uint32_t vhv;
-            int32_t vhv_loops;
-            uint32_t FDAMaxTimingBudgetUs = FDA_MAX_TIMING_BUDGET_US;
-
-            /* Timing budget is limited to 10 seconds */
-            if (MeasurementTimingBudgetMicroSeconds > 10000000)
-                Status = ERROR_INVALID_PARAMS;
-
-            if (Status == ERROR_NONE) {
-                Status = GetSequenceStepEnable(
-                        SEQUENCESTEP_MM1, &Mm1Enabled);
-            }
-
-            if (Status == ERROR_NONE) {
-                Status = GetSequenceStepEnable(
-                        SEQUENCESTEP_MM2, &Mm2Enabled);
-            }
-
-            if (Status == ERROR_NONE)
-                Status = get_timeouts_us(
-                        &PhaseCalTimeoutUs,
-                        &MmTimeoutUs,
-                        &TimingBudget);
-
-            if (Status == ERROR_NONE) {
-
-                PresetMode = CurrentParameters.PresetMode;
-
-                TimingGuard = 0;
-                divisor = 1;
-                switch (PresetMode) {
-                    case PRESETMODE_LITE_RANGING:
-                        if ((Mm1Enabled == 1) || (Mm2Enabled == 1))
-                            TimingGuard = 5000;
-                        else
-                            TimingGuard = 1000;
-                        break;
-
-                    case PRESETMODE_AUTONOMOUS:
-                        FDAMaxTimingBudgetUs *= 2;
-                        if ((Mm1Enabled == 1) || (Mm2Enabled == 1))
-                            TimingGuard = 26600;
-                        else
-                            TimingGuard = 21600;
-                        divisor = 2;
-                        break;
-
-                    case PRESETMODE_LOWPOWER_AUTONOMOUS:
-                        FDAMaxTimingBudgetUs *= 2;
-                        vhv = LOWPOWER_AUTO_VHV_LOOP_DURATION_US;
-                        vhv_loops = _low_power_auto_data.vhv_loop_bound;
-                        if (vhv_loops > 0) {
-                            vhv += vhv_loops *
-                                LOWPOWER_AUTO_VHV_LOOP_DURATION_US;
-                        }
-                        TimingGuard = LOWPOWER_AUTO_OVERHEAD_BEFORE_A_RANGING +
-                            LOWPOWER_AUTO_OVERHEAD_BETWEEN_A_B_RANGING +
-                            vhv;
-                        divisor = 2;
-                        break;
-
-                    default:
-                        /* Unsupported mode */
-                        Status = ERROR_MODE_NOT_SUPPORTED;
-                }
-
-                if (MeasurementTimingBudgetMicroSeconds <= TimingGuard)
-                    Status = ERROR_INVALID_PARAMS;
-                else {
-                    TimingBudget = (MeasurementTimingBudgetMicroSeconds
-                            - TimingGuard);
-                }
-
-                if (Status == ERROR_NONE) {
-                    if (TimingBudget > FDAMaxTimingBudgetUs)
-                        Status = ERROR_INVALID_PARAMS;
-                    else {
-                        TimingBudget /= divisor;
-                        Status = set_timeouts_us(
-                                PhaseCalTimeoutUs,
-                                MmTimeoutUs,
-                                TimingBudget);
-                    }
-
-                    if (Status == ERROR_NONE) {
-                        _range_config_timeout_us = TimingBudget;
-                    }
-                }
-            }
-            if (Status == ERROR_NONE) {
-                CurrentParameters.MeasurementTimingBudgetMicroSeconds =
-                    MeasurementTimingBudgetMicroSeconds;
-            }
-
-            return Status;
-        }
-
-        error_t SetDistanceMode(distanceMode_t DistanceMode)
-        {
-            error_t Status = ERROR_NONE;
-            PresetModes PresetMode;
-            distanceMode_t InternalDistanceMode;
-            uint32_t inter_measurement_period_ms;
-            uint32_t TimingBudget;
-            uint32_t MmTimeoutUs;
-            uint32_t PhaseCalTimeoutUs;
-            user_zone_t user_zone;
-
-            PresetMode = CurrentParameters.PresetMode;
-
-            if ((DistanceMode != DISTANCEMODE_SHORT) &&
-                    (DistanceMode != DISTANCEMODE_MEDIUM) &&
-                    (DistanceMode != DISTANCEMODE_LONG))
-                return ERROR_INVALID_PARAMS;
-
-            if (Status == ERROR_NONE) {
-                if ((DistanceMode == DISTANCEMODE_SHORT) ||
-                        (DistanceMode == DISTANCEMODE_MEDIUM))
-                    InternalDistanceMode = DistanceMode;
-                else /* (DistanceMode == DISTANCEMODE_LONG) */
-                    InternalDistanceMode = DISTANCEMODE_LONG;
-            }
-
-            if (Status == ERROR_NONE) {
-                Status = get_user_zone(&user_zone);
-            }
-
-            inter_measurement_period_ms =  _inter_measurement_period_ms;
-
-            if (Status == ERROR_NONE)
-                Status = get_timeouts_us(&PhaseCalTimeoutUs,
-                        &MmTimeoutUs, &TimingBudget);
-
-            if (Status == ERROR_NONE) {
-                Status = helper_set_preset_mode(
-                        PresetMode,
-                        InternalDistanceMode,
-                        inter_measurement_period_ms);
-            }
-
-            if (Status == ERROR_NONE) {
-                CurrentParameters.InternalDistanceMode = InternalDistanceMode;
-                CurrentParameters.NewDistanceMode = InternalDistanceMode;
-                CurrentParameters.DistanceMode = DistanceMode;
-            }
-
-            if (Status == ERROR_NONE) {
-                Status = set_timeouts_us(PhaseCalTimeoutUs,
-                        MmTimeoutUs, TimingBudget);
-
-                if (Status == ERROR_NONE)
-                    _range_config_timeout_us = TimingBudget;
-            }
-
-            if (Status == ERROR_NONE)
-                Status = set_user_zone(&user_zone);
-
-            return Status;
-        }
-
-        error_t checkForDataReady(bool *isDataReady)
-        {
-            uint8_t tmp = 0;
-            auto status = read_byte(RGSTR_GPIO_HV_MUX_CTRL, &tmp);
-
-            tmp = tmp & 0x10;
-            auto interruptPolarity = !(tmp >> 4);
-
-            uint8_t hvStatus = 0;
-            status |= read_byte(RGSTR_GPIO_TIO_HV_STATUS, &hvStatus);
-
-            if (status == ERROR_NONE) {
-                *isDataReady = (hvStatus & 1) == interruptPolarity;
-            }
-
-            return status;
         }
 
     protected:
@@ -4623,6 +4441,197 @@ class VL53L1X {
             return read_word(RGSTR_RESULT_FINAL_CROSSTALK_CORRECTED_RANGE_MM_SD0, 
                     distance);
         }
+
+        error_t SetMeasurementTimingBudgetMicroSeconds(
+                uint32_t MeasurementTimingBudgetMicroSeconds)
+        {
+            error_t Status = ERROR_NONE;
+            uint8_t Mm1Enabled;
+            uint8_t Mm2Enabled;
+            uint32_t TimingGuard;
+            uint32_t divisor;
+            uint32_t TimingBudget;
+            uint32_t MmTimeoutUs;
+            PresetModes PresetMode;
+            uint32_t PhaseCalTimeoutUs;
+            uint32_t vhv;
+            int32_t vhv_loops;
+            uint32_t FDAMaxTimingBudgetUs = FDA_MAX_TIMING_BUDGET_US;
+
+            /* Timing budget is limited to 10 seconds */
+            if (MeasurementTimingBudgetMicroSeconds > 10000000)
+                Status = ERROR_INVALID_PARAMS;
+
+            if (Status == ERROR_NONE) {
+                Status = GetSequenceStepEnable(
+                        SEQUENCESTEP_MM1, &Mm1Enabled);
+            }
+
+            if (Status == ERROR_NONE) {
+                Status = GetSequenceStepEnable(
+                        SEQUENCESTEP_MM2, &Mm2Enabled);
+            }
+
+            if (Status == ERROR_NONE)
+                Status = get_timeouts_us(
+                        &PhaseCalTimeoutUs,
+                        &MmTimeoutUs,
+                        &TimingBudget);
+
+            if (Status == ERROR_NONE) {
+
+                PresetMode = CurrentParameters.PresetMode;
+
+                TimingGuard = 0;
+                divisor = 1;
+                switch (PresetMode) {
+                    case PRESETMODE_LITE_RANGING:
+                        if ((Mm1Enabled == 1) || (Mm2Enabled == 1))
+                            TimingGuard = 5000;
+                        else
+                            TimingGuard = 1000;
+                        break;
+
+                    case PRESETMODE_AUTONOMOUS:
+                        FDAMaxTimingBudgetUs *= 2;
+                        if ((Mm1Enabled == 1) || (Mm2Enabled == 1))
+                            TimingGuard = 26600;
+                        else
+                            TimingGuard = 21600;
+                        divisor = 2;
+                        break;
+
+                    case PRESETMODE_LOWPOWER_AUTONOMOUS:
+                        FDAMaxTimingBudgetUs *= 2;
+                        vhv = LOWPOWER_AUTO_VHV_LOOP_DURATION_US;
+                        vhv_loops = _low_power_auto_data.vhv_loop_bound;
+                        if (vhv_loops > 0) {
+                            vhv += vhv_loops *
+                                LOWPOWER_AUTO_VHV_LOOP_DURATION_US;
+                        }
+                        TimingGuard = LOWPOWER_AUTO_OVERHEAD_BEFORE_A_RANGING +
+                            LOWPOWER_AUTO_OVERHEAD_BETWEEN_A_B_RANGING +
+                            vhv;
+                        divisor = 2;
+                        break;
+
+                    default:
+                        /* Unsupported mode */
+                        Status = ERROR_MODE_NOT_SUPPORTED;
+                }
+
+                if (MeasurementTimingBudgetMicroSeconds <= TimingGuard)
+                    Status = ERROR_INVALID_PARAMS;
+                else {
+                    TimingBudget = (MeasurementTimingBudgetMicroSeconds
+                            - TimingGuard);
+                }
+
+                if (Status == ERROR_NONE) {
+                    if (TimingBudget > FDAMaxTimingBudgetUs)
+                        Status = ERROR_INVALID_PARAMS;
+                    else {
+                        TimingBudget /= divisor;
+                        Status = set_timeouts_us(
+                                PhaseCalTimeoutUs,
+                                MmTimeoutUs,
+                                TimingBudget);
+                    }
+
+                    if (Status == ERROR_NONE) {
+                        _range_config_timeout_us = TimingBudget;
+                    }
+                }
+            }
+            if (Status == ERROR_NONE) {
+                CurrentParameters.MeasurementTimingBudgetMicroSeconds =
+                    MeasurementTimingBudgetMicroSeconds;
+            }
+
+            return Status;
+        }
+
+        error_t SetDistanceMode(distanceMode_t DistanceMode)
+        {
+            error_t Status = ERROR_NONE;
+            PresetModes PresetMode;
+            distanceMode_t InternalDistanceMode;
+            uint32_t inter_measurement_period_ms;
+            uint32_t TimingBudget;
+            uint32_t MmTimeoutUs;
+            uint32_t PhaseCalTimeoutUs;
+            user_zone_t user_zone;
+
+            PresetMode = CurrentParameters.PresetMode;
+
+            if ((DistanceMode != DISTANCEMODE_SHORT) &&
+                    (DistanceMode != DISTANCEMODE_MEDIUM) &&
+                    (DistanceMode != DISTANCEMODE_LONG))
+                return ERROR_INVALID_PARAMS;
+
+            if (Status == ERROR_NONE) {
+                if ((DistanceMode == DISTANCEMODE_SHORT) ||
+                        (DistanceMode == DISTANCEMODE_MEDIUM))
+                    InternalDistanceMode = DistanceMode;
+                else /* (DistanceMode == DISTANCEMODE_LONG) */
+                    InternalDistanceMode = DISTANCEMODE_LONG;
+            }
+
+            if (Status == ERROR_NONE) {
+                Status = get_user_zone(&user_zone);
+            }
+
+            inter_measurement_period_ms =  _inter_measurement_period_ms;
+
+            if (Status == ERROR_NONE)
+                Status = get_timeouts_us(&PhaseCalTimeoutUs,
+                        &MmTimeoutUs, &TimingBudget);
+
+            if (Status == ERROR_NONE) {
+                Status = helper_set_preset_mode(
+                        PresetMode,
+                        InternalDistanceMode,
+                        inter_measurement_period_ms);
+            }
+
+            if (Status == ERROR_NONE) {
+                CurrentParameters.InternalDistanceMode = InternalDistanceMode;
+                CurrentParameters.NewDistanceMode = InternalDistanceMode;
+                CurrentParameters.DistanceMode = DistanceMode;
+            }
+
+            if (Status == ERROR_NONE) {
+                Status = set_timeouts_us(PhaseCalTimeoutUs,
+                        MmTimeoutUs, TimingBudget);
+
+                if (Status == ERROR_NONE)
+                    _range_config_timeout_us = TimingBudget;
+            }
+
+            if (Status == ERROR_NONE)
+                Status = set_user_zone(&user_zone);
+
+            return Status;
+        }
+
+        error_t checkForDataReady(bool *isDataReady)
+        {
+            uint8_t tmp = 0;
+            auto status = read_byte(RGSTR_GPIO_HV_MUX_CTRL, &tmp);
+
+            tmp = tmp & 0x10;
+            auto interruptPolarity = !(tmp >> 4);
+
+            uint8_t hvStatus = 0;
+            status |= read_byte(RGSTR_GPIO_TIO_HV_STATUS, &hvStatus);
+
+            if (status == ERROR_NONE) {
+                *isDataReady = (hvStatus & 1) == interruptPolarity;
+            }
+
+            return status;
+        }
+
 
         // Platform-dependent ------------------------------------------------
 

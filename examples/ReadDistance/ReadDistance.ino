@@ -44,14 +44,10 @@ void setup(void)
 
     int8_t status = ranger.begin();
 
-    status |= ranger.SetDistanceMode(VL53L1X::DISTANCEMODE_MEDIUM);
-
-    status |= ranger.SetMeasurementTimingBudgetMicroSeconds(25000);
-
-    if (status) {
-        Serial.println("Sensor failed to begin. Please check wiring. Freezing...");
-        while (true)
-            ;
+    while (status) {
+        Serial.println("sensor failed to begin: status = ");
+        Serial.println(status);
+        delay(500);
     }
 }
 
