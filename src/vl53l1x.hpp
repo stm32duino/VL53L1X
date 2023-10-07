@@ -1,6 +1,8 @@
 #pragma once
 
 /*
+   VL53L1X class
+
    Copyright (c) 2017, STMicroelectronics
    Copyright (c) 2023, Simon D. Levy
    All Rights Reserved
@@ -292,8 +294,6 @@ class VL53L1X {
 
     private:
 
-        // Constants ---------------------------------------------------------
-
         static const uint8_t STATIC_NVM_MANAGED_I2C_SIZE_BYTES           = 11;
         static const uint8_t CUSTOMER_NVM_MANAGED_I2C_SIZE_BYTES         = 23;
         static const uint8_t STATIC_CONFIG_I2C_SIZE_BYTES                = 32;
@@ -315,7 +315,6 @@ class VL53L1X {
         static const uint8_t PATCH_RESULTS_I2C_SIZE_BYTES                = 90;
         static const uint8_t SHADOW_SYSTEM_RESULTS_I2C_SIZE_BYTES        = 82;
         static const uint8_t SHADOW_CORE_RESULTS_I2C_SIZE_BYTES          = 33;
-
 
         static const uint8_t DEVICESSCARRAY_RTN = 0x00;
         static const uint16_t AMBIENT_WINDOW_VCSEL_PERIODS  = 256;
@@ -415,8 +414,6 @@ class VL53L1X {
             0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x0f, 0x0d, 0x0e, 0x0e, 0x00,
             0x00, 0x02, 0xc7, 0xff, 0x9B, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00
         };
-
-        // Typedefs -----------------------------------------------------------
 
         enum {
             DEVICESTATE_POWERDOWN              ,
@@ -983,8 +980,6 @@ class VL53L1X {
 
         typedef uint8_t State;
 
-        // Static methods -----------------------------------------------------
-
         static uint16_t FIXEDPOINT1616TOFIXEDPOINT142(FixedPoint1616_t Value) 
         { 
             return (uint16_t)((Value>>14)&0xFFFF);
@@ -1029,10 +1024,6 @@ class VL53L1X {
                 uint16_t    count,
                 uint8_t    *pbuffer)
         {
-            /*
-             * Encodes a int16_t register value into an I2C write buffer
-             * MS byte first order (as per I2C register map.
-             */
 
             uint16_t   i    = 0;
             int16_t    data = 0;
@@ -1049,14 +1040,9 @@ class VL53L1X {
                 uint16_t    count,
                 uint8_t    *pbuffer)
         {
-            /*
-             * Decodes a int16_t from the input I2C read buffer
-             * (MS byte first order)
-             */
 
             int16_t    value = 0x00;
 
-            /* implement sign extension */
             if (*pbuffer >= 0x80) {
                 value = 0xFFFF;
             }
@@ -1073,10 +1059,6 @@ class VL53L1X {
                 uint16_t    count,
                 uint8_t    *pbuffer)
         {
-            /*
-             * Encodes a uint32_t register value into an I2C write buffer
-             * MS byte first order (as per I2C register map.
-             */
 
             uint16_t   i    = 0;
             uint32_t   data = 0;
@@ -1095,11 +1077,6 @@ class VL53L1X {
                 uint8_t  *pcol)
         {
 
-            /**
-             *  Decodes the array (row,col) location from
-             *  the input SPAD number
-             */
-
             if (spad_number > 127) {
                 *prow = 8 + ((255-spad_number) & 0x07);
                 *pcol = (spad_number-128) >> 3;
@@ -1113,9 +1090,6 @@ class VL53L1X {
                 nvm_copy_data_t  *pdata,
                 uint8_t                 *pbuffer)
         {
-            /*
-             * Convenience function to copy return SPAD enables to buffer
-             */
 
             *(pbuffer +  0) = pdata->global_config_spad_enables_rtn_0;
             *(pbuffer +  1) = pdata->global_config_spad_enables_rtn_1;
@@ -1153,10 +1127,6 @@ class VL53L1X {
 
         static uint32_t decode_timeout(uint16_t encoded_timeout)
         {
-            /*
-             * Decode 16-bit timeout register value
-             * format (LSByte * 2^MSByte) + 1
-             */
 
             uint32_t timeout_macro_clks = 0;
 
@@ -1170,14 +1140,6 @@ class VL53L1X {
                 uint16_t timeout_encoded,
                 uint32_t macro_period_us)
         {
-            /*  Calculates the  timeout in [us] based on the input
-             *  encoded timeout and the macro period in [us]
-             *
-             *  Max timeout supported is 1000000 us (1 sec) -> 20-bits
-             *  Max timeout in 20.12 format = 32-bits
-             *
-             *  Macro period [us] = 12.12 format
-             */
 
             uint32_t timeout_mclks  = 0;
             uint32_t timeout_us     = 0;
@@ -1193,9 +1155,6 @@ class VL53L1X {
 
         static uint16_t encode_timeout(uint32_t timeout_mclks)
         {
-            /*
-             * Encode timeout in macro periods in (LSByte * 2^MSByte) + 1 format
-             */
 
             uint16_t encoded_timeout = 0;
             uint32_t ls_byte = 0;
@@ -1220,22 +1179,12 @@ class VL53L1X {
                 uint32_t timeout_us,
                 uint32_t macro_period_us)
         {
-            /*  Calculates the timeout value in macro periods based on the input
-             *  timeout period in milliseconds and the macro period in [us]
-             *
-             *  Max timeout supported is 1000000 us (1 sec) -> 20-bits
-             *  Max timeout in 20.12 format = 32-bits
-             *
-             *  Macro period [us] = 12.12 format
-             */
 
             uint32_t timeout_mclks   = 0;
-
 
             timeout_mclks   =
                 ((timeout_us << 12) + (macro_period_us>>1)) /
                 macro_period_us;
-
 
             return timeout_mclks;
         }
@@ -1244,18 +1193,9 @@ class VL53L1X {
                 uint32_t timeout_us,
                 uint32_t macro_period_us)
         {
-            /*  Calculates the encoded timeout register value based on the input
-             *  timeout period in milliseconds and the macro period in [us]
-             *
-             *  Max timeout supported is 1000000 us (1 sec) -> 20-bits
-             *  Max timeout in 20.12 format = 32-bits
-             *
-             *  Macro period [us] = 12.12 format
-             */
 
             uint32_t timeout_mclks   = 0;
             uint16_t timeout_encoded = 0;
-
 
             timeout_mclks   =
                 calc_timeout_mclks(timeout_us, macro_period_us);
@@ -1270,18 +1210,9 @@ class VL53L1X {
                 uint32_t timeout_mclks,
                 uint32_t macro_period_us)
         {
-            /*  Calculates the  timeout in [us] based on the input
-             *  encoded timeout and the macro period in [us]
-             *
-             *  Max timeout supported is 1000000 us (1 sec) -> 20-bits
-             *  Max timeout in 20.12 format = 32-bits
-             *
-             *  Macro period [us] = 12.12 format
-             */
 
             uint32_t timeout_us     = 0;
             uint64_t tmp            = 0;
-
 
             tmp  = (uint64_t)timeout_mclks * (uint64_t)macro_period_us;
             tmp += 0x00800;
@@ -1298,28 +1229,12 @@ class VL53L1X {
                 int16_t  y_gradient,
                 uint8_t  rate_mult)
         {
-            /* Calculates Range Ignore Threshold rate per spad
-             * in Mcps - 3.13 format
-             *
-             * Calculates worst case xtalk rate per spad in array corner
-             * based on input central xtalk and x and y gradients
-             *
-             * Worst case rate = central rate + (8*(magnitude(xgrad)) +
-             * (8*(magnitude(ygrad)))
-             *
-             * Range ignore threshold rate is then multiplied by user input
-             * rate_mult (in 3.5 fractional format)
-             *
-             */
 
             int32_t    range_ignore_thresh_int  = 0;
             uint16_t   range_ignore_thresh_kcps = 0;
             int32_t    central_rate_int         = 0;
             int16_t    x_gradient_int           = 0;
             int16_t    y_gradient_int           = 0;
-
-
-            /* Shift central_rate to .13 fractional for simple addition */
 
             central_rate_int = ((int32_t)central_rate * (1 << 4)) / (1000);
 
@@ -1331,27 +1246,15 @@ class VL53L1X {
                 y_gradient_int = y_gradient * -1;
             }
 
-            /* Calculate full rate per spad - worst case from measured xtalk */
-            /* Generated here from .11 fractional kcps */
-            /* Additional factor of 4 applied to bring fractional precision to .13 */
-
             range_ignore_thresh_int = (8 * x_gradient_int * 4) + (8 * y_gradient_int * 4);
-
-            /* Convert Kcps to Mcps */
 
             range_ignore_thresh_int = range_ignore_thresh_int / 1000;
 
-            /* Combine with Central Rate - Mcps .13 format*/
-
             range_ignore_thresh_int = range_ignore_thresh_int + central_rate_int;
-
-            /* Mult by user input */
 
             range_ignore_thresh_int = (int32_t)rate_mult * range_ignore_thresh_int;
 
             range_ignore_thresh_int = (range_ignore_thresh_int + (1<<4)) / (1<<5);
-
-            /* Finally clip and output in correct format */
 
             if (range_ignore_thresh_int > 0xFFFF) {
                 range_ignore_thresh_kcps = 0xFFFF;
@@ -1367,9 +1270,6 @@ class VL53L1X {
                 uint8_t  col,
                 uint8_t *pspad_number)
         {
-            /**
-             *  Encodes the input array(row,col) location as SPAD number.
-             */
 
             if (row > 7) {
                 *pspad_number = 128 + (col << 3) + (15-row);
@@ -1383,14 +1283,6 @@ class VL53L1X {
                 uint8_t  height,
                 uint8_t *pencoded_xy_size)
         {
-            /* merge x and y sizes
-             *
-             * Important: the sense of the device width and height is swapped
-             * versus the API sense
-             *
-             * MS Nibble = height
-             * LS Nibble = width
-             */
 
             *pencoded_xy_size = (height << 4) + width;
 
@@ -1403,8 +1295,6 @@ class VL53L1X {
             *pwidth  = encoded_xy_size & 0x0F;
 
         }
-
-        // Instance variables ------------------------------------------------
 
         uint8_t   _wait_method;
         DevicePresetModes        _preset_mode;
@@ -1447,8 +1337,6 @@ class VL53L1X {
 
         DeviceParameters_t CurrentParameters;
 
-        // Instance methods ---------------------------------------------------
-
         error_t read_word(const uint16_t rgstr, uint16_t *data)
         {
             uint8_t buffer[2] = {};
@@ -1487,10 +1375,6 @@ class VL53L1X {
                 uint8_t                   *pbuffer,
                 static_nvm_managed_t  *pdata)
         {
-            /**
-             * Decodes data structure static_nvm_managed_t from the input I2C read buffer
-             * Buffer must be at least 11 bytes
-             */
 
             error_t status = ERROR_NONE;
 
@@ -1518,22 +1402,17 @@ class VL53L1X {
             pdata->vhv_config_init =
                 (*(pbuffer +  10));
 
-
             return status;
         }
 
         error_t get_static_nvm_managed(
                 static_nvm_managed_t  *pdata)
         {
-            /**
-             * Reads and de-serialises the contents of static_nvm_managed_t
-             * data structure from the device
-             */
 
             error_t status = ERROR_NONE;
             uint8_t comms_buffer[STATIC_NVM_MANAGED_I2C_SIZE_BYTES];
 
-            if (status == ERROR_NONE) /*lint !e774 always true*/
+            if (status == ERROR_NONE) 
                 status = read_bytes(_device, RGSTR_I2C_ADDRESS, 
                         STATIC_NVM_MANAGED_I2C_SIZE_BYTES, comms_buffer);
 
@@ -1549,10 +1428,6 @@ class VL53L1X {
         error_t i2c_encode_customer_nvm_managed(
                 uint16_t buf_size, uint8_t *pbuffer)
         {
-            /**
-             * Encodes data structure customer_nvm_managed_t into a I2C write buffer
-             * Buffer must be at least 23 bytes
-             */
 
             error_t status = ERROR_NONE;
 
@@ -1606,7 +1481,6 @@ class VL53L1X {
                     2,
                     pbuffer +  21);
 
-
             return status;
         }
 
@@ -1615,13 +1489,8 @@ class VL53L1X {
                 uint8_t                   *pbuffer,
                 customer_nvm_managed_t  *pdata)
         {
-            /**
-             * Decodes data structure customer_nvm_managed_t from the input I2C read buffer
-             * Buffer must be at least 23 bytes
-             */
 
             error_t status = ERROR_NONE;
-
 
             if (CUSTOMER_NVM_MANAGED_I2C_SIZE_BYTES > buf_size)
                 return ERROR_COMMS_BUFFER_TOO_SMALL;
@@ -1665,16 +1534,11 @@ class VL53L1X {
         error_t get_customer_nvm_managed(
                 customer_nvm_managed_t  *pdata)
         {
-            /**
-             * Reads and de-serialises the contents of customer_nvm_managed_t
-             * data structure from the device
-             */
 
             error_t status = ERROR_NONE;
             uint8_t comms_buffer[CUSTOMER_NVM_MANAGED_I2C_SIZE_BYTES];
 
-
-            if (status == ERROR_NONE) /*lint !e774 always true*/
+            if (status == ERROR_NONE) 
                 status = read_bytes(_device,
                         RGSTR_GLOBAL_CONFIG_SPAD_ENABLES_REF_0,
                         CUSTOMER_NVM_MANAGED_I2C_SIZE_BYTES, comms_buffer);
@@ -1685,19 +1549,13 @@ class VL53L1X {
                         comms_buffer,
                         pdata);
 
-
             return status;
         }
 
         error_t i2c_encode_static_config(uint16_t buf_size, uint8_t  *pbuffer)
         {
-            /**
-             * Encodes data structure static_config_t into a I2C write buffer
-             * Buffer must be at least 32 bytes
-             */
 
             error_t status = ERROR_NONE;
-
 
             if (STATIC_CONFIG_I2C_SIZE_BYTES > buf_size)
                 return ERROR_COMMS_BUFFER_TOO_SMALL;
@@ -1770,11 +1628,9 @@ class VL53L1X {
             return status;
         }
 
-
         error_t i2c_encode_general_config(uint16_t buf_size, uint8_t  *pbuffer)
         {
             error_t status = ERROR_NONE;
-
 
             if (GENERAL_CONFIG_I2C_SIZE_BYTES > buf_size)
                 return ERROR_COMMS_BUFFER_TOO_SMALL;
@@ -1822,10 +1678,8 @@ class VL53L1X {
             *(pbuffer +  21) =
                 _gen_cfg.dss_config_min_spads_limit;
 
-
             return status;
         }
-
 
         error_t i2c_encode_timing_config(uint16_t buf_size, uint8_t  *pbuffer)
         {
@@ -1872,7 +1726,6 @@ class VL53L1X {
                     pbuffer +  18);
             *(pbuffer +  22) =
                 _tim_cfg.system_fractional_enable & 0x1;
-
 
             return status;
         }
@@ -1929,13 +1782,8 @@ class VL53L1X {
                 uint8_t                   *pbuffer,
                 nvm_copy_data_t    *pdata)
         {
-            /**
-             * Decodes data structure nvm_copy_data_t from the input I2C read buffer
-             * Buffer must be at least 49 bytes
-             */
 
             error_t status = ERROR_NONE;
-
 
             if (NVM_COPY_DATA_I2C_SIZE_BYTES > buf_size)
                 return ERROR_COMMS_BUFFER_TOO_SMALL;
@@ -2037,23 +1885,17 @@ class VL53L1X {
             pdata->roi_config_mode_roi_xy_size =
                 (*(pbuffer +  48));
 
-
             return status;
         }
 
         error_t get_nvm_copy_data(
                 nvm_copy_data_t    *pdata)
         {
-            /**
-             * Reads and de-serialises the contents of nvm_copy_data_t
-             * data structure from the device
-             */
 
             error_t status = ERROR_NONE;
             uint8_t comms_buffer[NVM_COPY_DATA_I2C_SIZE_BYTES];
 
-
-            if (status == ERROR_NONE) /*lint !e774 always true*/
+            if (status == ERROR_NONE) 
                 status = read_bytes(_device, RGSTR_IDENTIFICATION_MODEL_ID,
                         NVM_COPY_DATA_I2C_SIZE_BYTES, comms_buffer);
 
@@ -2062,7 +1904,6 @@ class VL53L1X {
                         NVM_COPY_DATA_I2C_SIZE_BYTES,
                         comms_buffer,
                         pdata);
-
 
             return status;
         }
@@ -2103,21 +1944,8 @@ class VL53L1X {
         uint32_t calc_pll_period_us(
                 uint16_t  fast_osc_frequency)
         {
-            /*  Calculates PLL frequency using NVM fast_osc_frequency
-             *  Fast osc frequency fixed point format = unsigned 4.12
-             *
-             *  PLL period fixed point format = unsigned 0.24
-             *  Min input fast osc frequency  = 1 MHz
-             *  PLL Multiplier = 64 (fixed)
-             *  Min PLL freq = 64.0MHz
-             *  -> max PLL period = 1/ 64
-             *  ->  only the 18 LS bits are used
-             *
-             *  2^30 = (2^24) (1.0us) * 4096 (2^12) / 64 (PLL Multiplier)
-             */
 
             uint32_t  pll_period_us        = 0;
-
 
             pll_period_us = (0x01 << 30) / fast_osc_frequency;
 
@@ -2126,10 +1954,6 @@ class VL53L1X {
 
         uint8_t decode_vcsel_period(uint8_t vcsel_period_reg)
         {
-            /*
-             * Converts the encoded VCSEL period register value into
-             * the real period in PLL clocks
-             */
 
             uint8_t vcsel_period_pclks = 0;
 
@@ -2142,41 +1966,14 @@ class VL53L1X {
                 uint16_t  fast_osc_frequency,
                 uint8_t   vcsel_period)
         {
-            /* Calculates macro period in [us] from the input fast oscillator
-             * frequency and VCSEL period
-             *
-             * Macro period fixed point format = unsigned 12.12
-             * Maximum supported macro period  = 4095.9999 us
-             */
 
             uint32_t  pll_period_us        = 0;
             uint8_t   vcsel_period_pclks   = 0;
             uint32_t  macro_period_us      = 0;
 
-
-            /*  Calculate PLL period in [us] from the  fast_osc_frequency
-             *  Fast osc frequency fixed point format = unsigned 4.12
-             */
-
             pll_period_us = calc_pll_period_us(fast_osc_frequency);
 
-            /*  VCSEL period
-             *  - the real VCSEL period in PLL clocks = 2*(VCSEL_PERIOD+1)
-             */
-
             vcsel_period_pclks = decode_vcsel_period(vcsel_period);
-
-            /*  Macro period
-             *  - PLL period [us]      = 0.24 format
-             *      - for 1.0 MHz fast oscillator freq
-             *      - max PLL period = 1/64 (6-bits)
-             *      - i.e only the lower 18-bits of PLL Period value are used
-             *  - Macro period [vclks] = 2304 (12-bits)
-             *
-             *  Max bits (24 - 6) + 12 = 30-bits usage
-             *
-             *  Downshift by 6 before multiplying by the VCSEL Period
-             */
 
             macro_period_us =
                 (uint32_t)MACRO_PERIOD_VCSEL_PERIODS *
@@ -2189,7 +1986,6 @@ class VL53L1X {
             return macro_period_us;
         }
 
-
        error_t calc_timeout_register_values(
                 uint32_t                 phasecal_config_timeout_us,
                 uint32_t                 mm_config_timeout_us,
@@ -2198,12 +1994,6 @@ class VL53L1X {
                 general_config_t *pgeneral,
                 timing_config_t  *ptiming)
         {
-            /*
-             * Converts the input MM and range timeouts in [us]
-             * into the appropriate register values
-             *
-             * Must also be run after the VCSEL period settings are changed
-             */
 
             error_t status = ERROR_NONE;
 
@@ -2211,30 +2001,26 @@ class VL53L1X {
             uint32_t timeout_mclks      = 0;
             uint16_t timeout_encoded    = 0;
 
-
             if (fast_osc_frequency == 0) {
                 status = ERROR_DIVISION_BY_ZERO;
             } else {
-                /* Update Macro Period for Range A VCSEL Period */
+
                 macro_period_us =
                     calc_macro_period_us(
                             fast_osc_frequency,
                             ptiming->range_config_vcsel_period_a);
 
-                /*  Update Phase timeout - uses Timing A */
                 timeout_mclks =
                     calc_timeout_mclks(
                             phasecal_config_timeout_us,
                             macro_period_us);
 
-                /* clip as the phase cal timeout register is only 8-bits */
                 if (timeout_mclks > 0xFF)
                     timeout_mclks = 0xFF;
 
                 pgeneral->phasecal_config_timeout_macrop =
                     (uint8_t)timeout_mclks;
 
-                /*  Update MM Timing A timeout */
                 timeout_encoded =
                     calc_encoded_timeout(
                             mm_config_timeout_us,
@@ -2245,7 +2031,6 @@ class VL53L1X {
                 ptiming->mm_config_timeout_macrop_a_lo =
                     (uint8_t) (timeout_encoded & 0x00FF);
 
-                /* Update Range Timing A timeout */
                 timeout_encoded =
                     calc_encoded_timeout(
                             range_config_timeout_us,
@@ -2256,13 +2041,11 @@ class VL53L1X {
                 ptiming->range_config_timeout_macrop_a_lo =
                     (uint8_t) (timeout_encoded & 0x00FF);
 
-                /* Update Macro Period for Range B VCSEL Period */
                 macro_period_us =
                     calc_macro_period_us(
                             fast_osc_frequency,
                             ptiming->range_config_vcsel_period_b);
 
-                /* Update MM Timing B timeout */
                 timeout_encoded =
                     calc_encoded_timeout(
                             mm_config_timeout_us,
@@ -2273,7 +2056,6 @@ class VL53L1X {
                 ptiming->mm_config_timeout_macrop_b_lo =
                     (uint8_t) (timeout_encoded & 0x00FF);
 
-                /* Update Range Timing B timeout */
                 timeout_encoded = calc_encoded_timeout(
                         range_config_timeout_us,
                         macro_period_us);
@@ -2284,11 +2066,9 @@ class VL53L1X {
                     (uint8_t) (timeout_encoded & 0x00FF);
             }
 
-
             return status;
 
         }
-
 
         error_t config_low_power_auto_mode(
                 general_config_t   *pgeneral,
@@ -2297,28 +2077,18 @@ class VL53L1X {
                 )
         {
 
-            /*
-             * Initializes configs for when low power auto presets are selected
-             */
-
-            /* don't really use this here */
             error_t  status = ERROR_NONE;
 
-
-            /* set low power auto mode */
             plpadata->is_low_power_auto_mode = 1;
 
-            /* set low power range count to 0 */
             plpadata->low_power_auto_range_count = 0;
 
-            /* Turn off MM1/MM2 and DSS2 */
             pdynamic->system_sequence_config = 
                 SEQUENCE_VHV_EN | 
                 SEQUENCE_PHASECAL_EN | 
                 SEQUENCE_DSS1_EN | 
                 SEQUENCE_RANGE_EN;
 
-            /* Set DSS to manual/expected SPADs */
             pgeneral->dss_config_manual_effective_spads_select = 200 << 8;
             pgeneral->dss_config_roi_mode_control =
                 DEVICEDSSMODE_REQUESTED_EFFFECTIVE_SPADS;
@@ -2331,10 +2101,6 @@ class VL53L1X {
                 uint32_t            *pmm_config_timeout_us,
                 uint32_t			*prange_config_timeout_us)
         {
-            /**
-             * Convenience function for getting the MM and range
-             * timeouts
-             */
 
             error_t  status = ERROR_NONE;
 
@@ -2346,20 +2112,15 @@ class VL53L1X {
 
             if (status == ERROR_NONE) {
 
-                /* Update Macro Period for Range A VCSEL Period */
                 macro_period_us =
                     calc_macro_period_us(
                             _stat_nvm.osc_measured_fast_osc_frequency,
                             _tim_cfg.range_config_vcsel_period_a);
 
-                /*  Get Phase Cal Timing A timeout */
-
                 *pphasecal_config_timeout_us =
                     calc_timeout_us(
                             (uint32_t)_gen_cfg.phasecal_config_timeout_macrop,
                             macro_period_us);
-
-                /*  Get MM Timing A timeout */
 
                 timeout_encoded =
                     (uint16_t)_tim_cfg.mm_config_timeout_macrop_a_hi;
@@ -2370,8 +2131,6 @@ class VL53L1X {
                     calc_decoded_timeout_us(
                             timeout_encoded,
                             macro_period_us);
-
-                /* Get Range Timing A timeout */
 
                 timeout_encoded =
                     (uint16_t)_tim_cfg.range_config_timeout_macrop_a_hi;
@@ -2395,10 +2154,6 @@ class VL53L1X {
                 DeviceSequenceConfig   bit_id,
                 uint8_t                      *pvalue)
         {
-            /**
-             * Convenience function for getting sequence
-             * config enable bits
-             */
 
             error_t  status = ERROR_NONE;
 
@@ -2426,20 +2181,8 @@ class VL53L1X {
         error_t init_refspadchar_config_struct(
                 refspadchar_config_t   *pdata)
         {
-            /*
-             * Initializes Ref SPAD Char data structures preset mode
-             */
 
             error_t  status = ERROR_NONE;
-
-            /* Reference SPAD Char Configuration
-             *
-             * vcsel_period              = 0x0B   - 24 clock VCSEL period
-             * timeout_us                = 1000   - Set 1000us phase cal timeout
-             * target_count_rate_mcps    = 0x0A00 - 9.7 -> 20.0 Mcps
-             * min_count_rate_limit_mcps = 0x0500 - 9.7 -> 10.0 Mcps
-             * max_count_rate_limit_mcps = 0x1400 - 9.7 -> 40.0 Mcps
-             */
 
             pdata->device_test_mode =
                 TUNINGPARM_REFSPADCHAR_DEVICE_TEST_MODE_DEFAULT;
@@ -2460,40 +2203,23 @@ class VL53L1X {
         error_t init_ssc_config_struct(
                 ssc_config_t   *pdata)
         {
-            /*
-             * Initializes SPAD Self Check (SSC) data structure
-             */
 
             error_t  status = ERROR_NONE;
 
-            /* SPAD Select Check Configuration */
-
-            /* 0 - store RTN count rates
-             * 1 - store REF count rates
-             */
             pdata->array_select = DEVICESSCARRAY_RTN;
 
-            /* VCSEL period register value  0x12 (18) -> 38 VCSEL clocks */
             pdata->vcsel_period =
                 TUNINGPARM_SPADMAP_VCSEL_PERIOD_DEFAULT;
 
-            /* VCSEL pulse start */
             pdata->vcsel_start  =
                 TUNINGPARM_SPADMAP_VCSEL_START_DEFAULT;
 
-            /* VCSEL pulse width */
             pdata->vcsel_width  = 0x02;
 
-            /* SSC timeout [us] */
             pdata->timeout_us   = 36000;
 
-            /* SSC rate limit [Mcps]
-             * - 9.7 for VCSEL ON
-             * - 1.15 for VCSEL OFF
-             */
             pdata->rate_limit_mcps =
                 TUNINGPARM_SPADMAP_RATE_LIMIT_MCPS_DEFAULT;
-
 
             return status;
         }
@@ -2502,14 +2228,8 @@ class VL53L1X {
                 customer_nvm_managed_t *pnvm,
                 xtalk_config_t   *pdata)
         {
-            /*
-             * Initializes Xtalk Config structure
-             */
 
             error_t  status = ERROR_NONE;
-
-
-            /* Store xtalk data into golden copy */
 
             pdata->algo_crosstalk_compensation_plane_offset_kcps      =
                 pnvm->algo_crosstalk_compensation_plane_offset_kcps;
@@ -2517,8 +2237,6 @@ class VL53L1X {
                 pnvm->algo_crosstalk_compensation_x_plane_gradient_kcps;
             pdata->algo_crosstalk_compensation_y_plane_gradient_kcps  =
                 pnvm->algo_crosstalk_compensation_y_plane_gradient_kcps;
-
-            /* Store NVM defaults for later use */
 
             pdata->nvm_default_crosstalk_compensation_plane_offset_kcps      =
                 (uint32_t)pnvm->algo_crosstalk_compensation_plane_offset_kcps;
@@ -2529,8 +2247,6 @@ class VL53L1X {
 
             pdata->lite_mode_crosstalk_margin_kcps                     =
                 TUNINGPARM_LITE_XTALK_MARGIN_KCPS_DEFAULT;
-
-            /* Default for Range Ignore Threshold Mult = 2.0 */
 
             pdata->crosstalk_range_ignore_threshold_mult =
                 TUNINGPARM_LITE_RIT_MULT_DEFAULT;
@@ -2554,37 +2270,26 @@ class VL53L1X {
                 pdata->crosstalk_range_ignore_threshold_rate_mcps = 0;
             }
 
-
             return status;
         }
 
         error_t init_offset_cal_config_struct(
                 offsetcal_config_t   *pdata)
         {
-            /*
-             * Initializes Offset Calibration Config structure
-             * - for use with run_offset_calibration()
-             */
 
             error_t  status = ERROR_NONE;
 
-
-            /* Preset Timeout and DSS defaults */
-
             pdata->dss_config_target_total_rate_mcps          =
                 TUNINGPARM_OFFSET_CAL_DSS_RATE_MCPS_DEFAULT;
-            /* 20.0 Mcps */
+
             pdata->phasecal_config_timeout_us                  =
                 TUNINGPARM_OFFSET_CAL_PHASECAL_TIMEOUT_US_DEFAULT;
-            /* 1000 us */
+
             pdata->range_config_timeout_us                     =
                 TUNINGPARM_OFFSET_CAL_RANGE_TIMEOUT_US_DEFAULT;
-            /* 13000 us */
+
             pdata->mm_config_timeout_us                        =
                 TUNINGPARM_OFFSET_CAL_MM_TIMEOUT_US_DEFAULT;
-            /* 13000 us - Added as part of Patch_AddedOffsetCalMMTuningParm_11791 */
-
-            /* Init number of averaged samples */
 
             pdata->pre_num_of_samples                          =
                 TUNINGPARM_OFFSET_CAL_PRE_SAMPLES_DEFAULT;
@@ -2593,25 +2298,14 @@ class VL53L1X {
             pdata->mm2_num_of_samples                          =
                 TUNINGPARM_OFFSET_CAL_MM2_SAMPLES_DEFAULT;
 
-
             return status;
         }
 
         error_t init_tuning_parm_storage_struct(
                 tuning_parm_storage_t   *pdata)
         {
-            /*
-             * Initializes  Tuning Param storage structure
-             */
 
             error_t  status = ERROR_NONE;
-
-
-            /* Default configuration
-             *
-             * - Custom overwrite possible from vl53l1_set_tuning_parms()
-             * - via tuning file input
-             */
 
             pdata->tp_tuning_parm_version              =
                 TUNINGPARM_VERSION_DEFAULT;
@@ -2666,9 +2360,6 @@ class VL53L1X {
             pdata->tp_lite_first_order_select            =
                 TUNINGPARM_LITE_FIRST_ORDER_SELECT_DEFAULT;
 
-            /* Preset Mode Configurations */
-            /* - New parms added as part of Patch_TuningParmPresetModeAddition_11839 */
-
             pdata->tp_dss_target_lite_mcps               =
                 TUNINGPARM_LITE_DSS_CONFIG_TARGET_TOTAL_RATE_MCPS_DEFAULT;
             pdata->tp_dss_target_timed_mcps              =
@@ -2685,8 +2376,6 @@ class VL53L1X {
                 TUNINGPARM_LITE_RANGE_CONFIG_TIMEOUT_US_DEFAULT;
             pdata->tp_range_timeout_timed_us             =
                 TUNINGPARM_TIMED_RANGE_CONFIG_TIMEOUT_US_DEFAULT;
-
-            /* Added for Patch_LowPowerAutoMode */
 
             pdata->tp_mm_timeout_lpa_us =
                 TUNINGPARM_LOWPOWERAUTO_MM_CONFIG_TIMEOUT_US_DEFAULT;
@@ -2709,7 +2398,6 @@ class VL53L1X {
                     inter_measurement_period_ms * 
                     (uint32_t)_dbg_results.result_osc_calibrate_val;
             }
-
 
             return status;
         }
@@ -2782,10 +2470,6 @@ class VL53L1X {
                 uint32_t            mm_config_timeout_us,
                 uint32_t            range_config_timeout_us)
         {
-            /**
-             * Convenience function for setting the MM and range
-             * timeouts
-             */
 
             error_t  status = ERROR_NONE;
 
@@ -2808,7 +2492,6 @@ class VL53L1X {
                             &(_tim_cfg));
             }
 
-
             return status;
         }
 
@@ -2820,23 +2503,9 @@ class VL53L1X {
                 system_control_t   *psystem,
                 tuning_parm_storage_t *ptuning_parms)
         {
-            /*
-             * Initializes static and dynamic data structures fordevice preset mode
-             * DEVICEPRESETMODE_STANDARD_RANGING
-             *
-             *  - streaming
-             *  - single sigma delta
-             *  - back to back
-             *
-             *  PLEASE NOTE THE SETTINGS BELOW AT PROVISIONAL AND WILL CHANGE!
-             */
 
             error_t  status = ERROR_NONE;
 
-
-            /* Static Configuration */
-
-            /* dss_config_target_total_rate_mcps = 20.0 Mcps 9.7 fp */
             pstatic->dss_config_target_total_rate_mcps               = 0x0A00;
             pstatic->debug_ctrl                                      = 0x00;
             pstatic->test_mode_ctrl                                  = 0x00;
@@ -2848,18 +2517,8 @@ class VL53L1X {
             pstatic->pad_i2c_hv_config                               = 0x00;
             pstatic->pad_i2c_hv_extsup_config                        = 0x00;
 
-            /*
-             *  0 - gpio_extsup_hv
-             *  1 - gpio_vmodeint_hv
-             */
             pstatic->gpio_hv_pad_ctrl                                = 0x00;
 
-            /*
-             * Set interrupt active low
-             *
-             *  3:0 - gpio_mux_select_hv
-             *    4 - gpio_mux_active_high_hv
-             */
             pstatic->gpio_hv_mux_ctrl  = 
                 DEVICEINTERRUPTPOLARITY_ACTIVE_LOW |
                 DEVICEGPIOMODE_OUTPUT_RANGE_AND_ERROR_INTERRUPTS;
@@ -2876,22 +2535,17 @@ class VL53L1X {
                 ptuning_parms->tp_lite_sigma_est_amb_width_ns;
             pstatic->sigma_estimator_sigma_ref_mm                    =
                 ptuning_parms->tp_lite_sigma_ref_mm;
-            /* Minimum allowable value of 1 - 0 disables the feature */
+
             pstatic->algo_crosstalk_compensation_valid_height_mm     = 0x01;
             pstatic->spare_host_config_static_config_spare_0         = 0x00;
             pstatic->spare_host_config_static_config_spare_1         = 0x00;
 
             pstatic->algo_range_ignore_threshold_mcps                = 0x0000;
 
-            /* set RIT distance to 20 mm */
             pstatic->algo_range_ignore_valid_height_mm               = 0xff;
             pstatic->algo_range_min_clip                             =
                 ptuning_parms->tp_lite_min_clip;
-            /*
-             * Phase consistency check limit - format 1.3 fp
-             * 0x02 -> 0.25
-             * 0x08 -> 1.00
-             */
+
             pstatic->algo_consistency_check_tolerance               =
                 ptuning_parms->tp_consistency_lite_phase_tolerance;
             pstatic->spare_host_config_static_config_spare_2         = 0x00;
@@ -2904,83 +2558,53 @@ class VL53L1X {
                 INTERRUPT_CONFIG_NEW_SAMPLE_READY;
             pgeneral->cal_config_vcsel_start                         = 0x0B;
 
-            /*
-             * Set VHV / Phase Cal repeat rate to 1 every
-             * 60 * 60 ranges (once every minute @ 60Hz)
-             * 0 - disables
-             * 12-bit value -> 4095 max
-             */
             pgeneral->cal_config_repeat_rate                         =
                 ptuning_parms->tp_cal_repeat_rate;
             pgeneral->global_config_vcsel_width                      = 0x02;
-            /* 13 macro periods gives a timeout of 1ms */
+
             pgeneral->phasecal_config_timeout_macrop                 = 0x0D;
-            /* Phase cal target phase 2.0625 - 4.4 fp -> 0x21*/
+
             pgeneral->phasecal_config_target                         =
                 ptuning_parms->tp_phasecal_target;
             pgeneral->phasecal_config_override                       = 0x00;
             pgeneral->dss_config_roi_mode_control =
                 DEVICEDSSMODE_TARGET_RATE;
-            /* format for threshold high and low is 9.7 fp */
+
             pgeneral->system_thresh_rate_high                        = 0x0000;
             pgeneral->system_thresh_rate_low                         = 0x0000;
-            /* The format for manual effective spads is 8.8 -> 0x8C00 = 140.00 */
+
             pgeneral->dss_config_manual_effective_spads_select       = 0x8C00;
             pgeneral->dss_config_manual_block_select                 = 0x00;
 
-            /*
-             * Aperture attenuation value - format 0.8
-             *
-             * Nominal:  5x   -> 0.200000 * 256 = 51 = 0x33
-             * Measured: 4.6x -> 0.217391 * 256 = 56 = 0x38
-             */
             pgeneral->dss_config_aperture_attenuation                = 0x38;
             pgeneral->dss_config_max_spads_limit                     = 0xFF;
             pgeneral->dss_config_min_spads_limit                     = 0x01;
 
-            /* Timing Configuration */
-
-            /* Default timing of 2ms */
             ptiming->mm_config_timeout_macrop_a_hi                   = 0x00;
             ptiming->mm_config_timeout_macrop_a_lo                   = 0x1a;
             ptiming->mm_config_timeout_macrop_b_hi                   = 0x00;
             ptiming->mm_config_timeout_macrop_b_lo                   = 0x20;
-            /* Setup for 30ms default */
+
             ptiming->range_config_timeout_macrop_a_hi                = 0x01;
             ptiming->range_config_timeout_macrop_a_lo                = 0xCC;
-            /* register value 11 gives a 24 VCSEL period */
+
             ptiming->range_config_vcsel_period_a                     = 0x0B;
-            /* Setup for 30ms default */
+
             ptiming->range_config_timeout_macrop_b_hi                = 0x01;
             ptiming->range_config_timeout_macrop_b_lo                = 0xF5;
-            /* register value  09 gives a 20 VCSEL period */
+
             ptiming->range_config_vcsel_period_b                     = 0x09;
-            /*
-             * Sigma thresh register - format 14.2
-             *
-             * 0x003C -> 15.0 mm
-             * 0x0050 -> 20.0 mm
-             */
+
             ptiming->range_config_sigma_thresh                       =
                 ptuning_parms->tp_lite_med_sigma_thresh_mm;
-            /*
-             *  Rate Limit - format 9.7fp
-             *  0x0020 -> 0.250 Mcps
-             *  0x0080 -> 1.000 Mcps
-             */
+
             ptiming->range_config_min_count_rate_rtn_limit_mcps      =
                 ptuning_parms->tp_lite_med_min_count_rate_rtn_mcps;
 
-            /* Phase limit register formats = 5.3
-             * low   = 0x08 ->  1.0
-             * high  = 0x78 -> 15.0 -> 3.0m
-             */
             ptiming->range_config_valid_phase_low                    = 0x08;
             ptiming->range_config_valid_phase_high                   = 0x78;
             ptiming->system_intermeasurement_period                  = 0x00000000;
             ptiming->system_fractional_enable                        = 0x00;
-
-            /* Dynamic Configuration */
 
             pdynamic->system_grouped_parameter_hold_0                 = 0x01;
 
@@ -2990,9 +2614,8 @@ class VL53L1X {
             pdynamic->system_seed_config =
                 ptuning_parms->tp_lite_seed_cfg;
 
-            /* Timing A */
             pdynamic->sd_config_woi_sd0                               = 0x0B;
-            /* Timing B */
+
             pdynamic->sd_config_woi_sd1                               = 0x09;
 
             pdynamic->sd_config_initial_phase_sd0                     =
@@ -3002,43 +2625,13 @@ class VL53L1X {
 
             pdynamic->system_grouped_parameter_hold_1                 = 0x01;
 
-            /*
-             *  Quantifier settings
-             *
-             *  sd_config_first_order_select
-             *     bit 0 - return sigma delta
-             *     bit 1 - reference sigma delta
-             *
-             *  sd_config_first_order_select = 0x03 (1st order)
-             *
-             *      sd_config_quantifier options
-             *        0
-             *        1 ->   64
-             *        2 ->  128
-             *        3 ->  256
-             *
-             *  sd_config_first_order_select = 0x00 (2nd order)
-             *
-             *      sd_config_quantifier options
-             *        0
-             *        1  ->  256
-             *        2  -> 1024
-             *        3  -> 4095
-             *
-             *  Setting below 2nd order, Quantifier = 1024
-             */
-
             pdynamic->sd_config_first_order_select =
                 ptuning_parms->tp_lite_first_order_select;
             pdynamic->sd_config_quantifier         =
                 ptuning_parms->tp_lite_quantifier;
 
-            /* Below defaults will be overwritten by zone_cfg
-             * Spad no = 199 (0xC7)
-             * Spad no =  63 (0x3F)
-             */
             pdynamic->roi_config_user_roi_centre_spad              = 0xC7;
-            /* 16x16 ROI */
+
             pdynamic->roi_config_user_roi_requested_global_xy_size = 0xFF;
 
             pdynamic->system_sequence_config = 
@@ -3050,8 +2643,6 @@ class VL53L1X {
                 SEQUENCE_RANGE_EN;
 
             pdynamic->system_grouped_parameter_hold                   = 0x02;
-
-            /* System control */
 
             psystem->system_stream_count_ctrl                         = 0x00;
             psystem->firmware_enable                                  = 0x01;
@@ -3073,22 +2664,8 @@ class VL53L1X {
                 system_control_t   *psystem,
                 tuning_parm_storage_t *ptuning_parms)
         {
-            /*
-             * Initializes static and dynamic data structures for
-             * device preset mode
-             *
-             * DEVICEPRESETMODE_STANDARD_RANGING_SHORT_RANGE
-             * (up to 1.4 metres)
-             *
-             * PLEASE NOTE THE SETTINGS BELOW AT PROVISIONAL AND WILL CHANGE!
-             */
 
             error_t  status = ERROR_NONE;
-
-
-            /* Call standard ranging configuration followed by
-             * overrides for the  short range configuration
-             */
 
             status = preset_mode_standard_ranging(
                     pstatic,
@@ -3098,19 +2675,7 @@ class VL53L1X {
                     psystem,
                     ptuning_parms);
 
-            /* now override standard ranging specific registers */
-
             if (status == ERROR_NONE) {
-
-                /* Timing Configuration
-                 *
-                 * vcsel_period_a    = 7 -> 16 period
-                 * vcsel_period_b    = 5 -> 12 period
-                 * sigma_thresh                  = 0x003C -> 14.2fp -> 15.0 mm
-                 * min_count_rate_rtn_limit_mcps = 0x0080 ->  9.7fp ->  1.0 Mcps
-                 * valid_phase_low               = 0x08 -> 5.3fp -> 1.0
-                 * valid_phase_high              = 0x38 -> 5.3fp -> 7.0 -> 1.4m
-                 */
 
                 ptiming->range_config_vcsel_period_a                = 0x07;
                 ptiming->range_config_vcsel_period_b                = 0x05;
@@ -3121,11 +2686,6 @@ class VL53L1X {
                 ptiming->range_config_valid_phase_low               = 0x08;
                 ptiming->range_config_valid_phase_high              = 0x38;
 
-                /* Dynamic Configuration
-                 * SD0 -> Timing A
-                 * SD1 -> Timing B
-                 */
-
                 pdynamic->sd_config_woi_sd0                         = 0x07;
                 pdynamic->sd_config_woi_sd1                         = 0x05;
                 pdynamic->sd_config_initial_phase_sd0               =
@@ -3133,7 +2693,6 @@ class VL53L1X {
                 pdynamic->sd_config_initial_phase_sd1               =
                     ptuning_parms->tp_init_phase_ref_lite_short;
             }
-
 
             return status;
         }
@@ -3146,22 +2705,8 @@ class VL53L1X {
                 system_control_t   *psystem,
                 tuning_parm_storage_t *ptuning_parms)
         {
-            /*
-             * Initializes static and dynamic data structures for
-             * device preset mode
-             *
-             * DEVICEPRESETMODE_STANDARD_RANGING_LONG_RANGE
-             * (up to 4.8 metres)
-             *
-             *  PLEASE NOTE THE SETTINGS BELOW AT PROVISIONAL AND WILL CHANGE!
-             */
 
             error_t  status = ERROR_NONE;
-
-
-            /* Call standard ranging configuration with
-             * overrides for long range configuration
-             */
 
             status = preset_mode_standard_ranging(
                     pstatic,
@@ -3171,19 +2716,7 @@ class VL53L1X {
                     psystem,
                     ptuning_parms);
 
-            /* now override standard ranging specific registers */
-
             if (status == ERROR_NONE) {
-
-                /* Timing Configuration
-                 *
-                 * vcsel_period_a    = 15 -> 32 period
-                 * vcsel_period_b    = 13 -> 28 period
-                 * sigma_thresh                  = 0x003C -> 14.2fp -> 15.0 mm
-                 * min_count_rate_rtn_limit_mcps = 0x0080 ->  9.7fp ->  1.0 Mcps
-                 * valid_phase_low               = 0x08 -> 5.3fp ->  1.0
-                 * valid_phase_high              = 0xB8 -> 5.3fp -> 23.0 -> 4.6m
-                 */
 
                 ptiming->range_config_vcsel_period_a                = 0x0F;
                 ptiming->range_config_vcsel_period_b                = 0x0D;
@@ -3194,11 +2727,6 @@ class VL53L1X {
                 ptiming->range_config_valid_phase_low               = 0x08;
                 ptiming->range_config_valid_phase_high              = 0xB8;
 
-                /* Dynamic Configuration
-                 * SD0 -> Timing A
-                 * SD1 -> Timing B
-                 */
-
                 pdynamic->sd_config_woi_sd0                         = 0x0F;
                 pdynamic->sd_config_woi_sd1                         = 0x0D;
                 pdynamic->sd_config_initial_phase_sd0               =
@@ -3206,7 +2734,6 @@ class VL53L1X {
                 pdynamic->sd_config_initial_phase_sd1               =
                     ptuning_parms->tp_init_phase_ref_lite_long;
             }
-
 
             return status;
         }
@@ -3219,21 +2746,8 @@ class VL53L1X {
                 system_control_t   *psystem,
                 tuning_parm_storage_t *ptuning_parms)
         {
-            /*
-             * Initializes static and dynamic data structures for
-             * device preset mode
-             *
-             * DEVICEPRESETMODE_STANDARD_RANGING_MM1_CAL
-             *
-             * PLEASE NOTE THE SETTINGS BELOW AT PROVISIONAL AND WILL CHANGE!
-             */
 
             error_t  status = ERROR_NONE;
-
-
-            /* Call standard ranging configuration with
-             * overrides for long range configuration
-             */
 
             status = preset_mode_standard_ranging(
                     pstatic,
@@ -3242,8 +2756,6 @@ class VL53L1X {
                     pdynamic,
                     psystem,
                     ptuning_parms);
-
-            /* now override standard ranging specific registers */
 
             if (status == ERROR_NONE) {
 
@@ -3269,21 +2781,8 @@ class VL53L1X {
                 system_control_t   *psystem,
                 tuning_parm_storage_t *ptuning_parms)
         {
-            /*
-             * Initializes static and dynamic data structures for
-             * device preset mode
-             *
-             * DEVICEPRESETMODE_STANDARD_RANGING_MM2_CAL
-             *
-             * PLEASE NOTE THE SETTINGS BELOW AT PROVISIONAL AND WILL CHANGE!
-             */
 
             error_t  status = ERROR_NONE;
-
-
-            /* Call standard ranging configuration with
-             * overrides for long range configuration
-             */
 
             status = preset_mode_standard_ranging(
                     pstatic,
@@ -3292,8 +2791,6 @@ class VL53L1X {
                     pdynamic,
                     psystem,
                     ptuning_parms);
-
-            /* now override standard ranging specific registers */
 
             if (status == ERROR_NONE) {
 
@@ -3320,23 +2817,8 @@ class VL53L1X {
                 system_control_t   *psystem,
                 tuning_parm_storage_t *ptuning_parms)
         {
-            /*
-             * Initializes static and dynamic data structures for
-             * device preset mode
-             *
-             * DEVICEPRESETMODE_TIMED_RANGING
-             *
-             *  - pseudo-solo
-             *  - single sigma delta
-             *  - timed
-             *
-             *  PLEASE NOTE THE SETTINGS BELOW AT PROVISIONAL AND WILL CHANGE!
-             */
 
             error_t  status = ERROR_NONE;
-
-
-            /* Call standard ranging configuration */
 
             status = preset_mode_standard_ranging(
                     pstatic,
@@ -3346,37 +2828,25 @@ class VL53L1X {
                     psystem,
                     ptuning_parms);
 
-            /* now override standard ranging specific registers */
-
             if (status == ERROR_NONE) {
 
-                /* Dynamic Configuration */
-
-                /* Disable GPH  */
                 pdynamic->system_grouped_parameter_hold = 0x00;
 
-                /* Re-Configure timing budget default for 13ms */
                 ptiming->range_config_timeout_macrop_a_hi                = 0x00;
                 ptiming->range_config_timeout_macrop_a_lo                = 0xB1;
-                /* Setup for 13ms default */
+
                 ptiming->range_config_timeout_macrop_b_hi                = 0x00;
                 ptiming->range_config_timeout_macrop_b_lo                = 0xD4;
-
-                /* Timing Configuration */
 
                 ptiming->system_intermeasurement_period = 0x00000600;
                 pdynamic->system_seed_config =
                     ptuning_parms->tp_timed_seed_cfg;
 
-                /* System control */
-
-                /* Configure Timed/Psuedo-solo mode */
                 psystem->system_mode_start =
                     DEVICESCHEDULERMODE_PSEUDO_SOLO | 
                     DEVICEREADOUTMODE_SINGLE_SD     | 
                     DEVICEMEASUREMENTMODE_TIMED;
             }
-
 
             return status;
         }
@@ -3390,23 +2860,8 @@ class VL53L1X {
                 system_control_t   *psystem,
                 tuning_parm_storage_t *ptuning_parms)
         {
-            /*
-             * Initializes static and dynamic data structures for
-             * device preset mode
-             *
-             * DEVICEPRESETMODE_TIMED_RANGING_SHORT_RANGE
-             *
-             *  - pseudo-solo
-             *  - single sigma delta
-             *  - timed
-             *
-             *  PLEASE NOTE THE SETTINGS BELOW AT PROVISIONAL AND WILL CHANGE!
-             */
 
             error_t  status = ERROR_NONE;
-
-
-            /* Call standard ranging configuration */
 
             status = preset_mode_standard_ranging_short_range(
                     pstatic,
@@ -3416,21 +2871,13 @@ class VL53L1X {
                     psystem,
                     ptuning_parms);
 
-            /* now override standard ranging specific registers */
-
             if (status == ERROR_NONE) {
 
-                /* Dynamic Configuration */
-
-                /* Disable GPH  */
                 pdynamic->system_grouped_parameter_hold = 0x00;
 
-                /* Timing Configuration */
-
-                /* Re-Configure timing budget default for 13ms */
                 ptiming->range_config_timeout_macrop_a_hi                = 0x01;
                 ptiming->range_config_timeout_macrop_a_lo                = 0x84;
-                /* Setup for 13ms default */
+
                 ptiming->range_config_timeout_macrop_b_hi                = 0x01;
                 ptiming->range_config_timeout_macrop_b_lo                = 0xB1;
 
@@ -3438,15 +2885,11 @@ class VL53L1X {
                 pdynamic->system_seed_config =
                     ptuning_parms->tp_timed_seed_cfg;
 
-                /* System control */
-
-                /* Configure Timed/Psuedo-solo mode */
                 psystem->system_mode_start =
                     DEVICESCHEDULERMODE_PSEUDO_SOLO | 
                     DEVICEREADOUTMODE_SINGLE_SD     | 
                     DEVICEMEASUREMENTMODE_TIMED;
             }
-
 
             return status;
         }
@@ -3460,23 +2903,8 @@ class VL53L1X {
                 system_control_t   *psystem,
                 tuning_parm_storage_t *ptuning_parms)
         {
-            /*
-             * Initializes static and dynamic data structures for
-             * device preset mode
-             *
-             * DEVICEPRESETMODE_TIMED_RANGING_LONG_RANGE
-             *
-             *  - pseudo-solo
-             *  - single sigma delta
-             *  - timed
-             *
-             *  PLEASE NOTE THE SETTINGS BELOW AT PROVISIONAL AND WILL CHANGE!
-             */
 
             error_t  status = ERROR_NONE;
-
-
-            /* Call standard ranging configuration */
 
             status = preset_mode_standard_ranging_long_range(
                     pstatic,
@@ -3486,21 +2914,13 @@ class VL53L1X {
                     psystem,
                     ptuning_parms);
 
-            /* now override standard ranging specific registers */
-
             if (status == ERROR_NONE) {
 
-                /* Dynamic Configuration */
-
-                /* Disable GPH  */
                 pdynamic->system_grouped_parameter_hold = 0x00;
 
-                /* Timing Configuration */
-
-                /* Re-Configure timing budget default for 13ms */
                 ptiming->range_config_timeout_macrop_a_hi                = 0x00;
                 ptiming->range_config_timeout_macrop_a_lo                = 0x97;
-                /* Setup for 13ms default */
+
                 ptiming->range_config_timeout_macrop_b_hi                = 0x00;
                 ptiming->range_config_timeout_macrop_b_lo                = 0xB1;
 
@@ -3508,15 +2928,11 @@ class VL53L1X {
                 pdynamic->system_seed_config =
                     ptuning_parms->tp_timed_seed_cfg;
 
-                /* System control */
-
-                /* Configure Timed/Psuedo-solo mode */
                 psystem->system_mode_start =
                     DEVICESCHEDULERMODE_PSEUDO_SOLO | 
                     DEVICEREADOUTMODE_SINGLE_SD     | 
                     DEVICEMEASUREMENTMODE_TIMED;
             }
-
 
             return status;
         }
@@ -3531,24 +2947,8 @@ class VL53L1X {
                 tuning_parm_storage_t *ptuning_parms,
                 low_power_auto_data_t *plpadata)
         {
-            /*
-             * Initializes static and dynamic data structures for
-             * device preset mode
-             *
-             * DEVICEPRESETMODE_LOWPOWERAUTO_MEDIUM_RANGE
-             *
-             *  - pseudo-solo
-             *  - single sigma delta
-             *  - timed
-             *  - special low power auto mode for Presence application
-             *
-             *  PLEASE NOTE THE SETTINGS BELOW ARE PROVISIONAL AND WILL CHANGE!
-             */
 
             error_t  status = ERROR_NONE;
-
-
-            /* Call standard ranging configuration */
 
             status = preset_mode_timed_ranging(
                     pstatic,
@@ -3558,8 +2958,6 @@ class VL53L1X {
                     psystem,
                     ptuning_parms);
 
-            /* now setup the low power auto mode */
-
             if (status == ERROR_NONE) {
                 status = config_low_power_auto_mode(
                         pgeneral,
@@ -3567,7 +2965,6 @@ class VL53L1X {
                         plpadata
                         );
             }
-
 
             return status;
         }
@@ -3582,24 +2979,8 @@ class VL53L1X {
                 tuning_parm_storage_t *ptuning_parms,
                 low_power_auto_data_t *plpadata)
         {
-            /*
-             * Initializes static and dynamic data structures for
-             * device preset mode
-             *
-             * DEVICEPRESETMODE_LOWPOWERAUTO_SHORT_RANGE
-             *
-             *  - pseudo-solo
-             *  - single sigma delta
-             *  - timed
-             *  - special low power auto mode for Presence application
-             *
-             *  PLEASE NOTE THE SETTINGS BELOW ARE PROVISIONAL AND WILL CHANGE!
-             */
 
             error_t  status = ERROR_NONE;
-
-
-            /* Call standard ranging configuration */
 
             status = preset_mode_timed_ranging_short_range(
                     pstatic,
@@ -3609,8 +2990,6 @@ class VL53L1X {
                     psystem,
                     ptuning_parms);
 
-            /* now setup the low power auto mode */
-
             if (status == ERROR_NONE) {
                 status = config_low_power_auto_mode(
                         pgeneral,
@@ -3618,7 +2997,6 @@ class VL53L1X {
                         plpadata
                         );
             }
-
 
             return status;
         }
@@ -3633,24 +3011,8 @@ class VL53L1X {
                 tuning_parm_storage_t *ptuning_parms,
                 low_power_auto_data_t *plpadata)
         {
-            /*
-             * Initializes static and dynamic data structures for
-             * device preset mode
-             *
-             * DEVICEPRESETMODE_LOWPOWERAUTO_LONG_RANGE
-             *
-             *  - pseudo-solo
-             *  - single sigma delta
-             *  - timed
-             *  - special low power auto mode for Presence application
-             *
-             *  PLEASE NOTE THE SETTINGS BELOW ARE PROVISIONAL AND WILL CHANGE!
-             */
 
             error_t  status = ERROR_NONE;
-
-
-            /* Call standard ranging configuration */
 
             status = preset_mode_timed_ranging_long_range(
                     pstatic,
@@ -3660,8 +3022,6 @@ class VL53L1X {
                     psystem,
                     ptuning_parms);
 
-            /* now setup the low power auto mode */
-
             if (status == ERROR_NONE) {
                 status = config_low_power_auto_mode(
                         pgeneral,
@@ -3670,11 +3030,8 @@ class VL53L1X {
                         );
             }
 
-
             return status;
         }
-
-        /* End Patch_LowPowerAutoMode */
 
         error_t preset_mode_singleshot_ranging(
 
@@ -3685,21 +3042,8 @@ class VL53L1X {
                 system_control_t   *psystem,
                 tuning_parm_storage_t *ptuning_parms)
         {
-            /*
-             * Initializes static and dynamic data structures for device preset mode
-             * DEVICEPRESETMODE_TIMED_RANGING
-             *
-             *  - pseudo-solo
-             *  - single sigma delta
-             *  - timed
-             *
-             *  PLEASE NOTE THE SETTINGS BELOW AT PROVISIONAL AND WILL CHANGE!
-             */
 
             error_t  status = ERROR_NONE;
-
-
-            /* Call standard ranging configuration */
 
             status = preset_mode_standard_ranging(
                     pstatic,
@@ -3709,36 +3053,24 @@ class VL53L1X {
                     psystem,
                     ptuning_parms);
 
-            /* now override standard ranging specific registers */
-
             if (status == ERROR_NONE) {
 
-                /* Dynamic Configuration */
-
-                /* Disable GPH  */
                 pdynamic->system_grouped_parameter_hold = 0x00;
 
-                /* Timing Configuration */
-
-                /* Re-Configure timing budget default for 13ms */
                 ptiming->range_config_timeout_macrop_a_hi                = 0x00;
                 ptiming->range_config_timeout_macrop_a_lo                = 0xB1;
-                /* Setup for 13ms default */
+
                 ptiming->range_config_timeout_macrop_b_hi                = 0x00;
                 ptiming->range_config_timeout_macrop_b_lo                = 0xD4;
 
                 pdynamic->system_seed_config =
                     ptuning_parms->tp_timed_seed_cfg;
 
-                /* System control */
-
-                /* Configure Timed/Psuedo-solo mode */
                 psystem->system_mode_start = 
                     DEVICESCHEDULERMODE_PSEUDO_SOLO | 
                     DEVICEREADOUTMODE_SINGLE_SD     | 
                     DEVICEMEASUREMENTMODE_SINGLESHOT;
             }
-
 
             return status;
         }
@@ -3751,17 +3083,8 @@ class VL53L1X {
                 system_control_t   *psystem,
                 tuning_parm_storage_t *ptuning_parms)
         {
-            /**
-             * Initializes static and dynamic data structures for device preset mode
-             * DEVICEPRESETMODE_OLT
-             *
-             *  PLEASE NOTE THE SETTINGS BELOW AT PROVISIONAL AND WILL CHANGE!
-             */
 
             error_t  status = ERROR_NONE;
-
-
-            /* Call standard ranging configuration */
 
             status = preset_mode_standard_ranging(
                     pstatic,
@@ -3771,11 +3094,8 @@ class VL53L1X {
                     psystem,
                     ptuning_parms);
 
-            /* now override OLT specific registers */
-
             if (status == ERROR_NONE) {
 
-                /* Disables requirement for host handshake */
                 psystem->system_stream_count_ctrl  = 0x01;
             }
 
@@ -3822,8 +3142,6 @@ class VL53L1X {
             _inter_measurement_period_ms = inter_measurement_period_ms;
 
             init_ll_driver_state(DEVICESTATE_SW_STANDBY);
-
-            /* apply selected preset */
 
             switch (device_preset_mode) {
 
@@ -3966,8 +3284,6 @@ class VL53L1X {
 
             }
 
-            /* update DSS target */
-
             if (status == ERROR_NONE) {
 
                 pstatic->dss_config_target_total_rate_mcps =
@@ -3976,11 +3292,6 @@ class VL53L1X {
                     dss_config_target_total_rate_mcps;
 
             }
-
-            /*
-             * Update the register timeout values based on input
-             * real time values and preset mode VCSEL periods
-             */
 
             if (status == ERROR_NONE) {
                 status = set_timeouts_us(
@@ -4046,7 +3357,7 @@ class VL53L1X {
                     break;
 
                 default:
-                    /* Unsupported mode */
+
                     Status = ERROR_MODE_NOT_SUPPORTED;
             }
 
@@ -4125,7 +3436,6 @@ class VL53L1X {
             return Status;
         }
 
-
         error_t RdWord(uint16_t index, uint16_t *pdata)
         {
             static uint16_t r16data = 0;
@@ -4137,17 +3447,17 @@ class VL53L1X {
             return status;
         }
 
-        error_t i2c_encode_system_control(uint16_t buf_size, uint8_t *pbuffer)
+        error_t i2c_encode_system_control(uint16_t buf_size, uint8_t *buffer)
         {
             if (SYSTEM_CONTROL_I2C_SIZE_BYTES > buf_size) {
                 return ERROR_COMMS_BUFFER_TOO_SMALL;
             }
 
-            *(pbuffer + 0) = _sys_ctrl.power_management_go1_power_force & 0x1;
-            *(pbuffer + 1) = _sys_ctrl.system_stream_count_ctrl & 0x1;
-            *(pbuffer + 2) = _sys_ctrl.firmware_enable & 0x1;
-            *(pbuffer + 3) = _sys_ctrl.system_interrupt_clear & 0x3;
-            *(pbuffer + 4) = _sys_ctrl.system_mode_start;
+            buffer[0] = _sys_ctrl.power_management_go1_power_force & 0x1;
+            buffer[1] = _sys_ctrl.system_stream_count_ctrl & 0x1;
+            buffer[2] = _sys_ctrl.firmware_enable & 0x1;
+            buffer[3] = _sys_ctrl.system_interrupt_clear & 0x3;
+            buffer[4] = _sys_ctrl.system_mode_start;
 
             return ERROR_NONE;
         }
@@ -4176,7 +3486,7 @@ class VL53L1X {
         error_t set_limit_value(uint16_t LimitCheckId, FixedPoint1616_t value)
         {
             error_t Status = ERROR_NONE;
-            uint16_t tmpuint16; /* temporary variable */
+            uint16_t tmpuint16; 
 
             switch (LimitCheckId) {
                 case CHECKENABLE_SIGMA_FINAL_RANGE:
@@ -4235,7 +3545,7 @@ class VL53L1X {
             if (LimitCheckId >= CHECKENABLE_NUMBER_OF_CHECKS) {
                 Status = ERROR_INVALID_PARAMS;
             } else {
-                /* TempFix1616 contains either 0 or the limit value */
+
                 if (LimitCheckEnable == 0) {
                     TempFix1616 = 0;
                 }
@@ -4304,26 +3614,18 @@ class VL53L1X {
         error_t set_user_zone(
                 user_zone_t     *puser_zone)
         {
-            /**
-             * Convenience function for setting the user ROI
-             */
 
             error_t  status = ERROR_NONE;
 
-            /* convert (row,col) location into a SPAD number */
             encode_row_col(
                     puser_zone->y_centre,
                     puser_zone->x_centre,
                     &(_dyn_cfg.roi_config_user_roi_centre_spad));
 
-            /* merge x and y sizes */
             encode_zone_size(
                     puser_zone->width,
                     puser_zone->height,
                     &(_dyn_cfg.roi_config_user_roi_requested_global_xy_size));
-
-            /* need to add checks to ensure ROI is within array */
-
 
             return status;
         }
@@ -4331,16 +3633,12 @@ class VL53L1X {
         error_t get_mode_mitigation_roi(
                 user_zone_t     *pmm_roi)
         {
-            /**
-             * Convenience function for getting the mode mitigation ROI
-             */
 
             error_t  status = ERROR_NONE;
 
             uint8_t  x       = 0;
             uint8_t  y       = 0;
             uint8_t  xy_size = 0;
-
 
             decode_row_col(
                     _nvm_copy_data.roi_config_mode_roi_centre_spad,
@@ -4354,7 +3652,6 @@ class VL53L1X {
 
             pmm_roi->height = xy_size >> 4;
             pmm_roi->width  = xy_size & 0x0F;
-
 
             return status;
         }
@@ -4460,7 +3757,6 @@ class VL53L1X {
             int32_t vhv_loops;
             uint32_t FDAMaxTimingBudgetUs = FDA_MAX_TIMING_BUDGET_US;
 
-            /* Timing budget is limited to 10 seconds */
             if (MeasurementTimingBudgetMicroSeconds > 10000000)
                 Status = ERROR_INVALID_PARAMS;
 
@@ -4518,7 +3814,7 @@ class VL53L1X {
                         break;
 
                     default:
-                        /* Unsupported mode */
+
                         Status = ERROR_MODE_NOT_SUPPORTED;
                 }
 
@@ -4575,7 +3871,7 @@ class VL53L1X {
                 if ((DistanceMode == DISTANCEMODE_SHORT) ||
                         (DistanceMode == DISTANCEMODE_MEDIUM))
                     InternalDistanceMode = DistanceMode;
-                else /* (DistanceMode == DISTANCEMODE_LONG) */
+                else 
                     InternalDistanceMode = DISTANCEMODE_LONG;
             }
 
@@ -4634,8 +3930,6 @@ class VL53L1X {
             return status;
         }
 
-        // Platform-dependent ------------------------------------------------
-
         error_t read_bytes(void * _device, const uint16_t rgstr, 
                 const uint8_t count, uint8_t *data);
 
@@ -4644,4 +3938,4 @@ class VL53L1X {
 
         void delay_msec(const uint32_t msec);
 
-}; // class VL53L1X
+}; 

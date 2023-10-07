@@ -4,6 +4,7 @@
    Arduino support for VL53L1X
 
    Copyright (c) 2023, Simon D. Levy
+
    All Rights Reserved
 
    Redistribution and use in source and binary forms, with or without
