@@ -1,36 +1,39 @@
-/*
-  Reading distance from the laser based VL53L1X
-*/
-
 #include <Wire.h>
 
-#include "vl53l1x.hpp"
+#include "vl53l1x_arduino.hpp"
 
-static VL53L1X sensor;
+static VL53L1X ranger;
 
 void setup(void)
 {
-  Wire.begin();
+    int8_t status = VL53L1X::ERROR_NONE;
 
-  Serial.begin(115200);
+    Wire.begin();
 
-  sensor.begin(0x29);
+    Serial.begin(115200);
 
-  sensor.stopRanging();
-  sensor.setDistanceMode(VL53L1X::DISTANCE_MODE_MEDIUM);
-  sensor.setTimingBudgetInMs(25);
+    status |= ranger.init();
 
+    status |= ranger.SetDistanceMode(VL53L1X::DISTANCEMODE_MEDIUM);
+
+    status |= ranger.SetMeasurementTimingBudgetMicroSeconds(25000);
+
+    if (status) {
+        Serial.println("Sensor failed to begin. Please check wiring. Freezing...");
+        while (true)
+            ;
+    }
 }
 
 void loop(void)
 {
-    sensor.startRanging(); 
+    ranger.startRanging();
 
     while (true) {
 
-        uint8_t dataReady = 0;
+        bool dataReady = false;
 
-        sensor.checkForDataReady(&dataReady);
+        ranger.checkForDataReady(&dataReady);
 
         if (dataReady) {
             break;
@@ -40,11 +43,9 @@ void loop(void)
     }
 
     uint16_t distance = 0;
-    sensor.getDistance(&distance);
+    ranger.getDistance(&distance);
 
-    Serial.print("Distance(mm): ");
-    Serial.println(distance);
+    ranger.stopRanging();
 
-    sensor.stopRanging();
-    sensor.startRanging();
+    Serial.printf("%d mm\n", distance);
 }
