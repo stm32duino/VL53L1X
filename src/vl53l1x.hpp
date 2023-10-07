@@ -5,6 +5,7 @@
 
    Copyright (c) 2017, STMicroelectronics
    Copyright (c) 2023, Simon D. Levy
+
    All Rights Reserved
 
    Redistribution and use in source and binary forms, with or without
@@ -105,8 +106,9 @@ class VL53L1X {
                     _stat_nvm.osc_measured_fast_osc_frequency = 0xBCCC;
                 }
 
-                if (status == ERROR_NONE)
-                    status = get_mode_mitigation_roi(&(_mm_roi));
+                if (status == ERROR_NONE) {
+                    get_mode_mitigation_roi(&(_mm_roi));
+                }
 
                 if (_optical_centre.x_centre == 0 && _optical_centre.y_centre == 0) {
                     _optical_centre.x_centre = _mm_roi.x_centre << 4;
@@ -123,7 +125,7 @@ class VL53L1X {
 
                 status = init_tuning_parm_storage_struct(&_tuning_parms);
 
-                status = set_vhv_loopbound(TUNINGPARM_VHV_LOOPBOUND_DEFAULT);
+                set_vhv_loopbound(TUNINGPARM_VHV_LOOPBOUND_DEFAULT);
 
                 if (status == ERROR_NONE)
                     status = set_preset_mode(
@@ -191,7 +193,7 @@ class VL53L1X {
                 }
 
                 if (status == ERROR_NONE) {
-                    status = SetInterMeasurementPeriodMilliSeconds(1000);
+                    status = set_inter_measurement_period_ms(1000);
                 }
 
                 for (uint16_t rgstr = 0x002D; rgstr <= 0x0087; rgstr++) {
@@ -2496,7 +2498,6 @@ class VL53L1X {
         }
 
         error_t preset_mode_standard_ranging(
-                static_config_t    *pstatic,
                 general_config_t   *pgeneral,
                 timing_config_t    *ptiming,
                 dynamic_config_t   *pdynamic,
@@ -2506,51 +2507,51 @@ class VL53L1X {
 
             error_t  status = ERROR_NONE;
 
-            pstatic->dss_config_target_total_rate_mcps               = 0x0A00;
-            pstatic->debug_ctrl                                      = 0x00;
-            pstatic->test_mode_ctrl                                  = 0x00;
-            pstatic->clk_gating_ctrl                                 = 0x00;
-            pstatic->nvm_bist_ctrl                                   = 0x00;
-            pstatic->nvm_bist_num_nvm_words                          = 0x00;
-            pstatic->nvm_bist_start_address                          = 0x00;
-            pstatic->host_if_status                                  = 0x00;
-            pstatic->pad_i2c_hv_config                               = 0x00;
-            pstatic->pad_i2c_hv_extsup_config                        = 0x00;
+            _stat_cfg.dss_config_target_total_rate_mcps               = 0x0A00;
+            _stat_cfg.debug_ctrl                                      = 0x00;
+            _stat_cfg.test_mode_ctrl                                  = 0x00;
+            _stat_cfg.clk_gating_ctrl                                 = 0x00;
+            _stat_cfg.nvm_bist_ctrl                                   = 0x00;
+            _stat_cfg.nvm_bist_num_nvm_words                          = 0x00;
+            _stat_cfg.nvm_bist_start_address                          = 0x00;
+            _stat_cfg.host_if_status                                  = 0x00;
+            _stat_cfg.pad_i2c_hv_config                               = 0x00;
+            _stat_cfg.pad_i2c_hv_extsup_config                        = 0x00;
 
-            pstatic->gpio_hv_pad_ctrl                                = 0x00;
+            _stat_cfg.gpio_hv_pad_ctrl                                = 0x00;
 
-            pstatic->gpio_hv_mux_ctrl  = 
+            _stat_cfg.gpio_hv_mux_ctrl  = 
                 DEVICEINTERRUPTPOLARITY_ACTIVE_LOW |
                 DEVICEGPIOMODE_OUTPUT_RANGE_AND_ERROR_INTERRUPTS;
 
-            pstatic->gpio_tio_hv_status                              = 0x02;
-            pstatic->gpio_fio_hv_status                              = 0x00;
-            pstatic->ana_config_spad_sel_pswidth                     = 0x02;
-            pstatic->ana_config_vcsel_pulse_width_offset             = 0x08;
-            pstatic->ana_config_fast_osc_config_ctrl                = 0x00;
+            _stat_cfg.gpio_tio_hv_status                              = 0x02;
+            _stat_cfg.gpio_fio_hv_status                              = 0x00;
+            _stat_cfg.ana_config_spad_sel_pswidth                     = 0x02;
+            _stat_cfg.ana_config_vcsel_pulse_width_offset             = 0x08;
+            _stat_cfg.ana_config_fast_osc_config_ctrl                = 0x00;
 
-            pstatic->sigma_estimator_effective_pulse_width_ns        =
+            _stat_cfg.sigma_estimator_effective_pulse_width_ns        =
                 ptuning_parms->tp_lite_sigma_est_pulse_width_ns;
-            pstatic->sigma_estimator_effective_ambient_width_ns      =
+            _stat_cfg.sigma_estimator_effective_ambient_width_ns      =
                 ptuning_parms->tp_lite_sigma_est_amb_width_ns;
-            pstatic->sigma_estimator_sigma_ref_mm                    =
+            _stat_cfg.sigma_estimator_sigma_ref_mm                    =
                 ptuning_parms->tp_lite_sigma_ref_mm;
 
-            pstatic->algo_crosstalk_compensation_valid_height_mm     = 0x01;
-            pstatic->spare_host_config_static_config_spare_0         = 0x00;
-            pstatic->spare_host_config_static_config_spare_1         = 0x00;
+            _stat_cfg.algo_crosstalk_compensation_valid_height_mm     = 0x01;
+            _stat_cfg.spare_host_config_static_config_spare_0         = 0x00;
+            _stat_cfg.spare_host_config_static_config_spare_1         = 0x00;
 
-            pstatic->algo_range_ignore_threshold_mcps                = 0x0000;
+            _stat_cfg.algo_range_ignore_threshold_mcps                = 0x0000;
 
-            pstatic->algo_range_ignore_valid_height_mm               = 0xff;
-            pstatic->algo_range_min_clip                             =
+            _stat_cfg.algo_range_ignore_valid_height_mm               = 0xff;
+            _stat_cfg.algo_range_min_clip                             =
                 ptuning_parms->tp_lite_min_clip;
 
-            pstatic->algo_consistency_check_tolerance               =
+            _stat_cfg.algo_consistency_check_tolerance               =
                 ptuning_parms->tp_consistency_lite_phase_tolerance;
-            pstatic->spare_host_config_static_config_spare_2         = 0x00;
-            pstatic->sd_config_reset_stages_msb                      = 0x00;
-            pstatic->sd_config_reset_stages_lsb                      = 0x00;
+            _stat_cfg.spare_host_config_static_config_spare_2         = 0x00;
+            _stat_cfg.sd_config_reset_stages_msb                      = 0x00;
+            _stat_cfg.sd_config_reset_stages_lsb                      = 0x00;
 
             pgeneral->gph_config_stream_count_update_value           = 0x00;
             pgeneral->global_config_stream_divider                   = 0x00;
@@ -2657,7 +2658,6 @@ class VL53L1X {
         }
 
         error_t preset_mode_standard_ranging_short_range(
-                static_config_t    *pstatic,
                 general_config_t   *pgeneral,
                 timing_config_t    *ptiming,
                 dynamic_config_t   *pdynamic,
@@ -2668,7 +2668,6 @@ class VL53L1X {
             error_t  status = ERROR_NONE;
 
             status = preset_mode_standard_ranging(
-                    pstatic,
                     pgeneral,
                     ptiming,
                     pdynamic,
@@ -2698,7 +2697,6 @@ class VL53L1X {
         }
 
         error_t preset_mode_standard_ranging_long_range(
-                static_config_t    *pstatic,
                 general_config_t   *pgeneral,
                 timing_config_t    *ptiming,
                 dynamic_config_t   *pdynamic,
@@ -2709,7 +2707,6 @@ class VL53L1X {
             error_t  status = ERROR_NONE;
 
             status = preset_mode_standard_ranging(
-                    pstatic,
                     pgeneral,
                     ptiming,
                     pdynamic,
@@ -2739,7 +2736,6 @@ class VL53L1X {
         }
 
         error_t preset_mode_standard_ranging_mm1_cal(
-                static_config_t    *pstatic,
                 general_config_t   *pgeneral,
                 timing_config_t    *ptiming,
                 dynamic_config_t   *pdynamic,
@@ -2750,7 +2746,6 @@ class VL53L1X {
             error_t  status = ERROR_NONE;
 
             status = preset_mode_standard_ranging(
-                    pstatic,
                     pgeneral,
                     ptiming,
                     pdynamic,
@@ -2774,7 +2769,6 @@ class VL53L1X {
         }
 
         error_t preset_mode_standard_ranging_mm2_cal(
-                static_config_t    *pstatic,
                 general_config_t   *pgeneral,
                 timing_config_t    *ptiming,
                 dynamic_config_t   *pdynamic,
@@ -2785,7 +2779,6 @@ class VL53L1X {
             error_t  status = ERROR_NONE;
 
             status = preset_mode_standard_ranging(
-                    pstatic,
                     pgeneral,
                     ptiming,
                     pdynamic,
@@ -2810,7 +2803,6 @@ class VL53L1X {
 
         error_t preset_mode_timed_ranging(
 
-                static_config_t    *pstatic,
                 general_config_t   *pgeneral,
                 timing_config_t    *ptiming,
                 dynamic_config_t   *pdynamic,
@@ -2821,7 +2813,6 @@ class VL53L1X {
             error_t  status = ERROR_NONE;
 
             status = preset_mode_standard_ranging(
-                    pstatic,
                     pgeneral,
                     ptiming,
                     pdynamic,
@@ -2853,7 +2844,6 @@ class VL53L1X {
 
         error_t preset_mode_timed_ranging_short_range(
 
-                static_config_t    *pstatic,
                 general_config_t   *pgeneral,
                 timing_config_t    *ptiming,
                 dynamic_config_t   *pdynamic,
@@ -2864,7 +2854,6 @@ class VL53L1X {
             error_t  status = ERROR_NONE;
 
             status = preset_mode_standard_ranging_short_range(
-                    pstatic,
                     pgeneral,
                     ptiming,
                     pdynamic,
@@ -2896,7 +2885,6 @@ class VL53L1X {
 
         error_t preset_mode_timed_ranging_long_range(
 
-                static_config_t    *pstatic,
                 general_config_t   *pgeneral,
                 timing_config_t    *ptiming,
                 dynamic_config_t   *pdynamic,
@@ -2907,7 +2895,6 @@ class VL53L1X {
             error_t  status = ERROR_NONE;
 
             status = preset_mode_standard_ranging_long_range(
-                    pstatic,
                     pgeneral,
                     ptiming,
                     pdynamic,
@@ -2939,7 +2926,6 @@ class VL53L1X {
 
         error_t preset_mode_low_power_auto_ranging(
 
-                static_config_t    *pstatic,
                 general_config_t   *pgeneral,
                 timing_config_t    *ptiming,
                 dynamic_config_t   *pdynamic,
@@ -2951,7 +2937,6 @@ class VL53L1X {
             error_t  status = ERROR_NONE;
 
             status = preset_mode_timed_ranging(
-                    pstatic,
                     pgeneral,
                     ptiming,
                     pdynamic,
@@ -2971,7 +2956,6 @@ class VL53L1X {
 
         error_t preset_mode_low_power_auto_short_ranging(
 
-                static_config_t    *pstatic,
                 general_config_t   *pgeneral,
                 timing_config_t    *ptiming,
                 dynamic_config_t   *pdynamic,
@@ -2983,7 +2967,6 @@ class VL53L1X {
             error_t  status = ERROR_NONE;
 
             status = preset_mode_timed_ranging_short_range(
-                    pstatic,
                     pgeneral,
                     ptiming,
                     pdynamic,
@@ -3003,7 +2986,6 @@ class VL53L1X {
 
         error_t preset_mode_low_power_auto_long_ranging(
 
-                static_config_t    *pstatic,
                 general_config_t   *pgeneral,
                 timing_config_t    *ptiming,
                 dynamic_config_t   *pdynamic,
@@ -3015,7 +2997,6 @@ class VL53L1X {
             error_t  status = ERROR_NONE;
 
             status = preset_mode_timed_ranging_long_range(
-                    pstatic,
                     pgeneral,
                     ptiming,
                     pdynamic,
@@ -3035,7 +3016,6 @@ class VL53L1X {
 
         error_t preset_mode_singleshot_ranging(
 
-                static_config_t    *pstatic,
                 general_config_t   *pgeneral,
                 timing_config_t    *ptiming,
                 dynamic_config_t   *pdynamic,
@@ -3046,7 +3026,6 @@ class VL53L1X {
             error_t  status = ERROR_NONE;
 
             status = preset_mode_standard_ranging(
-                    pstatic,
                     pgeneral,
                     ptiming,
                     pdynamic,
@@ -3076,7 +3055,6 @@ class VL53L1X {
         }
 
         error_t preset_mode_olt(
-                static_config_t    *pstatic,
                 general_config_t   *pgeneral,
                 timing_config_t    *ptiming,
                 dynamic_config_t   *pdynamic,
@@ -3087,7 +3065,6 @@ class VL53L1X {
             error_t  status = ERROR_NONE;
 
             status = preset_mode_standard_ranging(
-                    pstatic,
                     pgeneral,
                     ptiming,
                     pdynamic,
@@ -3117,17 +3094,18 @@ class VL53L1X {
             driver_state->rd_timing_status  = 0;
         }
 
+        ///////////////////////////////////
+
         error_t set_preset_mode(
-                DevicePresetModes     device_preset_mode,
-                uint16_t                     dss_config_target_total_rate_mcps,
-                uint32_t                     phasecal_config_timeout_us,
-                uint32_t                     mm_config_timeout_us,
-                uint32_t                     range_config_timeout_us,
-                uint32_t                     inter_measurement_period_ms)
+                const DevicePresetModes  device_preset_mode,
+                const uint16_t dss_config_target_total_rate_mcps,
+                const uint32_t phasecal_config_timeout_us,
+                const uint32_t mm_config_timeout_us,
+                const uint32_t range_config_timeout_us,
+                const uint32_t inter_measurement_period_ms)
         {
             error_t  status = ERROR_NONE;
 
-            static_config_t        *pstatic       = &(_stat_cfg);
             general_config_t       *pgeneral      = &(_gen_cfg);
             timing_config_t        *ptiming       = &(_tim_cfg);
             dynamic_config_t       *pdynamic      = &(_dyn_cfg);
@@ -3146,147 +3124,90 @@ class VL53L1X {
             switch (device_preset_mode) {
 
                 case DEVICEPRESETMODE_STANDARD_RANGING:
-                    status = preset_mode_standard_ranging(
-                            pstatic,
-                            pgeneral,
-                            ptiming,
-                            pdynamic,
-                            psystem,
-                            ptuning_parms);
+                    status = preset_mode_standard_ranging(pgeneral,
+                            ptiming, pdynamic, psystem, ptuning_parms);
                     break;
 
                 case DEVICEPRESETMODE_STANDARD_RANGING_SHORT_RANGE:
                     status = preset_mode_standard_ranging_short_range(
-                            pstatic,
-                            pgeneral,
-                            ptiming,
-                            pdynamic,
-                            psystem,
+                            pgeneral, ptiming, pdynamic, psystem,
                             ptuning_parms);
                     break;
 
                 case DEVICEPRESETMODE_STANDARD_RANGING_LONG_RANGE:
                     status = preset_mode_standard_ranging_long_range(
-                            pstatic,
-                            pgeneral,
-                            ptiming,
-                            pdynamic,
-                            psystem,
+                            pgeneral, ptiming, pdynamic, psystem,
                             ptuning_parms);
                     break;
 
                 case DEVICEPRESETMODE_STANDARD_RANGING_MM1_CAL:
                     status = preset_mode_standard_ranging_mm1_cal(
-                            pstatic,
-                            pgeneral,
-                            ptiming,
-                            pdynamic,
-                            psystem,
+                            pgeneral, ptiming, pdynamic, psystem,
                             ptuning_parms);
                     break;
 
                 case DEVICEPRESETMODE_STANDARD_RANGING_MM2_CAL:
                     status = preset_mode_standard_ranging_mm2_cal(
-                            pstatic,
-                            pgeneral,
-                            ptiming,
-                            pdynamic,
-                            psystem,
+                            pgeneral, ptiming, pdynamic, psystem,
                             ptuning_parms);
                     break;
 
                 case DEVICEPRESETMODE_TIMED_RANGING:
                     status = preset_mode_timed_ranging(
-                            pstatic,
-                            pgeneral,
-                            ptiming,
-                            pdynamic,
-                            psystem,
+                            pgeneral, ptiming, pdynamic, psystem,
                             ptuning_parms);
                     break;
 
                 case DEVICEPRESETMODE_TIMED_RANGING_SHORT_RANGE:
                     status = preset_mode_timed_ranging_short_range(
-                            pstatic,
-                            pgeneral,
-                            ptiming,
-                            pdynamic,
-                            psystem,
+                            pgeneral, ptiming, pdynamic, psystem,
                             ptuning_parms);
                     break;
 
                 case DEVICEPRESETMODE_TIMED_RANGING_LONG_RANGE:
                     status = preset_mode_timed_ranging_long_range(
-                            pstatic,
-                            pgeneral,
-                            ptiming,
-                            pdynamic,
-                            psystem,
+                            pgeneral, ptiming, pdynamic, psystem,
                             ptuning_parms);
                     break;
 
                 case DEVICEPRESETMODE_OLT:
                     status = preset_mode_olt(
-                            pstatic,
-                            pgeneral,
-                            ptiming,
-                            pdynamic,
-                            psystem,
+                            pgeneral, ptiming, pdynamic, psystem,
                             ptuning_parms);
                     break;
 
                 case DEVICEPRESETMODE_SINGLESHOT_RANGING:
                     status = preset_mode_singleshot_ranging(
-                            pstatic,
-                            pgeneral,
-                            ptiming,
-                            pdynamic,
-                            psystem,
+                            pgeneral, ptiming, pdynamic, psystem,
                             ptuning_parms);
                     break;
 
                 case DEVICEPRESETMODE_LOWPOWERAUTO_SHORT_RANGE:
                     status = preset_mode_low_power_auto_short_ranging(
-                            pstatic,
-                            pgeneral,
-                            ptiming,
-                            pdynamic,
-                            psystem,
-                            ptuning_parms,
-                            plpadata);
+                            pgeneral, ptiming, pdynamic, psystem,
+                            ptuning_parms, plpadata);
                     break;
 
                 case DEVICEPRESETMODE_LOWPOWERAUTO_MEDIUM_RANGE:
                     status = preset_mode_low_power_auto_ranging(
-                            pstatic,
-                            pgeneral,
-                            ptiming,
-                            pdynamic,
-                            psystem,
-                            ptuning_parms,
-                            plpadata);
+                            pgeneral, ptiming, pdynamic, psystem,
+                            ptuning_parms, plpadata);
                     break;
 
                 case DEVICEPRESETMODE_LOWPOWERAUTO_LONG_RANGE:
                     status = preset_mode_low_power_auto_long_ranging(
-                            pstatic,
-                            pgeneral,
-                            ptiming,
-                            pdynamic,
-                            psystem,
-                            ptuning_parms,
-                            plpadata);
+                            pgeneral, ptiming, pdynamic, psystem,
+                            ptuning_parms, plpadata);
                     break;
 
                 default:
                     status = ERROR_INVALID_PARAMS;
                     break;
-
             }
 
             if (status == ERROR_NONE) {
 
-                pstatic->dss_config_target_total_rate_mcps =
+                _stat_cfg.dss_config_target_total_rate_mcps =
                     dss_config_target_total_rate_mcps;
                 _dss_config_target_total_rate_mcps    =
                     dss_config_target_total_rate_mcps;
@@ -3308,13 +3229,12 @@ class VL53L1X {
         }
 
         error_t ComputeDevicePresetMode(
-                PresetModes PresetMode,
-                distanceMode_t DistanceMode,
+                const PresetModes PresetMode,
+                const distanceMode_t DistanceMode,
                 DevicePresetModes *pDevicePresetMode)
         {
-            error_t Status = ERROR_NONE;
+            error_t status = ERROR_NONE;
 
-            uint8_t DistIdx;
             DevicePresetModes LightModes[3] = {
                 DEVICEPRESETMODE_STANDARD_RANGING_SHORT_RANGE,
                 DEVICEPRESETMODE_STANDARD_RANGING,
@@ -3332,6 +3252,7 @@ class VL53L1X {
 
             *pDevicePresetMode = DEVICEPRESETMODE_STANDARD_RANGING;
 
+            uint8_t DistIdx = 0;
             switch (DistanceMode) {
                 case DISTANCEMODE_SHORT:
                     DistIdx = 0;
@@ -3357,86 +3278,78 @@ class VL53L1X {
                     break;
 
                 default:
-
-                    Status = ERROR_MODE_NOT_SUPPORTED;
+                    status = ERROR_MODE_NOT_SUPPORTED;
             }
 
-            return Status;
+            return status;
         }
 
         error_t helper_set_preset_mode(
-                PresetModes PresetMode,
-                distanceMode_t DistanceMode,
-                uint32_t inter_measurement_period_ms)
+                const PresetModes PresetMode,
+                const distanceMode_t DistanceMode,
+                const uint32_t inter_measurement_period_ms)
         {
-            error_t Status = ERROR_NONE;
-            DevicePresetModes   device_preset_mode;
-            uint8_t measurement_mode;
-            uint16_t dss_config_target_total_rate_mcps;
-            uint32_t phasecal_config_timeout_us;
-            uint32_t mm_config_timeout_us;
-            uint32_t lld_range_config_timeout_us;
+            error_t status = ERROR_NONE;
 
-            if ((PresetMode == PRESETMODE_AUTONOMOUS) ||
-                    (PresetMode == PRESETMODE_LOWPOWER_AUTONOMOUS))
-                measurement_mode  = DEVICEMEASUREMENTMODE_TIMED;
-            else
-                measurement_mode  = DEVICEMEASUREMENTMODE_BACKTOBACK;
+            auto measurement_mode = 
+                (PresetMode == PRESETMODE_AUTONOMOUS ||
+                 PresetMode == PRESETMODE_LOWPOWER_AUTONOMOUS) ?
+                DEVICEMEASUREMENTMODE_TIMED :
+                DEVICEMEASUREMENTMODE_BACKTOBACK;
 
-            Status = ComputeDevicePresetMode(PresetMode, DistanceMode,
+            DevicePresetModes  device_preset_mode = {};
+            status = ComputeDevicePresetMode(PresetMode, DistanceMode,
                     &device_preset_mode);
 
-            if (Status == ERROR_NONE)
-                Status =  get_preset_mode_timing_cfg(
+            uint16_t dss_config_target_total_rate_mcps = 0;
+            uint32_t phasecal_config_timeout_us= 0;
+            uint32_t mm_config_timeout_us= 0;
+            uint32_t lld_range_config_timeout_us= 0;
+
+            if (status == ERROR_NONE) {
+                status =  get_preset_mode_timing_cfg(
                         device_preset_mode,
                         &dss_config_target_total_rate_mcps,
                         &phasecal_config_timeout_us,
                         &mm_config_timeout_us,
                         &lld_range_config_timeout_us);
+            }
 
-            if (Status == ERROR_NONE)
-                Status = set_preset_mode(
+            if (status == ERROR_NONE) {
+                status = set_preset_mode(
                         device_preset_mode,
                         dss_config_target_total_rate_mcps,
                         phasecal_config_timeout_us,
                         mm_config_timeout_us,
                         lld_range_config_timeout_us,
                         inter_measurement_period_ms);
+            }
 
-            if (Status == ERROR_NONE) {
+            if (status == ERROR_NONE) {
                 _measurement_mode = measurement_mode;
             }
 
-            if (Status == ERROR_NONE) {
+            if (status == ERROR_NONE) {
                 CurrentParameters.PresetMode = PresetMode;
             }
 
-            return Status;
-        }
-
-        error_t SetInterMeasurementPeriodMilliSeconds(
-                uint32_t InterMeasurementPeriodMilliSeconds)
-        {
-            error_t Status = ERROR_NONE;
-
-            Status = set_inter_measurement_period_ms(InterMeasurementPeriodMilliSeconds);
-
-            return Status;
+            return status;
         }
 
         error_t GetSequenceStepEnable(
-                SequenceStepId SequenceStepId, uint8_t *pSequenceStepEnabled)
+                const SequenceStepId SequenceStepId, 
+                uint8_t *pSequenceStepEnabled)
         {
-            error_t Status = ERROR_NONE;
+            error_t status = ERROR_NONE;
 
-            Status = get_sequence_config_bit(
+            status = get_sequence_config_bit(
                     (DeviceSequenceConfig)SequenceStepId,
                     pSequenceStepEnabled);
 
-            return Status;
+            return status;
         }
 
-        error_t RdWord(uint16_t index, uint16_t *pdata)
+        error_t RdWord(const uint16_t index, uint16_t *pdata)
         {
             static uint16_t r16data = 0;
 
@@ -3447,7 +3360,8 @@ class VL53L1X {
             return status;
         }
 
-        error_t i2c_encode_system_control(uint16_t buf_size, uint8_t *buffer)
+        error_t i2c_encode_system_control(const uint16_t buf_size, 
+                uint8_t *buffer)
         {
             if (SYSTEM_CONTROL_I2C_SIZE_BYTES > buf_size) {
                 return ERROR_COMMS_BUFFER_TOO_SMALL;
@@ -3462,88 +3376,71 @@ class VL53L1X {
             return ERROR_NONE;
         }
 
-        error_t set_lite_min_count_rate(uint16_t lite_mincountrate)
+        error_t set_limit_value(const uint16_t LimitCheckId, 
+                const FixedPoint1616_t value)
         {
-            error_t  status = ERROR_NONE;
+            error_t status = ERROR_NONE;
 
-            _tim_cfg.range_config_min_count_rate_rtn_limit_mcps =
-                lite_mincountrate;
-
-            return status;
-
-        }
-
-        error_t set_lite_sigma_threshold(uint16_t lite_sigma)
-        {
-            error_t  status = ERROR_NONE;
-
-            _tim_cfg.range_config_sigma_thresh = lite_sigma;
-
-            return status;
-
-        }
-
-        error_t set_limit_value(uint16_t LimitCheckId, FixedPoint1616_t value)
-        {
-            error_t Status = ERROR_NONE;
-            uint16_t tmpuint16; 
+            uint16_t tmpuint16 = 0;
 
             switch (LimitCheckId) {
                 case CHECKENABLE_SIGMA_FINAL_RANGE:
                     tmpuint16 = FIXEDPOINT1616TOFIXEDPOINT142(value);
-                    set_lite_sigma_threshold(tmpuint16);
+                    _tim_cfg.range_config_sigma_thresh = tmpuint16;
                     break;
                 case CHECKENABLE_SIGNAL_RATE_FINAL_RANGE:
                     tmpuint16 = FIXEDPOINT1616TOFIXEDPOINT97(value);
-                    set_lite_min_count_rate(tmpuint16);
+                    _tim_cfg.range_config_min_count_rate_rtn_limit_mcps = 
+                        tmpuint16;
                     break;
                 default:
-                    Status = ERROR_INVALID_PARAMS;
+                    status = ERROR_INVALID_PARAMS;
             }
 
-            return Status;
+            return status;
         }
 
-        error_t set_limit_check_value(
-
-                uint16_t LimitCheckId, 
-                FixedPoint1616_t LimitCheckValue)
+        error_t set_limit_check_value(const uint16_t LimitCheckId, 
+                const FixedPoint1616_t LimitCheckValue)
         {
-            error_t Status = ERROR_NONE;
+            error_t status = ERROR_NONE;
             uint8_t LimitChecksEnable;
 
             if (LimitCheckId >= CHECKENABLE_NUMBER_OF_CHECKS) {
-                Status = ERROR_INVALID_PARAMS;
-            } else {
+                status = ERROR_INVALID_PARAMS;
+            } 
+            else {
 
                 LimitChecksEnable = CurrentParameters.LimitChecksEnable[LimitCheckId];
 
                 if (LimitChecksEnable == 0) {
 
-                    CurrentParameters.LimitChecksValue[LimitCheckId] = LimitCheckValue;
+                    CurrentParameters.LimitChecksValue[LimitCheckId] = 
+                        LimitCheckValue;
 
                 } else {
 
-                    Status = set_limit_value(LimitCheckId, LimitCheckValue);
+                    status = set_limit_value(LimitCheckId, LimitCheckValue);
 
-                    if (Status == ERROR_NONE) {
+                    if (status == ERROR_NONE) {
 
-                        CurrentParameters.LimitChecksValue[LimitCheckId] = LimitCheckValue; 
+                        CurrentParameters.LimitChecksValue[LimitCheckId] = 
+                            LimitCheckValue; 
                     }
                 }
             }
 
-            return Status;
+            return status;
         }
 
-        error_t set_limit_check_enable( uint16_t LimitCheckId,
-                uint8_t LimitCheckEnable)
+        error_t set_limit_check_enable(const uint16_t LimitCheckId,
+                const uint8_t LimitCheckEnable)
         {
-            error_t Status = ERROR_NONE;
+            error_t status = ERROR_NONE;
             FixedPoint1616_t TempFix1616 = 0;
 
             if (LimitCheckId >= CHECKENABLE_NUMBER_OF_CHECKS) {
-                Status = ERROR_INVALID_PARAMS;
+                status = ERROR_INVALID_PARAMS;
             } else {
 
                 if (LimitCheckEnable == 0) {
@@ -3553,22 +3450,20 @@ class VL53L1X {
                     TempFix1616 = CurrentParameters.LimitChecksValue[LimitCheckId];
                 }
 
-                Status = set_limit_value(LimitCheckId, TempFix1616); }
+                status = set_limit_value(LimitCheckId, TempFix1616); }
 
-            if (Status == ERROR_NONE) {
+            if (status == ERROR_NONE) {
 
                 CurrentParameters.LimitChecksEnable[LimitCheckId] = 
                     LimitCheckEnable == 0 ? 0 : 1;
 
             }
 
-            return Status;
+            return status;
         }
 
-        error_t low_power_auto_data_init(void)
+        void low_power_auto_data_init(void)
         {
-            error_t  status = ERROR_NONE;
-
             _low_power_auto_data.vhv_loop_bound =
                 TUNINGPARM_LOWPOWERAUTO_VHV_LOOP_BOUND_DEFAULT;
             _low_power_auto_data.is_low_power_auto_mode = 0;
@@ -3579,25 +3474,17 @@ class VL53L1X {
             _low_power_auto_data.first_run_phasecal_result = 0;
             _low_power_auto_data.dss_total_rate_per_spad_mcps = 0;
             _low_power_auto_data.dss_required_spads = 0;
-
-            return status;
         }
 
-        error_t set_vhv_loopbound(uint8_t vhv_loopbound) 
+        void set_vhv_loopbound(uint8_t vhv_loopbound) 
         {
-            error_t  status = ERROR_NONE;
-
             _stat_nvm.vhv_config_timeout_macrop_loop_bound =
                 (_stat_nvm.vhv_config_timeout_macrop_loop_bound & 0x03) +
                 (vhv_loopbound * 4);
-
-            return status;
         }
 
-        error_t get_user_zone(user_zone_t * puser_zone)
+        void get_user_zone(user_zone_t * puser_zone)
         {
-            error_t  status = ERROR_NONE;
-
             decode_row_col(
                     _dyn_cfg.roi_config_user_roi_centre_spad,
                     &(puser_zone->y_centre),
@@ -3607,42 +3494,24 @@ class VL53L1X {
                     _dyn_cfg.roi_config_user_roi_requested_global_xy_size,
                     &(puser_zone->width),
                     &(puser_zone->height));
-
-            return status;
         }
 
-        error_t set_user_zone(
-                user_zone_t     *puser_zone)
+        void set_user_zone(const user_zone_t * puser_zone)
         {
-
-            error_t  status = ERROR_NONE;
-
-            encode_row_col(
-                    puser_zone->y_centre,
-                    puser_zone->x_centre,
+            encode_row_col( puser_zone->y_centre, puser_zone->x_centre,
                     &(_dyn_cfg.roi_config_user_roi_centre_spad));
 
-            encode_zone_size(
-                    puser_zone->width,
-                    puser_zone->height,
+            encode_zone_size( puser_zone->width, puser_zone->height,
                     &(_dyn_cfg.roi_config_user_roi_requested_global_xy_size));
-
-            return status;
         }
 
-        error_t get_mode_mitigation_roi(
-                user_zone_t     *pmm_roi)
+        void get_mode_mitigation_roi(user_zone_t * pmm_roi)
         {
-
-            error_t  status = ERROR_NONE;
-
             uint8_t  x       = 0;
             uint8_t  y       = 0;
             uint8_t  xy_size = 0;
 
-            decode_row_col(
-                    _nvm_copy_data.roi_config_mode_roi_centre_spad,
-                    &y,
+            decode_row_col( _nvm_copy_data.roi_config_mode_roi_centre_spad, &y,
                     &x);
 
             pmm_roi->x_centre = x;
@@ -3652,8 +3521,6 @@ class VL53L1X {
 
             pmm_roi->height = xy_size >> 4;
             pmm_roi->width  = xy_size & 0x0F;
-
-            return status;
         }
 
         error_t stopRanging(void)
@@ -3675,8 +3542,10 @@ class VL53L1X {
                  DEVICEMEASUREMENTMODE_STOP_MASK) |
                 _measurement_mode;
 
-            auto i2c_buffer_size_bytes = (RGSTR_POWER_MANAGEMENT_GO1_POWER_FORCE +
-                    SYSTEM_CONTROL_I2C_SIZE_BYTES) - RGSTR_ANA_CONFIG_VHV_REF_SEL_VDDPIX;
+            auto i2c_buffer_size_bytes = (
+                    RGSTR_POWER_MANAGEMENT_GO1_POWER_FORCE +
+                    SYSTEM_CONTROL_I2C_SIZE_BYTES) - 
+                RGSTR_ANA_CONFIG_VHV_REF_SEL_VDDPIX;
 
             uint8_t i2c_buffer_offset_bytes = 0;
 
@@ -3742,46 +3611,40 @@ class VL53L1X {
         }
 
         error_t SetMeasurementTimingBudgetMicroSeconds(
-                uint32_t MeasurementTimingBudgetMicroSeconds)
+                const uint32_t MeasurementTimingBudgetMicroSeconds)
         {
-            error_t Status = ERROR_NONE;
-            uint8_t Mm1Enabled;
-            uint8_t Mm2Enabled;
-            uint32_t TimingGuard;
-            uint32_t divisor;
-            uint32_t TimingBudget;
-            uint32_t MmTimeoutUs;
-            PresetModes PresetMode;
-            uint32_t PhaseCalTimeoutUs;
-            uint32_t vhv;
-            int32_t vhv_loops;
-            uint32_t FDAMaxTimingBudgetUs = FDA_MAX_TIMING_BUDGET_US;
+            error_t status = ERROR_NONE;
 
             if (MeasurementTimingBudgetMicroSeconds > 10000000)
-                Status = ERROR_INVALID_PARAMS;
+                status = ERROR_INVALID_PARAMS;
 
-            if (Status == ERROR_NONE) {
-                Status = GetSequenceStepEnable(
-                        SEQUENCESTEP_MM1, &Mm1Enabled);
+            uint8_t Mm1Enabled = 0;
+            if (status == ERROR_NONE) {
+                status = GetSequenceStepEnable(SEQUENCESTEP_MM1, &Mm1Enabled);
             }
 
-            if (Status == ERROR_NONE) {
-                Status = GetSequenceStepEnable(
-                        SEQUENCESTEP_MM2, &Mm2Enabled);
+            uint8_t Mm2Enabled = 0;
+            if (status == ERROR_NONE) {
+                status = GetSequenceStepEnable(SEQUENCESTEP_MM2, &Mm2Enabled);
             }
 
-            if (Status == ERROR_NONE)
-                Status = get_timeouts_us(
-                        &PhaseCalTimeoutUs,
-                        &MmTimeoutUs,
+            uint32_t TimingBudget = 0;
+            uint32_t MmTimeoutUs = 0;
+            uint32_t PhaseCalTimeoutUs = 0;
+            if (status == ERROR_NONE)
+                status = get_timeouts_us( &PhaseCalTimeoutUs, &MmTimeoutUs,
                         &TimingBudget);
 
-            if (Status == ERROR_NONE) {
+            uint32_t TimingGuard = 0;
 
-                PresetMode = CurrentParameters.PresetMode;
+            if (status == ERROR_NONE) {
+
+                auto PresetMode = CurrentParameters.PresetMode;
+
+                auto FDAMaxTimingBudgetUs = FDA_MAX_TIMING_BUDGET_US;
 
                 TimingGuard = 0;
-                divisor = 1;
+                uint32_t divisor = 1;
                 switch (PresetMode) {
                     case PRESETMODE_LITE_RANGING:
                         if ((Mm1Enabled == 1) || (Mm2Enabled == 1))
@@ -3800,116 +3663,106 @@ class VL53L1X {
                         break;
 
                     case PRESETMODE_LOWPOWER_AUTONOMOUS:
-                        FDAMaxTimingBudgetUs *= 2;
-                        vhv = LOWPOWER_AUTO_VHV_LOOP_DURATION_US;
-                        vhv_loops = _low_power_auto_data.vhv_loop_bound;
-                        if (vhv_loops > 0) {
-                            vhv += vhv_loops *
-                                LOWPOWER_AUTO_VHV_LOOP_DURATION_US;
+                        {
+                            FDAMaxTimingBudgetUs *= 2;
+                            auto vhv = LOWPOWER_AUTO_VHV_LOOP_DURATION_US;
+                            auto vhv_loops = _low_power_auto_data.vhv_loop_bound;
+                            if (vhv_loops > 0) {
+                                vhv += vhv_loops *
+                                    LOWPOWER_AUTO_VHV_LOOP_DURATION_US;
+                            }
+                            TimingGuard = LOWPOWER_AUTO_OVERHEAD_BEFORE_A_RANGING +
+                                LOWPOWER_AUTO_OVERHEAD_BETWEEN_A_B_RANGING + vhv;
+                            divisor = 2;
                         }
-                        TimingGuard = LOWPOWER_AUTO_OVERHEAD_BEFORE_A_RANGING +
-                            LOWPOWER_AUTO_OVERHEAD_BETWEEN_A_B_RANGING +
-                            vhv;
-                        divisor = 2;
                         break;
 
                     default:
 
-                        Status = ERROR_MODE_NOT_SUPPORTED;
+                        status = ERROR_MODE_NOT_SUPPORTED;
                 }
 
                 if (MeasurementTimingBudgetMicroSeconds <= TimingGuard)
-                    Status = ERROR_INVALID_PARAMS;
+                    status = ERROR_INVALID_PARAMS;
                 else {
                     TimingBudget = (MeasurementTimingBudgetMicroSeconds
                             - TimingGuard);
                 }
 
-                if (Status == ERROR_NONE) {
+                if (status == ERROR_NONE) {
                     if (TimingBudget > FDAMaxTimingBudgetUs)
-                        Status = ERROR_INVALID_PARAMS;
+                        status = ERROR_INVALID_PARAMS;
                     else {
                         TimingBudget /= divisor;
-                        Status = set_timeouts_us(
+                        status = set_timeouts_us(
                                 PhaseCalTimeoutUs,
                                 MmTimeoutUs,
                                 TimingBudget);
                     }
 
-                    if (Status == ERROR_NONE) {
+                    if (status == ERROR_NONE) {
                         _range_config_timeout_us = TimingBudget;
                     }
                 }
             }
-            if (Status == ERROR_NONE) {
+            if (status == ERROR_NONE) {
                 CurrentParameters.MeasurementTimingBudgetMicroSeconds =
                     MeasurementTimingBudgetMicroSeconds;
             }
 
-            return Status;
+            return status;
         }
 
-        error_t SetDistanceMode(distanceMode_t DistanceMode)
+        error_t SetDistanceMode(const distanceMode_t DistanceMode)
         {
-            error_t Status = ERROR_NONE;
-            PresetModes PresetMode;
-            distanceMode_t InternalDistanceMode;
-            uint32_t inter_measurement_period_ms;
-            uint32_t TimingBudget;
-            uint32_t MmTimeoutUs;
-            uint32_t PhaseCalTimeoutUs;
-            user_zone_t user_zone;
-
-            PresetMode = CurrentParameters.PresetMode;
+            auto PresetMode = CurrentParameters.PresetMode;
 
             if ((DistanceMode != DISTANCEMODE_SHORT) &&
                     (DistanceMode != DISTANCEMODE_MEDIUM) &&
                     (DistanceMode != DISTANCEMODE_LONG))
                 return ERROR_INVALID_PARAMS;
 
-            if (Status == ERROR_NONE) {
-                if ((DistanceMode == DISTANCEMODE_SHORT) ||
-                        (DistanceMode == DISTANCEMODE_MEDIUM))
-                    InternalDistanceMode = DistanceMode;
-                else 
-                    InternalDistanceMode = DISTANCEMODE_LONG;
+            auto InternalDistanceMode = 
+                (DistanceMode == DISTANCEMODE_SHORT ||
+                 DistanceMode == DISTANCEMODE_MEDIUM) ?
+                DistanceMode :
+                DISTANCEMODE_LONG;
+
+            user_zone_t user_zone = {};
+            get_user_zone(&user_zone);
+
+            auto inter_measurement_period_ms = _inter_measurement_period_ms;
+
+            uint32_t TimingBudget = 0;
+            uint32_t MmTimeoutUs = 0;
+            uint32_t PhaseCalTimeoutUs = 0;
+            auto status = get_timeouts_us(&PhaseCalTimeoutUs, &MmTimeoutUs, 
+                    &TimingBudget);
+
+            if (status == ERROR_NONE) {
+                status = helper_set_preset_mode(PresetMode,
+                        InternalDistanceMode, inter_measurement_period_ms);
             }
 
-            if (Status == ERROR_NONE) {
-                Status = get_user_zone(&user_zone);
-            }
-
-            inter_measurement_period_ms =  _inter_measurement_period_ms;
-
-            if (Status == ERROR_NONE)
-                Status = get_timeouts_us(&PhaseCalTimeoutUs,
-                        &MmTimeoutUs, &TimingBudget);
-
-            if (Status == ERROR_NONE) {
-                Status = helper_set_preset_mode(
-                        PresetMode,
-                        InternalDistanceMode,
-                        inter_measurement_period_ms);
-            }
-
-            if (Status == ERROR_NONE) {
+            if (status == ERROR_NONE) {
                 CurrentParameters.InternalDistanceMode = InternalDistanceMode;
                 CurrentParameters.NewDistanceMode = InternalDistanceMode;
                 CurrentParameters.DistanceMode = DistanceMode;
             }
 
-            if (Status == ERROR_NONE) {
-                Status = set_timeouts_us(PhaseCalTimeoutUs,
+            if (status == ERROR_NONE) {
+                status = set_timeouts_us(PhaseCalTimeoutUs,
                         MmTimeoutUs, TimingBudget);
 
-                if (Status == ERROR_NONE)
+                if (status == ERROR_NONE)
                     _range_config_timeout_us = TimingBudget;
             }
 
-            if (Status == ERROR_NONE)
-                Status = set_user_zone(&user_zone);
+            if (status == ERROR_NONE) {
+                set_user_zone(&user_zone);
+            }
 
-            return Status;
+            return status;
         }
 
         error_t checkForDataReady(bool *isDataReady)
@@ -3920,11 +3773,11 @@ class VL53L1X {
             tmp = tmp & 0x10;
             auto interruptPolarity = !(tmp >> 4);
 
-            uint8_t hvStatus = 0;
-            status |= read_byte(RGSTR_GPIO_TIO_HV_STATUS, &hvStatus);
+            uint8_t hvstatus = 0;
+            status |= read_byte(RGSTR_GPIO_TIO_HV_STATUS, &hvstatus);
 
             if (status == ERROR_NONE) {
-                *isDataReady = (hvStatus & 1) == interruptPolarity;
+                *isDataReady = (hvstatus & 1) == interruptPolarity;
             }
 
             return status;
