@@ -27,25 +27,9 @@ void setup(void)
 
 void loop(void)
 {
-    ranger.startRanging();
-
-    while (true) {
-
-        bool dataReady = false;
-
-        ranger.checkForDataReady(&dataReady);
-
-        if (dataReady) {
-            break;
-        }
-
-        delay(1);
-    }
-
     uint16_t distance = 0;
-    ranger.getDistance(&distance);
 
-    ranger.stopRanging();
+    ranger.readDistance(&distance);
 
     Serial.printf("%d mm\n", distance);
 }

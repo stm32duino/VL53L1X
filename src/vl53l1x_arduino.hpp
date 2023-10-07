@@ -82,4 +82,7 @@ VL53L1X::error_t VL53L1X::write_bytes(void * device, const uint16_t rgstr,
     return 0;
 }
 
-
+void VL53L1X::delay_msec(const uint32_t msec)
+{
+    delay(msec);
+}

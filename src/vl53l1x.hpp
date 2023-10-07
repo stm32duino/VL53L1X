@@ -262,6 +262,31 @@ class VL53L1X {
 
         } // init
 
+
+        error_t readDistance(uint16_t * distance)
+        {
+            startRanging();
+
+            while (true) {
+
+                bool dataReady = false;
+
+                checkForDataReady(&dataReady);
+
+                if (dataReady) {
+                    break;
+                }
+
+                delay_msec(1);
+            }
+
+            getDistance(distance);
+
+            stopRanging();
+
+            return ERROR_NONE;
+        }
+
         error_t stopRanging(void)
         {
             return 
@@ -1267,12 +1292,6 @@ class VL53L1X {
         {
             return write_bytes(_device, rgstr, 1, &data);
         }
-
-        error_t read_bytes(void * _device, const uint16_t rgstr, 
-                const uint8_t count, uint8_t *data);
-
-        error_t write_bytes(void * device, const uint16_t rgstr, 
-                const uint8_t count, const uint8_t *data);
 
         enum {
             DEVICESTATE_POWERDOWN              ,
@@ -4608,5 +4627,15 @@ class VL53L1X {
 
             return status;
         }
+
+        // Platform-dependent ------------------------------------------------
+
+        error_t read_bytes(void * _device, const uint16_t rgstr, 
+                const uint8_t count, uint8_t *data);
+
+        error_t write_bytes(void * device, const uint16_t rgstr, 
+                const uint8_t count, const uint8_t *data);
+
+        void delay_msec(const uint32_t msec);
 
 }; // class VL53L1X
