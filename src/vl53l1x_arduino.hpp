@@ -10,7 +10,7 @@
 
 #include <Wire.h>
 
-class VL53L1X : public VL53L1X_Abstract
+class VL53L1X_Arduino : public VL53L1X
 {
     private:
 
@@ -20,7 +20,7 @@ class VL53L1X : public VL53L1X_Abstract
     public:
 
         VL53L1X(TwoWire * twoWire, const uint8_t i2c_addr = 0x29) 
-            : VL53L1X_Abstract(i2c_addr)
+            : VL53L1X(i2c_addr)
         {
             _twoWire = twoWire;
         }
@@ -100,4 +100,5 @@ class VL53L1X : public VL53L1X_Abstract
 
             return 0;
         }
-}; // class VL53L1X
+
+};

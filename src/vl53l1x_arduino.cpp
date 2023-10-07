@@ -2,7 +2,7 @@
 
 #include <Wire.h>
 
-VL53L1X_Abstract::error_t VL53L1X_Abstract::write_bytes(const uint16_t rgstr,
+VL53L1X::error_t VL53L1X::write_bytes(const uint16_t rgstr,
         const uint8_t count, const uint8_t *data)
 {
     Wire.beginTransmission(_i2c_address);
@@ -18,7 +18,7 @@ VL53L1X_Abstract::error_t VL53L1X_Abstract::write_bytes(const uint16_t rgstr,
     return 0;
 }
 
-VL53L1X_Abstract::error_t VL53L1X_Abstract::read_bytes(const uint16_t rgstr, 
+VL53L1X::error_t VL53L1X::read_bytes(const uint16_t rgstr, 
         const uint8_t count, uint8_t *data)
 {
     int status = 0;

@@ -33,7 +33,7 @@
 
 #include <stdint.h>
 
-class VL53L1X_Abstract {
+class VL53L1X {
 
     public:
 
@@ -4607,4 +4607,4 @@ class VL53L1X_Abstract {
             return status;
         }
 
-}; // class VL53L1X_Abstract
+}; // class VL53L1X
