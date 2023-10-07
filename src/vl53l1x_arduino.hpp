@@ -42,15 +42,12 @@ class VL53L1X_Arduino : public VL53L1X
 
     public:
 
-        VL53L1X_Arduino(TwoWire * twoWire = &Wire) 
-            : VL53L1X((void *)twoWire), _twoWire(twoWire)
+        error_t begin(TwoWire * twoWire = &Wire) 
         {
+            return VL53L1X::begin((const void *)twoWire);
         }
-
-    private:
-
-        TwoWire * _twoWire;
 };
+
 
 VL53L1X::error_t VL53L1X::read_bytes(void * device, const uint16_t rgstr, 
         const uint8_t count, uint8_t *data)

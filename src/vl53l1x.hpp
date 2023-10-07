@@ -47,13 +47,14 @@ class VL53L1X {
 
         typedef uint8_t distanceMode_t;
 
-        VL53L1X(void * device = NULL)
+        VL53L1X(void)
         {
-            _device = device;
         }
 
-        error_t begin(const uint8_t addr=0x29)
+        error_t begin(const void * device=NULL, const uint8_t addr=0x29)
         {
+            _device = (void *)device;
+
             _i2c_address = 0x29;
 
             auto status = write_byte(RGSTR_I2C_ADDRESS, addr);
