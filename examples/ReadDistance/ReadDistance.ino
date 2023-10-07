@@ -12,7 +12,7 @@ void setup(void)
 
     Serial.begin(115200);
 
-    status |= ranger.init();
+    status |= ranger.begin();
 
     status |= ranger.SetDistanceMode(VL53L1X::DISTANCEMODE_MEDIUM);
 

@@ -103,7 +103,7 @@ class VL53L1X {
             _device = device;
         }
 
-        error_t init(const uint8_t addr=0x29)
+        error_t begin(const uint8_t addr=0x29)
         {
             _i2c_address = 0x29;
 
