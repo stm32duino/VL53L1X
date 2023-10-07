@@ -4143,8 +4143,8 @@ class VL53L1X {
                 return ERROR_COMMS_BUFFER_TOO_SMALL;
             }
 
-            //*(pbuffer + 0) = _sys_ctrl.power_management_go1_power_force & 0x1;
-            //*(pbuffer + 1) = _sys_ctrl.system_stream_count_ctrl & 0x1;
+            *(pbuffer + 0) = _sys_ctrl.power_management_go1_power_force & 0x1;
+            *(pbuffer + 1) = _sys_ctrl.system_stream_count_ctrl & 0x1;
             *(pbuffer + 2) = _sys_ctrl.firmware_enable & 0x1;
             *(pbuffer + 3) = _sys_ctrl.system_interrupt_clear & 0x3;
             *(pbuffer + 4) = _sys_ctrl.system_mode_start;
