@@ -96,122 +96,123 @@ class VL53L1X {
 
                 if (status == ERROR_NONE)
                     copy_rtn_good_spads_to_buffer( &(_nvm_copy_data),
-                            &(_rtn_good_spads[0])); }
+                            &(_rtn_good_spads[0])); 
+            }
 
+            if (status == ERROR_NONE)
+                status = RdWord(RGSTR_RESULT_OSC_CALIBRATE_VAL,
+                        &(_dbg_results.result_osc_calibrate_val));
+
+            if (_stat_nvm.osc_measured_fast_osc_frequency < 0x1000) {
+                _stat_nvm.osc_measured_fast_osc_frequency = 0xBCCC;
+            }
+
+            if (status == ERROR_NONE) {
+                get_mode_mitigation_roi(&(_mm_roi));
+            }
+
+            if (_optical_centre.x_centre == 0 && _optical_centre.y_centre == 0) {
+                _optical_centre.x_centre = _mm_roi.x_centre << 4;
+                _optical_centre.y_centre = _mm_roi.y_centre << 4;
+            }
+
+            init_refspadchar_config_struct( &(_refspadchar));
+
+            status = init_ssc_config_struct( &(_ssc_cfg));
+
+            status = init_xtalk_config_struct( &(_customer), &(_xtalk_cfg));
+
+            status = init_offset_cal_config_struct( &(_offsetcal_cfg));
+
+            status = init_tuning_parm_storage_struct(&_tuning_params);
+
+            set_vhv_loopbound(TUNINGPARM_VHV_LOOPBOUND_DEFAULT);
+
+            if (status == ERROR_NONE)
+                status = set_preset_mode(
+                        _preset_mode,
+                        _dss_config_target_total_rate_mcps,
+                        _phasecal_config_timeout_us,
+                        _mm_config_timeout_us,
+                        _range_config_timeout_us,
+                        _inter_measurement_period_ms);
+
+            low_power_auto_data_init();
+
+            if (status == ERROR_NONE) {
+
+                CurrentParameters.PresetMode = PRESETMODE_LOWPOWER_AUTONOMOUS;
+            }
+
+            for (uint8_t i=0; i<CHECKENABLE_NUMBER_OF_CHECKS; i++) {
                 if (status == ERROR_NONE)
-                    status = RdWord(RGSTR_RESULT_OSC_CALIBRATE_VAL,
-                            &(_dbg_results.result_osc_calibrate_val));
+                    status = set_limit_check_enable(i, 1);
+                else
+                    break;
+            }
 
-                if (_stat_nvm.osc_measured_fast_osc_frequency < 0x1000) {
-                    _stat_nvm.osc_measured_fast_osc_frequency = 0xBCCC;
-                }
+            if (status == ERROR_NONE) {
+                status = set_limit_check_value(
+                        CHECKENABLE_SIGMA_FINAL_RANGE,
+                        (FixedPoint1616_t)(18 * 65536));
+            }
 
-                if (status == ERROR_NONE) {
-                    get_mode_mitigation_roi(&(_mm_roi));
-                }
+            if (status == ERROR_NONE) {
+                status = set_limit_check_value(
+                        CHECKENABLE_SIGNAL_RATE_FINAL_RANGE,
+                        (FixedPoint1616_t)(25 * 65536 / 100));
+            }
 
-                if (_optical_centre.x_centre == 0 && _optical_centre.y_centre == 0) {
-                    _optical_centre.x_centre = _mm_roi.x_centre << 4;
-                    _optical_centre.y_centre = _mm_roi.y_centre << 4;
-                }
+            uint8_t measurement_mode  = DEVICEMEASUREMENTMODE_BACKTOBACK;
 
-                status = init_refspadchar_config_struct( &(_refspadchar));
+            _measurement_mode = measurement_mode;
 
-                status = init_ssc_config_struct( &(_ssc_cfg));
+            CurrentParameters.NewDistanceMode = DISTANCEMODE_LONG;
 
-                status = init_xtalk_config_struct( &(_customer), &(_xtalk_cfg));
+            CurrentParameters.InternalDistanceMode = DISTANCEMODE_LONG;
 
-                status = init_offset_cal_config_struct( &(_offsetcal_cfg));
+            CurrentParameters.DistanceMode = DISTANCEMODE_LONG;
 
-                status = init_tuning_parm_storage_struct(&_tuning_parms);
+            distanceMode_t DistanceMode = DISTANCEMODE_LONG;
 
-                set_vhv_loopbound(TUNINGPARM_VHV_LOOPBOUND_DEFAULT);
+            PresetModes PresetMode = PRESETMODE_LOWPOWER_AUTONOMOUS;
 
-                if (status == ERROR_NONE)
-                    status = set_preset_mode(
-                            _preset_mode,
-                            _dss_config_target_total_rate_mcps,
-                            _phasecal_config_timeout_us,
-                            _mm_config_timeout_us,
-                            _range_config_timeout_us,
-                            _inter_measurement_period_ms);
+            status = helper_set_preset_mode(PresetMode, DistanceMode, 1000);
 
-                low_power_auto_data_init();
+            if (status == ERROR_NONE) {
 
-                if (status == ERROR_NONE) {
+                CurrentParameters.InternalDistanceMode = DistanceMode;
 
-                    CurrentParameters.PresetMode = PRESETMODE_LOWPOWER_AUTONOMOUS;
-                }
+                CurrentParameters.NewDistanceMode = DistanceMode;
 
-                for (uint8_t i=0; i<CHECKENABLE_NUMBER_OF_CHECKS; i++) {
-                    if (status == ERROR_NONE)
-                        status = set_limit_check_enable(i, 1);
-                    else
-                        break;
-                }
+                if ((PresetMode == PRESETMODE_LITE_RANGING) ||
+                        (PresetMode == PRESETMODE_AUTONOMOUS) ||
+                        (PresetMode == PRESETMODE_LOWPOWER_AUTONOMOUS))
+                    status = SetMeasurementTimingBudgetMicroSeconds(41000);
+                else
+                    status = SetMeasurementTimingBudgetMicroSeconds(33333);
+            }
 
-                if (status == ERROR_NONE) {
-                    status = set_limit_check_value(
-                            CHECKENABLE_SIGMA_FINAL_RANGE,
-                            (FixedPoint1616_t)(18 * 65536));
-                }
+            if (status == ERROR_NONE) {
+                status = set_inter_measurement_period_ms(1000);
+            }
 
-                if (status == ERROR_NONE) {
-                    status = set_limit_check_value(
-                            CHECKENABLE_SIGNAL_RATE_FINAL_RANGE,
-                            (FixedPoint1616_t)(25 * 65536 / 100));
-                }
+            for (uint16_t rgstr = 0x002D; rgstr <= 0x0087; rgstr++) {
+                status |= write_byte(rgstr, DEFAULT_CONFIGURATION[rgstr - 0x002D]);
+            }
 
-                uint8_t measurement_mode  = DEVICEMEASUREMENTMODE_BACKTOBACK;
+            status |= write_byte(RGSTR_SYSTEM_INTERRUPT_CLEAR, 0x01); 
+            status |= write_byte(RGSTR_SYSTEM_MODE_START, 0x40); 
+            status |= write_byte(RGSTR_SYSTEM_INTERRUPT_CLEAR, 0x01);
+            status |= write_byte(RGSTR_VHV_CONFIG_TIMEOUT_MACROP_LOOP_BOUND, 0x09); 
 
-                _measurement_mode = measurement_mode;
+            status |= write_byte(0x0B, 0);											
 
-                CurrentParameters.NewDistanceMode = DISTANCEMODE_LONG;
+            status |= SetMeasurementTimingBudgetMicroSeconds(timingBudgetMsec * 1000);
 
-                CurrentParameters.InternalDistanceMode = DISTANCEMODE_LONG;
+            status |= SetDistanceMode(distanceMode);
 
-                CurrentParameters.DistanceMode = DISTANCEMODE_LONG;
-
-                distanceMode_t DistanceMode = DISTANCEMODE_LONG;
-
-                PresetModes PresetMode = PRESETMODE_LOWPOWER_AUTONOMOUS;
-
-                status = helper_set_preset_mode(PresetMode, DistanceMode, 1000);
-
-                if (status == ERROR_NONE) {
-
-                    CurrentParameters.InternalDistanceMode = DistanceMode;
-
-                    CurrentParameters.NewDistanceMode = DistanceMode;
-
-                    if ((PresetMode == PRESETMODE_LITE_RANGING) ||
-                            (PresetMode == PRESETMODE_AUTONOMOUS) ||
-                            (PresetMode == PRESETMODE_LOWPOWER_AUTONOMOUS))
-                        status = SetMeasurementTimingBudgetMicroSeconds(41000);
-                    else
-                        status = SetMeasurementTimingBudgetMicroSeconds(33333);
-                }
-
-                if (status == ERROR_NONE) {
-                    status = set_inter_measurement_period_ms(1000);
-                }
-
-                for (uint16_t rgstr = 0x002D; rgstr <= 0x0087; rgstr++) {
-                    status |= write_byte(rgstr, DEFAULT_CONFIGURATION[rgstr - 0x002D]);
-                }
-
-                status |= write_byte(RGSTR_SYSTEM_INTERRUPT_CLEAR, 0x01); 
-                status |= write_byte(RGSTR_SYSTEM_MODE_START, 0x40); 
-                status |= write_byte(RGSTR_SYSTEM_INTERRUPT_CLEAR, 0x01);
-                status |= write_byte(RGSTR_VHV_CONFIG_TIMEOUT_MACROP_LOOP_BOUND, 0x09); 
-
-                status |= write_byte(0x0B, 0);											
-
-                status |= SetMeasurementTimingBudgetMicroSeconds(timingBudgetMsec * 1000);
-
-                status |= SetDistanceMode(distanceMode);
-
-                return status; 
+            return status; 
 
         }
 
@@ -982,37 +983,34 @@ class VL53L1X {
 
         typedef uint8_t State;
 
-        static uint16_t FIXEDPOINT1616TOFIXEDPOINT142(FixedPoint1616_t Value) 
+        static uint16_t FIXEDPOINT1616TOFIXEDPOINT142(
+                const FixedPoint1616_t Value) 
         { 
             return (uint16_t)((Value>>14)&0xFFFF);
         }
 
-        static uint16_t FIXEDPOINT1616TOFIXEDPOINT97(FixedPoint1616_t Value) 
+        static uint16_t FIXEDPOINT1616TOFIXEDPOINT97(
+                const FixedPoint1616_t Value) 
         {
             return (uint16_t)((Value>>9)&0xFFFF);
         }
 
         static void i2c_encode_uint16_t(
-                uint16_t    ip_value,
-                uint16_t    count,
-                uint8_t    *pbuffer)
+                const uint16_t ip_value,
+                const uint16_t count,
+                uint8_t *pbuffer)
         {
-            uint16_t   i    = 0;
-            uint16_t   data = 0;
+            auto data =  ip_value;
 
-            data =  ip_value;
-
-            for (i = 0; i < count ; i++) {
+            for (uint16_t i = 0; i < count ; i++) {
                 pbuffer[count-i-1] = (uint8_t)(data & 0x00FF);
                 data = data >> 8;
             }
         }
 
-        static uint16_t i2c_decode_uint16_t(
-                uint16_t    count,
-                uint8_t    *pbuffer)
+        static uint16_t i2c_decode_uint16_t(uint16_t count, uint8_t *pbuffer)
         {
-            uint16_t   value = 0x00;
+            uint16_t value = 0x00;
 
             while (count-- > 0) {
                 value = (value << 8) | (uint16_t)*pbuffer++;
@@ -1022,28 +1020,21 @@ class VL53L1X {
         }
 
         static void i2c_encode_int16_t(
-                int16_t     ip_value,
-                uint16_t    count,
-                uint8_t    *pbuffer)
+                const int16_t ip_value,
+                const uint16_t count,
+                uint8_t *pbuffer)
         {
+            auto data =  ip_value;
 
-            uint16_t   i    = 0;
-            int16_t    data = 0;
-
-            data =  ip_value;
-
-            for (i = 0; i < count ; i++) {
+            for (uint16_t i = 0; i < count ; i++) {
                 pbuffer[count-i-1] = (uint8_t)(data & 0x00FF);
                 data = data >> 8;
             }
         }
 
-        static int16_t i2c_decode_int16_t(
-                uint16_t    count,
-                uint8_t    *pbuffer)
+        static int16_t i2c_decode_int16_t(uint16_t count, uint8_t *pbuffer)
         {
-
-            int16_t    value = 0x00;
+            int16_t value = 0;
 
             if (*pbuffer >= 0x80) {
                 value = 0xFFFF;
@@ -1057,26 +1048,23 @@ class VL53L1X {
         }
 
         static void i2c_encode_uint32_t(
-                uint32_t    ip_value,
-                uint16_t    count,
-                uint8_t    *pbuffer)
+                const uint32_t ip_value,
+                const uint16_t count,
+                uint8_t *pbuffer)
         {
 
-            uint16_t   i    = 0;
-            uint32_t   data = 0;
+            auto data = ip_value;
 
-            data =  ip_value;
-
-            for (i = 0; i < count ; i++) {
+            for (uint16_t i = 0; i < count ; i++) {
                 pbuffer[count-i-1] = (uint8_t)(data & 0x00FF);
                 data = data >> 8;
             }
         }
 
         static void decode_row_col(
-                uint8_t  spad_number,
-                uint8_t  *prow,
-                uint8_t  *pcol)
+                const uint8_t  spad_number,
+                uint8_t *prow,
+                uint8_t *pcol)
         {
 
             if (spad_number > 127) {
@@ -1089,81 +1077,68 @@ class VL53L1X {
         }
 
         static void copy_rtn_good_spads_to_buffer(
-                nvm_copy_data_t  *pdata,
-                uint8_t                 *pbuffer)
+                const nvm_copy_data_t  *pdata,
+                uint8_t  *pbuffer)
         {
-
-            *(pbuffer +  0) = pdata->global_config_spad_enables_rtn_0;
-            *(pbuffer +  1) = pdata->global_config_spad_enables_rtn_1;
-            *(pbuffer +  2) = pdata->global_config_spad_enables_rtn_2;
-            *(pbuffer +  3) = pdata->global_config_spad_enables_rtn_3;
-            *(pbuffer +  4) = pdata->global_config_spad_enables_rtn_4;
-            *(pbuffer +  5) = pdata->global_config_spad_enables_rtn_5;
-            *(pbuffer +  6) = pdata->global_config_spad_enables_rtn_6;
-            *(pbuffer +  7) = pdata->global_config_spad_enables_rtn_7;
-            *(pbuffer +  8) = pdata->global_config_spad_enables_rtn_8;
-            *(pbuffer +  9) = pdata->global_config_spad_enables_rtn_9;
-            *(pbuffer + 10) = pdata->global_config_spad_enables_rtn_10;
-            *(pbuffer + 11) = pdata->global_config_spad_enables_rtn_11;
-            *(pbuffer + 12) = pdata->global_config_spad_enables_rtn_12;
-            *(pbuffer + 13) = pdata->global_config_spad_enables_rtn_13;
-            *(pbuffer + 14) = pdata->global_config_spad_enables_rtn_14;
-            *(pbuffer + 15) = pdata->global_config_spad_enables_rtn_15;
-            *(pbuffer + 16) = pdata->global_config_spad_enables_rtn_16;
-            *(pbuffer + 17) = pdata->global_config_spad_enables_rtn_17;
-            *(pbuffer + 18) = pdata->global_config_spad_enables_rtn_18;
-            *(pbuffer + 19) = pdata->global_config_spad_enables_rtn_19;
-            *(pbuffer + 20) = pdata->global_config_spad_enables_rtn_20;
-            *(pbuffer + 21) = pdata->global_config_spad_enables_rtn_21;
-            *(pbuffer + 22) = pdata->global_config_spad_enables_rtn_22;
-            *(pbuffer + 23) = pdata->global_config_spad_enables_rtn_23;
-            *(pbuffer + 24) = pdata->global_config_spad_enables_rtn_24;
-            *(pbuffer + 25) = pdata->global_config_spad_enables_rtn_25;
-            *(pbuffer + 26) = pdata->global_config_spad_enables_rtn_26;
-            *(pbuffer + 27) = pdata->global_config_spad_enables_rtn_27;
-            *(pbuffer + 28) = pdata->global_config_spad_enables_rtn_28;
-            *(pbuffer + 29) = pdata->global_config_spad_enables_rtn_29;
-            *(pbuffer + 30) = pdata->global_config_spad_enables_rtn_30;
-            *(pbuffer + 31) = pdata->global_config_spad_enables_rtn_31;
+            pbuffer[ 0] = pdata->global_config_spad_enables_rtn_0;
+            pbuffer[ 1] = pdata->global_config_spad_enables_rtn_1;
+            pbuffer[ 2] = pdata->global_config_spad_enables_rtn_2;
+            pbuffer[ 3] = pdata->global_config_spad_enables_rtn_3;
+            pbuffer[ 4] = pdata->global_config_spad_enables_rtn_4;
+            pbuffer[ 5] = pdata->global_config_spad_enables_rtn_5;
+            pbuffer[ 6] = pdata->global_config_spad_enables_rtn_6;
+            pbuffer[ 7] = pdata->global_config_spad_enables_rtn_7;
+            pbuffer[ 8] = pdata->global_config_spad_enables_rtn_8;
+            pbuffer[ 9] = pdata->global_config_spad_enables_rtn_9;
+            pbuffer[10] = pdata->global_config_spad_enables_rtn_10;
+            pbuffer[11] = pdata->global_config_spad_enables_rtn_11;
+            pbuffer[12] = pdata->global_config_spad_enables_rtn_12;
+            pbuffer[13] = pdata->global_config_spad_enables_rtn_13;
+            pbuffer[14] = pdata->global_config_spad_enables_rtn_14;
+            pbuffer[15] = pdata->global_config_spad_enables_rtn_15;
+            pbuffer[16] = pdata->global_config_spad_enables_rtn_16;
+            pbuffer[17] = pdata->global_config_spad_enables_rtn_17;
+            pbuffer[18] = pdata->global_config_spad_enables_rtn_18;
+            pbuffer[19] = pdata->global_config_spad_enables_rtn_19;
+            pbuffer[20] = pdata->global_config_spad_enables_rtn_20;
+            pbuffer[21] = pdata->global_config_spad_enables_rtn_21;
+            pbuffer[22] = pdata->global_config_spad_enables_rtn_22;
+            pbuffer[23] = pdata->global_config_spad_enables_rtn_23;
+            pbuffer[24] = pdata->global_config_spad_enables_rtn_24;
+            pbuffer[25] = pdata->global_config_spad_enables_rtn_25;
+            pbuffer[26] = pdata->global_config_spad_enables_rtn_26;
+            pbuffer[27] = pdata->global_config_spad_enables_rtn_27;
+            pbuffer[28] = pdata->global_config_spad_enables_rtn_28;
+            pbuffer[29] = pdata->global_config_spad_enables_rtn_29;
+            pbuffer[30] = pdata->global_config_spad_enables_rtn_30;
+            pbuffer[31] = pdata->global_config_spad_enables_rtn_31;
         }
 
         static uint32_t decode_timeout(uint16_t encoded_timeout)
         {
-
-            uint32_t timeout_macro_clks = 0;
-
-            timeout_macro_clks = ((uint32_t) (encoded_timeout & 0x00FF)
+            uint32_t timeout_macro_clks = ((uint32_t) (encoded_timeout & 0x00FF)
                     << (uint32_t) ((encoded_timeout & 0xFF00) >> 8)) + 1;
 
             return timeout_macro_clks;
         }
 
         static uint32_t calc_decoded_timeout_us(
-                uint16_t timeout_encoded,
-                uint32_t macro_period_us)
+                const uint16_t timeout_encoded,
+                const uint32_t macro_period_us)
         {
+            auto timeout_mclks = decode_timeout(timeout_encoded);
 
-            uint32_t timeout_mclks  = 0;
-            uint32_t timeout_us     = 0;
-
-            timeout_mclks =
-                decode_timeout(timeout_encoded);
-
-            timeout_us    =
-                calc_timeout_us(timeout_mclks, macro_period_us);
-
-            return timeout_us;
+            return calc_timeout_us(timeout_mclks, macro_period_us);
         }
 
-        static uint16_t encode_timeout(uint32_t timeout_mclks)
+        static uint16_t encode_timeout(const uint32_t timeout_mclks)
         {
-
             uint16_t encoded_timeout = 0;
-            uint32_t ls_byte = 0;
-            uint16_t ms_byte = 0;
 
             if (timeout_mclks > 0) {
-                ls_byte = timeout_mclks - 1;
+
+                uint32_t ls_byte = timeout_mclks - 1;
+                uint16_t ms_byte = 0;
 
                 while ((ls_byte & 0xFFFFFF00) > 0) {
                     ls_byte = ls_byte >> 1;
@@ -1177,35 +1152,20 @@ class VL53L1X {
             return encoded_timeout;
         }
 
-        static uint32_t calc_timeout_mclks(
-                uint32_t timeout_us,
-                uint32_t macro_period_us)
+        static uint32_t calc_timeout_mclks(const uint32_t timeout_us,
+                const uint32_t macro_period_us)
         {
-
-            uint32_t timeout_mclks   = 0;
-
-            timeout_mclks   =
-                ((timeout_us << 12) + (macro_period_us>>1)) /
-                macro_period_us;
-
-            return timeout_mclks;
+            return ((timeout_us << 12) + 
+                    (macro_period_us>>1)) / macro_period_us;
         }
 
-        static uint16_t calc_encoded_timeout(
-                uint32_t timeout_us,
-                uint32_t macro_period_us)
+        static uint16_t calc_encoded_timeout(const uint32_t timeout_us,
+                const uint32_t macro_period_us)
         {
-
-            uint32_t timeout_mclks   = 0;
-            uint16_t timeout_encoded = 0;
-
-            timeout_mclks   =
+            auto timeout_mclks = 
                 calc_timeout_mclks(timeout_us, macro_period_us);
 
-            timeout_encoded =
-                encode_timeout(timeout_mclks);
-
-            return timeout_encoded;
+            return encode_timeout(timeout_mclks);
         }
 
         static uint32_t calc_timeout_us(
@@ -1226,29 +1186,19 @@ class VL53L1X {
         }
 
         static uint16_t calc_range_ignore_threshold(
-                uint32_t central_rate,
-                int16_t  x_gradient,
-                int16_t  y_gradient,
-                uint8_t  rate_mult)
+                const uint32_t central_rate,
+                const int16_t  x_gradient,
+                const int16_t  y_gradient,
+                const uint8_t  rate_mult)
         {
+            int32_t central_rate_int = ((int32_t)central_rate * (1 << 4)) / (1000);
 
-            int32_t    range_ignore_thresh_int  = 0;
-            uint16_t   range_ignore_thresh_kcps = 0;
-            int32_t    central_rate_int         = 0;
-            int16_t    x_gradient_int           = 0;
-            int16_t    y_gradient_int           = 0;
+            int16_t x_gradient_int = x_gradient < 0 ?  -x_gradient : 0;
 
-            central_rate_int = ((int32_t)central_rate * (1 << 4)) / (1000);
+            int16_t y_gradient_int = y_gradient < 0 ?  -y_gradient : 0;
 
-            if (x_gradient < 0) {
-                x_gradient_int = x_gradient * -1;
-            }
-
-            if (y_gradient < 0) {
-                y_gradient_int = y_gradient * -1;
-            }
-
-            range_ignore_thresh_int = (8 * x_gradient_int * 4) + (8 * y_gradient_int * 4);
+            int32_t range_ignore_thresh_int = 
+                (8 * x_gradient_int * 4) + (8 * y_gradient_int * 4);
 
             range_ignore_thresh_int = range_ignore_thresh_int / 1000;
 
@@ -1258,44 +1208,31 @@ class VL53L1X {
 
             range_ignore_thresh_int = (range_ignore_thresh_int + (1<<4)) / (1<<5);
 
-            if (range_ignore_thresh_int > 0xFFFF) {
-                range_ignore_thresh_kcps = 0xFFFF;
-            } else {
-                range_ignore_thresh_kcps = (uint16_t)range_ignore_thresh_int;
-            }
-
-            return range_ignore_thresh_kcps;
+            return 
+                range_ignore_thresh_int > 0xFFFF ?
+                0xFFFF :
+                (uint16_t)range_ignore_thresh_int;
         }
 
-        static void encode_row_col(
-                uint8_t  row,
-                uint8_t  col,
-                uint8_t *pspad_number)
+        static uint8_t encode_row_col(const uint8_t  row, const uint8_t  col)
         {
-
-            if (row > 7) {
-                *pspad_number = 128 + (col << 3) + (15-row);
-            } else {
-                *pspad_number = ((15-col) << 3) + row;
-            }
+            return row > 7 ?  
+                128 + (col << 3) + (15-row) : 
+                ((15-col) << 3) + row;
         }
 
-        static void encode_zone_size(
-                uint8_t  width,
-                uint8_t  height,
-                uint8_t *pencoded_xy_size)
+        static uint8_t encode_zone_size(const uint8_t  width,
+                const uint8_t height)
         {
-
-            *pencoded_xy_size = (height << 4) + width;
+            return (height << 4) + width;
 
         }
 
-        static void decode_zone_size( uint8_t  encoded_xy_size, 
+        static void decode_zone_size(const uint8_t  encoded_xy_size, 
                 uint8_t  *pwidth, uint8_t  *pheight)
         {
             *pheight = encoded_xy_size >> 4;
             *pwidth  = encoded_xy_size & 0x0F;
-
         }
 
         uint8_t   _wait_method;
@@ -1318,7 +1255,7 @@ class VL53L1X {
         gain_calibration_data_t      _gain_cal;
         user_zone_t                  _mm_roi;
         optical_centre_t             _optical_centre;
-        tuning_parm_storage_t        _tuning_parms;
+        tuning_parm_storage_t        _tuning_params;
         uint8_t _rtn_good_spads[32];
         refspadchar_config_t         _refspadchar;
         ssc_config_t                 _ssc_cfg;
@@ -1370,18 +1307,12 @@ class VL53L1X {
             return write_bytes(_device, rgstr, 1, &data);
         }
 
-        error_t update_ll_driver_cfg_state(void);
-
-        error_t i2c_decode_static_nvm_managed(
-                uint16_t                   buf_size,
-                uint8_t                   *pbuffer,
-                static_nvm_managed_t  *pdata)
+        error_t i2c_decode_static_nvm_managed(const uint16_t buf_size,
+                uint8_t  *pbuffer, static_nvm_managed_t  *pdata)
         {
-
-            error_t status = ERROR_NONE;
-
-            if (STATIC_NVM_MANAGED_I2C_SIZE_BYTES > buf_size)
+            if (STATIC_NVM_MANAGED_I2C_SIZE_BYTES > buf_size) {
                 return ERROR_COMMS_BUFFER_TOO_SMALL;
+            }
 
             pdata->i2c_slave_device_address =
                 (*(pbuffer +   0)) & 0x7F;
@@ -1404,37 +1335,32 @@ class VL53L1X {
             pdata->vhv_config_init =
                 (*(pbuffer +  10));
 
-            return status;
+            return ERROR_NONE;
         }
 
-        error_t get_static_nvm_managed(
-                static_nvm_managed_t  *pdata)
+        error_t get_static_nvm_managed(static_nvm_managed_t  *pdata)
         {
+            uint8_t comms_buffer[STATIC_NVM_MANAGED_I2C_SIZE_BYTES] = {};
 
-            error_t status = ERROR_NONE;
-            uint8_t comms_buffer[STATIC_NVM_MANAGED_I2C_SIZE_BYTES];
+            auto status = read_bytes(_device, RGSTR_I2C_ADDRESS, 
+                    STATIC_NVM_MANAGED_I2C_SIZE_BYTES, comms_buffer);
 
-            if (status == ERROR_NONE) 
-                status = read_bytes(_device, RGSTR_I2C_ADDRESS, 
-                        STATIC_NVM_MANAGED_I2C_SIZE_BYTES, comms_buffer);
-
-            if (status == ERROR_NONE)
+            if (status == ERROR_NONE) {
                 status = i2c_decode_static_nvm_managed(
                         STATIC_NVM_MANAGED_I2C_SIZE_BYTES,
                         comms_buffer,
                         pdata);
+            }
 
             return status;
         }
 
-        error_t i2c_encode_customer_nvm_managed(
-                uint16_t buf_size, uint8_t *pbuffer)
+        error_t i2c_encode_customer_nvm_managed(const uint16_t buf_size, 
+                uint8_t *pbuffer)
         {
-
-            error_t status = ERROR_NONE;
-
-            if (CUSTOMER_NVM_MANAGED_I2C_SIZE_BYTES > buf_size)
+            if (CUSTOMER_NVM_MANAGED_I2C_SIZE_BYTES > buf_size) {
                 return ERROR_COMMS_BUFFER_TOO_SMALL;
+            }
 
             *(pbuffer +   0) =
                 _customer.global_config_spad_enables_ref_0;
@@ -1483,19 +1409,16 @@ class VL53L1X {
                     2,
                     pbuffer +  21);
 
-            return status;
+            return ERROR_NONE;
         }
 
-        error_t i2c_decode_customer_nvm_managed(
-                uint16_t                   buf_size,
-                uint8_t                   *pbuffer,
-                customer_nvm_managed_t  *pdata)
+        error_t i2c_decode_customer_nvm_managed(const uint16_t buf_size,
+                uint8_t  *pbuffer, customer_nvm_managed_t *pdata)
         {
 
-            error_t status = ERROR_NONE;
-
-            if (CUSTOMER_NVM_MANAGED_I2C_SIZE_BYTES > buf_size)
+            if (CUSTOMER_NVM_MANAGED_I2C_SIZE_BYTES > buf_size) {
                 return ERROR_COMMS_BUFFER_TOO_SMALL;
+            }
 
             pdata->global_config_spad_enables_ref_0 =
                 (*(pbuffer +   0));
@@ -1530,15 +1453,15 @@ class VL53L1X {
             pdata->mm_config_outer_offset_mm =
                 (i2c_decode_int16_t(2, pbuffer +  21));
 
-            return status;
+            return ERROR_NONE;
         }
 
         error_t get_customer_nvm_managed(
                 customer_nvm_managed_t  *pdata)
         {
-
             error_t status = ERROR_NONE;
-            uint8_t comms_buffer[CUSTOMER_NVM_MANAGED_I2C_SIZE_BYTES];
+
+            uint8_t comms_buffer[CUSTOMER_NVM_MANAGED_I2C_SIZE_BYTES] = {};
 
             if (status == ERROR_NONE) 
                 status = read_bytes(_device,
@@ -1554,13 +1477,13 @@ class VL53L1X {
             return status;
         }
 
-        error_t i2c_encode_static_config(uint16_t buf_size, uint8_t  *pbuffer)
+        error_t i2c_encode_static_config(const uint16_t buf_size, 
+                uint8_t  *pbuffer)
         {
 
-            error_t status = ERROR_NONE;
-
-            if (STATIC_CONFIG_I2C_SIZE_BYTES > buf_size)
+            if (STATIC_CONFIG_I2C_SIZE_BYTES > buf_size) {
                 return ERROR_COMMS_BUFFER_TOO_SMALL;
+            }
 
             i2c_encode_uint16_t(
                     _stat_cfg.dss_config_target_total_rate_mcps,
@@ -1627,15 +1550,15 @@ class VL53L1X {
             *(pbuffer +  31) =
                 _stat_cfg.sd_config_reset_stages_lsb;
 
-            return status;
+            return ERROR_NONE;
         }
 
-        error_t i2c_encode_general_config(uint16_t buf_size, uint8_t  *pbuffer)
+        error_t i2c_encode_general_config(const uint16_t buf_size, 
+                uint8_t  *pbuffer)
         {
-            error_t status = ERROR_NONE;
-
-            if (GENERAL_CONFIG_I2C_SIZE_BYTES > buf_size)
+            if (GENERAL_CONFIG_I2C_SIZE_BYTES > buf_size) {
                 return ERROR_COMMS_BUFFER_TOO_SMALL;
+            }
 
             *(pbuffer +   0) =
                 _gen_cfg.gph_config_stream_count_update_value;
@@ -1680,15 +1603,15 @@ class VL53L1X {
             *(pbuffer +  21) =
                 _gen_cfg.dss_config_min_spads_limit;
 
-            return status;
+            return ERROR_NONE;
         }
 
-        error_t i2c_encode_timing_config(uint16_t buf_size, uint8_t  *pbuffer)
+        error_t i2c_encode_timing_config(const uint16_t buf_size, 
+                uint8_t  *pbuffer)
         {
-            error_t status = ERROR_NONE;
-
-            if (TIMING_CONFIG_I2C_SIZE_BYTES > buf_size)
+            if (TIMING_CONFIG_I2C_SIZE_BYTES > buf_size) {
                 return ERROR_COMMS_BUFFER_TOO_SMALL;
+            }
 
             *(pbuffer +   0) =
                 _tim_cfg.mm_config_timeout_macrop_a_hi & 0xF;
@@ -1729,15 +1652,15 @@ class VL53L1X {
             *(pbuffer +  22) =
                 _tim_cfg.system_fractional_enable & 0x1;
 
-            return status;
+            return ERROR_NONE;
         }
 
-        error_t i2c_encode_dynamic_config(uint16_t buf_size, uint8_t  *pbuffer)
+        error_t i2c_encode_dynamic_config(const uint16_t buf_size, 
+                uint8_t  *pbuffer)
         {
-            error_t status = ERROR_NONE;
-
-            if (DYNAMIC_CONFIG_I2C_SIZE_BYTES > buf_size)
+            if (DYNAMIC_CONFIG_I2C_SIZE_BYTES > buf_size) {
                 return ERROR_COMMS_BUFFER_TOO_SMALL;
+            }
 
             *(pbuffer +   0) =
                 _dyn_cfg.system_grouped_parameter_hold_0 & 0x3;
@@ -1776,19 +1699,15 @@ class VL53L1X {
             *(pbuffer +  17) =
                 _dyn_cfg.system_grouped_parameter_hold & 0x3;
 
-            return status;
+            return ERROR_NONE;
         }
 
-        error_t i2c_decode_nvm_copy_data(
-                uint16_t                   buf_size,
-                uint8_t                   *pbuffer,
-                nvm_copy_data_t    *pdata)
+        error_t i2c_decode_nvm_copy_data(const uint16_t buf_size, 
+                uint8_t *pbuffer, nvm_copy_data_t *pdata)
         {
-
-            error_t status = ERROR_NONE;
-
-            if (NVM_COPY_DATA_I2C_SIZE_BYTES > buf_size)
+            if (NVM_COPY_DATA_I2C_SIZE_BYTES > buf_size) {
                 return ERROR_COMMS_BUFFER_TOO_SMALL;
+            }
 
             pdata->identification_model_id =
                 (*(pbuffer +   0));
@@ -1887,25 +1806,20 @@ class VL53L1X {
             pdata->roi_config_mode_roi_xy_size =
                 (*(pbuffer +  48));
 
-            return status;
+            return ERROR_NONE;
         }
 
-        error_t get_nvm_copy_data(
-                nvm_copy_data_t    *pdata)
+        error_t get_nvm_copy_data(nvm_copy_data_t * pdata)
         {
+            uint8_t comms_buffer[NVM_COPY_DATA_I2C_SIZE_BYTES] = {};
 
-            error_t status = ERROR_NONE;
-            uint8_t comms_buffer[NVM_COPY_DATA_I2C_SIZE_BYTES];
+            auto status = read_bytes(_device, RGSTR_IDENTIFICATION_MODEL_ID,
+                    NVM_COPY_DATA_I2C_SIZE_BYTES, comms_buffer);
 
-            if (status == ERROR_NONE) 
-                status = read_bytes(_device, RGSTR_IDENTIFICATION_MODEL_ID,
-                        NVM_COPY_DATA_I2C_SIZE_BYTES, comms_buffer);
-
-            if (status == ERROR_NONE)
-                status = i2c_decode_nvm_copy_data(
-                        NVM_COPY_DATA_I2C_SIZE_BYTES,
-                        comms_buffer,
-                        pdata);
+            if (status == ERROR_NONE) {
+                status = i2c_decode_nvm_copy_data(NVM_COPY_DATA_I2C_SIZE_BYTES,
+                        comms_buffer, pdata);
+            }
 
             return status;
         }
@@ -1943,52 +1857,25 @@ class VL53L1X {
             return status;
         }
 
-        uint32_t calc_pll_period_us(
-                uint16_t  fast_osc_frequency)
+        uint32_t calc_macro_period_us(const uint16_t fast_osc_frequency,
+                const uint8_t vcsel_period)
         {
+            uint32_t pll_period_us = (0x01 << 30) / fast_osc_frequency;
 
-            uint32_t  pll_period_us        = 0;
+            uint8_t vcsel_period_pclks = (vcsel_period + 1) << 1;
 
-            pll_period_us = (0x01 << 30) / fast_osc_frequency;
-
-            return pll_period_us;
-        }
-
-        uint8_t decode_vcsel_period(uint8_t vcsel_period_reg)
-        {
-
-            uint8_t vcsel_period_pclks = 0;
-
-            vcsel_period_pclks = (vcsel_period_reg + 1) << 1;
-
-            return vcsel_period_pclks;
-        }
-
-        uint32_t calc_macro_period_us(
-                uint16_t  fast_osc_frequency,
-                uint8_t   vcsel_period)
-        {
-
-            uint32_t  pll_period_us        = 0;
-            uint8_t   vcsel_period_pclks   = 0;
-            uint32_t  macro_period_us      = 0;
-
-            pll_period_us = calc_pll_period_us(fast_osc_frequency);
-
-            vcsel_period_pclks = decode_vcsel_period(vcsel_period);
-
-            macro_period_us =
+            uint32_t macro_period_us =
                 (uint32_t)MACRO_PERIOD_VCSEL_PERIODS *
                 pll_period_us;
-            macro_period_us = macro_period_us >> 6;
 
+            macro_period_us = macro_period_us >> 6;
             macro_period_us = macro_period_us * (uint32_t)vcsel_period_pclks;
             macro_period_us = macro_period_us >> 6;
 
             return macro_period_us;
         }
 
-       error_t calc_timeout_register_values(
+        error_t calc_timeout_register_values(
                 const uint32_t phasecal_config_timeout_us,
                 const uint32_t mm_config_timeout_us,
                 const uint32_t range_config_timeout_us,
@@ -2088,9 +1975,9 @@ class VL53L1X {
         }
 
         error_t get_timeouts_us(
-                uint32_t            *pphasecal_config_timeout_us,
-                uint32_t            *pmm_config_timeout_us,
-                uint32_t			*prange_config_timeout_us)
+                uint32_t *pphasecal_config_timeout_us,
+                uint32_t *pmm_config_timeout_us,
+                uint32_t *prange_config_timeout_us)
         {
 
             error_t  status = ERROR_NONE;
@@ -2141,11 +2028,9 @@ class VL53L1X {
             return status;
         }
 
-        error_t get_sequence_config_bit(
-                DeviceSequenceConfig   bit_id,
-                uint8_t                      *pvalue)
+        error_t get_sequence_config_bit(const DeviceSequenceConfig bit_id,
+                uint8_t *pvalue)
         {
-
             error_t  status = ERROR_NONE;
 
             uint8_t  bit_mask        = 0x01;
@@ -2169,12 +2054,8 @@ class VL53L1X {
             return status;
         }
 
-        error_t init_refspadchar_config_struct(
-                refspadchar_config_t   *pdata)
+        void init_refspadchar_config_struct(refspadchar_config_t   *pdata)
         {
-
-            error_t  status = ERROR_NONE;
-
             pdata->device_test_mode =
                 TUNINGPARM_REFSPADCHAR_DEVICE_TEST_MODE_DEFAULT;
             pdata->vcsel_period              =
@@ -2187,14 +2068,10 @@ class VL53L1X {
                 TUNINGPARM_REFSPADCHAR_MIN_COUNTRATE_LIMIT_MCPS_DEFAULT;
             pdata->max_count_rate_limit_mcps =
                 TUNINGPARM_REFSPADCHAR_MAX_COUNTRATE_LIMIT_MCPS_DEFAULT;
-
-            return status;
         }
 
-        error_t init_ssc_config_struct(
-                ssc_config_t   *pdata)
+        error_t init_ssc_config_struct(ssc_config_t  *pdata)
         {
-
             error_t  status = ERROR_NONE;
 
             pdata->array_select = DEVICESSCARRAY_RTN;
@@ -2215,9 +2092,8 @@ class VL53L1X {
             return status;
         }
 
-        error_t init_xtalk_config_struct(
-                customer_nvm_managed_t *pnvm,
-                xtalk_config_t   *pdata)
+        error_t init_xtalk_config_struct(customer_nvm_managed_t *pnvm,
+                xtalk_config_t *pdata)
         {
 
             error_t  status = ERROR_NONE;
@@ -2264,8 +2140,7 @@ class VL53L1X {
             return status;
         }
 
-        error_t init_offset_cal_config_struct(
-                offsetcal_config_t   *pdata)
+        error_t init_offset_cal_config_struct(offsetcal_config_t   *pdata)
         {
 
             error_t  status = ERROR_NONE;
@@ -2292,10 +2167,8 @@ class VL53L1X {
             return status;
         }
 
-        error_t init_tuning_parm_storage_struct(
-                tuning_parm_storage_t   *pdata)
+        error_t init_tuning_parm_storage_struct(tuning_parm_storage_t   *pdata)
         {
-
             error_t  status = ERROR_NONE;
 
             pdata->tp_tuning_parm_version              =
@@ -2376,7 +2249,8 @@ class VL53L1X {
             return status;
         }
 
-        error_t set_inter_measurement_period_ms(uint32_t inter_measurement_period_ms)
+        error_t set_inter_measurement_period_ms(
+                const uint32_t inter_measurement_period_ms)
         {
             error_t  status = ERROR_NONE;
 
@@ -2395,10 +2269,10 @@ class VL53L1X {
 
         error_t get_preset_mode_timing_cfg(
                 DevicePresetModes     device_preset_mode,
-                uint16_t                    *pdss_config_target_total_rate_mcps,
-                uint32_t                    *pphasecal_config_timeout_us,
-                uint32_t                    *pmm_config_timeout_us,
-                uint32_t                    *prange_config_timeout_us)
+                uint16_t *pdss_config_target_total_rate_mcps,
+                uint32_t *pphasecal_config_timeout_us,
+                uint32_t *pmm_config_timeout_us,
+                uint32_t *prange_config_timeout_us)
         {
             error_t  status = ERROR_NONE;
 
@@ -2411,13 +2285,13 @@ class VL53L1X {
                 case DEVICEPRESETMODE_STANDARD_RANGING_MM2_CAL:
                 case DEVICEPRESETMODE_OLT:
                     *pdss_config_target_total_rate_mcps =
-                        _tuning_parms.tp_dss_target_lite_mcps;
+                        _tuning_params.tp_dss_target_lite_mcps;
                     *pphasecal_config_timeout_us =
-                        _tuning_parms.tp_phasecal_timeout_lite_us;
+                        _tuning_params.tp_phasecal_timeout_lite_us;
                     *pmm_config_timeout_us =
-                        _tuning_parms.tp_mm_timeout_lite_us;
+                        _tuning_params.tp_mm_timeout_lite_us;
                     *prange_config_timeout_us =
-                        _tuning_parms.tp_range_timeout_lite_us;
+                        _tuning_params.tp_range_timeout_lite_us;
                     break;
 
                 case DEVICEPRESETMODE_TIMED_RANGING:
@@ -2425,26 +2299,26 @@ class VL53L1X {
                 case DEVICEPRESETMODE_TIMED_RANGING_LONG_RANGE:
                 case DEVICEPRESETMODE_SINGLESHOT_RANGING:
                     *pdss_config_target_total_rate_mcps =
-                        _tuning_parms.tp_dss_target_timed_mcps;
+                        _tuning_params.tp_dss_target_timed_mcps;
                     *pphasecal_config_timeout_us =
-                        _tuning_parms.tp_phasecal_timeout_timed_us;
+                        _tuning_params.tp_phasecal_timeout_timed_us;
                     *pmm_config_timeout_us =
-                        _tuning_parms.tp_mm_timeout_timed_us;
+                        _tuning_params.tp_mm_timeout_timed_us;
                     *prange_config_timeout_us =
-                        _tuning_parms.tp_range_timeout_timed_us;
+                        _tuning_params.tp_range_timeout_timed_us;
                     break;
 
                 case DEVICEPRESETMODE_LOWPOWERAUTO_SHORT_RANGE:
                 case DEVICEPRESETMODE_LOWPOWERAUTO_MEDIUM_RANGE:
                 case DEVICEPRESETMODE_LOWPOWERAUTO_LONG_RANGE:
                     *pdss_config_target_total_rate_mcps =
-                        _tuning_parms.tp_dss_target_timed_mcps;
+                        _tuning_params.tp_dss_target_timed_mcps;
                     *pphasecal_config_timeout_us =
-                        _tuning_parms.tp_phasecal_timeout_timed_us;
+                        _tuning_params.tp_phasecal_timeout_timed_us;
                     *pmm_config_timeout_us =
-                        _tuning_parms.tp_mm_timeout_lpa_us;
+                        _tuning_params.tp_mm_timeout_lpa_us;
                     *prange_config_timeout_us =
-                        _tuning_parms.tp_range_timeout_lpa_us;
+                        _tuning_params.tp_range_timeout_lpa_us;
                     break;
 
                 default:
@@ -2509,11 +2383,11 @@ class VL53L1X {
             _stat_cfg.ana_config_fast_osc_config_ctrl                = 0x00;
 
             _stat_cfg.sigma_estimator_effective_pulse_width_ns        =
-                _tuning_parms.tp_lite_sigma_est_pulse_width_ns;
+                _tuning_params.tp_lite_sigma_est_pulse_width_ns;
             _stat_cfg.sigma_estimator_effective_ambient_width_ns      =
-                _tuning_parms.tp_lite_sigma_est_amb_width_ns;
+                _tuning_params.tp_lite_sigma_est_amb_width_ns;
             _stat_cfg.sigma_estimator_sigma_ref_mm                    =
-                _tuning_parms.tp_lite_sigma_ref_mm;
+                _tuning_params.tp_lite_sigma_ref_mm;
 
             _stat_cfg.algo_crosstalk_compensation_valid_height_mm     = 0x01;
             _stat_cfg.spare_host_config_static_config_spare_0         = 0x00;
@@ -2523,10 +2397,10 @@ class VL53L1X {
 
             _stat_cfg.algo_range_ignore_valid_height_mm               = 0xff;
             _stat_cfg.algo_range_min_clip                             =
-                _tuning_parms.tp_lite_min_clip;
+                _tuning_params.tp_lite_min_clip;
 
             _stat_cfg.algo_consistency_check_tolerance               =
-                _tuning_parms.tp_consistency_lite_phase_tolerance;
+                _tuning_params.tp_consistency_lite_phase_tolerance;
             _stat_cfg.spare_host_config_static_config_spare_2         = 0x00;
             _stat_cfg.sd_config_reset_stages_msb                      = 0x00;
             _stat_cfg.sd_config_reset_stages_lsb                      = 0x00;
@@ -2538,13 +2412,13 @@ class VL53L1X {
             _gen_cfg.cal_config_vcsel_start                         = 0x0B;
 
             _gen_cfg.cal_config_repeat_rate                         =
-                _tuning_parms.tp_cal_repeat_rate;
+                _tuning_params.tp_cal_repeat_rate;
             _gen_cfg.global_config_vcsel_width                      = 0x02;
 
             _gen_cfg.phasecal_config_timeout_macrop                 = 0x0D;
 
             _gen_cfg.phasecal_config_target                         =
-                _tuning_parms.tp_phasecal_target;
+                _tuning_params.tp_phasecal_target;
             _gen_cfg.phasecal_config_override                       = 0x00;
             _gen_cfg.dss_config_roi_mode_control =
                 DEVICEDSSMODE_TARGET_RATE;
@@ -2575,10 +2449,10 @@ class VL53L1X {
             _tim_cfg.range_config_vcsel_period_b                     = 0x09;
 
             _tim_cfg.range_config_sigma_thresh                       =
-                _tuning_parms.tp_lite_med_sigma_thresh_mm;
+                _tuning_params.tp_lite_med_sigma_thresh_mm;
 
             _tim_cfg.range_config_min_count_rate_rtn_limit_mcps      =
-                _tuning_parms.tp_lite_med_min_count_rate_rtn_mcps;
+                _tuning_params.tp_lite_med_min_count_rate_rtn_mcps;
 
             _tim_cfg.range_config_valid_phase_low                    = 0x08;
             _tim_cfg.range_config_valid_phase_high                   = 0x78;
@@ -2591,23 +2465,23 @@ class VL53L1X {
             _dyn_cfg.system_thresh_low                               = 0x0000;
             _dyn_cfg.system_enable_xtalk_per_quadrant                = 0x00;
             _dyn_cfg.system_seed_config =
-                _tuning_parms.tp_lite_seed_cfg;
+                _tuning_params.tp_lite_seed_cfg;
 
             _dyn_cfg.sd_config_woi_sd0                               = 0x0B;
 
             _dyn_cfg.sd_config_woi_sd1                               = 0x09;
 
             _dyn_cfg.sd_config_initial_phase_sd0                     =
-                _tuning_parms.tp_init_phase_rtn_lite_med;
+                _tuning_params.tp_init_phase_rtn_lite_med;
             _dyn_cfg.sd_config_initial_phase_sd1                     =
-                _tuning_parms.tp_init_phase_ref_lite_med;;
+                _tuning_params.tp_init_phase_ref_lite_med;;
 
             _dyn_cfg.system_grouped_parameter_hold_1                 = 0x01;
 
             _dyn_cfg.sd_config_first_order_select =
-                _tuning_parms.tp_lite_first_order_select;
+                _tuning_params.tp_lite_first_order_select;
             _dyn_cfg.sd_config_quantifier         =
-                _tuning_parms.tp_lite_quantifier;
+                _tuning_params.tp_lite_quantifier;
 
             _dyn_cfg.roi_config_user_roi_centre_spad              = 0xC7;
 
@@ -2646,18 +2520,18 @@ class VL53L1X {
                 _tim_cfg.range_config_vcsel_period_a                = 0x07;
                 _tim_cfg.range_config_vcsel_period_b                = 0x05;
                 _tim_cfg.range_config_sigma_thresh                  =
-                    _tuning_parms.tp_lite_short_sigma_thresh_mm;
+                    _tuning_params.tp_lite_short_sigma_thresh_mm;
                 _tim_cfg.range_config_min_count_rate_rtn_limit_mcps =
-                    _tuning_parms.tp_lite_short_min_count_rate_rtn_mcps;
+                    _tuning_params.tp_lite_short_min_count_rate_rtn_mcps;
                 _tim_cfg.range_config_valid_phase_low               = 0x08;
                 _tim_cfg.range_config_valid_phase_high              = 0x38;
 
                 _dyn_cfg.sd_config_woi_sd0                         = 0x07;
                 _dyn_cfg.sd_config_woi_sd1                         = 0x05;
                 _dyn_cfg.sd_config_initial_phase_sd0               =
-                    _tuning_parms.tp_init_phase_rtn_lite_short;
+                    _tuning_params.tp_init_phase_rtn_lite_short;
                 _dyn_cfg.sd_config_initial_phase_sd1               =
-                    _tuning_parms.tp_init_phase_ref_lite_short;
+                    _tuning_params.tp_init_phase_ref_lite_short;
             }
 
             return status;
@@ -2672,18 +2546,18 @@ class VL53L1X {
                 _tim_cfg.range_config_vcsel_period_a                = 0x0F;
                 _tim_cfg.range_config_vcsel_period_b                = 0x0D;
                 _tim_cfg.range_config_sigma_thresh                  =
-                    _tuning_parms.tp_lite_long_sigma_thresh_mm;
+                    _tuning_params.tp_lite_long_sigma_thresh_mm;
                 _tim_cfg.range_config_min_count_rate_rtn_limit_mcps =
-                    _tuning_parms.tp_lite_long_min_count_rate_rtn_mcps;
+                    _tuning_params.tp_lite_long_min_count_rate_rtn_mcps;
                 _tim_cfg.range_config_valid_phase_low               = 0x08;
                 _tim_cfg.range_config_valid_phase_high              = 0xB8;
 
                 _dyn_cfg.sd_config_woi_sd0                         = 0x0F;
                 _dyn_cfg.sd_config_woi_sd1                         = 0x0D;
                 _dyn_cfg.sd_config_initial_phase_sd0               =
-                    _tuning_parms.tp_init_phase_rtn_lite_long;
+                    _tuning_params.tp_init_phase_rtn_lite_long;
                 _dyn_cfg.sd_config_initial_phase_sd1               =
-                    _tuning_parms.tp_init_phase_ref_lite_long;
+                    _tuning_params.tp_init_phase_ref_lite_long;
             }
 
             return status;
@@ -2749,7 +2623,7 @@ class VL53L1X {
 
                 _tim_cfg.system_intermeasurement_period = 0x00000600;
                 _dyn_cfg.system_seed_config =
-                    _tuning_parms.tp_timed_seed_cfg;
+                    _tuning_params.tp_timed_seed_cfg;
 
                 _sys_ctrl.system_mode_start =
                     DEVICESCHEDULERMODE_PSEUDO_SOLO | 
@@ -2778,7 +2652,7 @@ class VL53L1X {
 
                 _tim_cfg.system_intermeasurement_period = 0x00000600;
                 _dyn_cfg.system_seed_config =
-                    _tuning_parms.tp_timed_seed_cfg;
+                    _tuning_params.tp_timed_seed_cfg;
 
                 _sys_ctrl.system_mode_start =
                     DEVICESCHEDULERMODE_PSEUDO_SOLO | 
@@ -2805,7 +2679,7 @@ class VL53L1X {
 
                 _tim_cfg.system_intermeasurement_period = 0x00000600;
                 _dyn_cfg.system_seed_config =
-                    _tuning_parms.tp_timed_seed_cfg;
+                    _tuning_params.tp_timed_seed_cfg;
 
                 _sys_ctrl.system_mode_start =
                     DEVICESCHEDULERMODE_PSEUDO_SOLO | 
@@ -2867,8 +2741,7 @@ class VL53L1X {
                 _tim_cfg.range_config_timeout_macrop_b_hi                = 0x00;
                 _tim_cfg.range_config_timeout_macrop_b_lo                = 0xD4;
 
-                _dyn_cfg.system_seed_config =
-                    _tuning_parms.tp_timed_seed_cfg;
+                _dyn_cfg.system_seed_config = _tuning_params.tp_timed_seed_cfg;
 
                 _sys_ctrl.system_mode_start = 
                     DEVICESCHEDULERMODE_PSEUDO_SOLO | 
@@ -2892,7 +2765,7 @@ class VL53L1X {
             return status;
         }
 
-        void init_ll_driver_state(DeviceState device_state)
+        void init_ll_driver_state(const DeviceState device_state)
         {
             ll_driver_state_t *driver_state = &(_ll_state);
 
@@ -2906,8 +2779,6 @@ class VL53L1X {
             driver_state->rd_gph_id         = GROUPEDPARAMETERHOLD_ID_MASK;
             driver_state->rd_timing_status  = 0;
         }
-
-        ///////////////////////////////////
 
         error_t set_preset_mode(
                 const DevicePresetModes  device_preset_mode,
@@ -3278,11 +3149,11 @@ class VL53L1X {
 
         void set_user_zone(const user_zone_t * puser_zone)
         {
-            encode_row_col( puser_zone->y_centre, puser_zone->x_centre,
-                    &(_dyn_cfg.roi_config_user_roi_centre_spad));
+            _dyn_cfg.roi_config_user_roi_centre_spad =
+                encode_row_col( puser_zone->y_centre, puser_zone->x_centre);
 
-            encode_zone_size( puser_zone->width, puser_zone->height,
-                    &(_dyn_cfg.roi_config_user_roi_requested_global_xy_size));
+            _dyn_cfg.roi_config_user_roi_requested_global_xy_size =
+                encode_zone_size( puser_zone->width, puser_zone->height);
         }
 
         void get_mode_mitigation_roi(user_zone_t * pmm_roi)
