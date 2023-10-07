@@ -247,11 +247,8 @@ class VL53L1X {
                 }
 
                 status |= write_byte(RGSTR_SYSTEM_INTERRUPT_CLEAR, 0x01); 
-
                 status |= write_byte(RGSTR_SYSTEM_MODE_START, 0x40); 
-
                 status |= write_byte(RGSTR_SYSTEM_INTERRUPT_CLEAR, 0x01);
-
                 status |= write_byte(RGSTR_VHV_CONFIG_TIMEOUT_MACROP_LOOP_BOUND, 0x09); 
 
                 status |= write_byte(0x0B, 0);											
@@ -285,86 +282,7 @@ class VL53L1X {
             return ERROR_NONE;
         }
 
-        error_t stopRanging(void)
-        {
-            return 
-                write_byte(RGSTR_FIRMWARE_ENABLE, 0x01) |
-                write_byte(RGSTR_SYSTEM_INTERRUPT_CLEAR, 0x03) |
-                write_byte(RGSTR_SYSTEM_MODE_START, 0x00); 
-        }
-
-        error_t startRanging()
-        {
-            error_t status = ERROR_NONE;
-
-            uint8_t buffer[MAX_I2C_XFER_SIZE] = {};
-
-            _sys_ctrl.system_mode_start =
-                (_sys_ctrl.system_mode_start &
-                 DEVICEMEASUREMENTMODE_STOP_MASK) |
-                _measurement_mode;
-
-            auto i2c_buffer_size_bytes = (RGSTR_POWER_MANAGEMENT_GO1_POWER_FORCE +
-                    SYSTEM_CONTROL_I2C_SIZE_BYTES) - RGSTR_ANA_CONFIG_VHV_REF_SEL_VDDPIX;
-
-            uint8_t i2c_buffer_offset_bytes = 0;
-
-            status |= i2c_encode_static_nvm_managed(STATIC_NVM_MANAGED_I2C_SIZE_BYTES,
-                    &buffer[i2c_buffer_offset_bytes]);
-
-            i2c_buffer_offset_bytes = RGSTR_GLOBAL_CONFIG_SPAD_ENABLES_REF_0 -
-                RGSTR_ANA_CONFIG_VHV_REF_SEL_VDDPIX;
-
-            status |= i2c_encode_customer_nvm_managed(
-                    CUSTOMER_NVM_MANAGED_I2C_SIZE_BYTES,
-                    &buffer[i2c_buffer_offset_bytes]);
-
-            i2c_buffer_offset_bytes = 
-                RGSTR_DSS_CONFIG_TARGET_TOTAL_RATE_MCPS - 
-                RGSTR_ANA_CONFIG_VHV_REF_SEL_VDDPIX;
-
-            status |= i2c_encode_static_config(
-                    STATIC_CONFIG_I2C_SIZE_BYTES,
-                    &buffer[i2c_buffer_offset_bytes]);
-
-            i2c_buffer_offset_bytes =
-                RGSTR_GPH_CONFIG_STREAM_COUNT_UPDATE_VALUE - 
-                RGSTR_ANA_CONFIG_VHV_REF_SEL_VDDPIX;
-
-            status |= i2c_encode_general_config(
-                    GENERAL_CONFIG_I2C_SIZE_BYTES,
-                    &buffer[i2c_buffer_offset_bytes]);
-
-            i2c_buffer_offset_bytes = 
-                RGSTR_MM_CONFIG_TIMEOUT_MACROP_A_HI - 
-                RGSTR_ANA_CONFIG_VHV_REF_SEL_VDDPIX;
-
-            status |= i2c_encode_timing_config(
-                    TIMING_CONFIG_I2C_SIZE_BYTES,
-                    &buffer[i2c_buffer_offset_bytes]);
-
-            i2c_buffer_offset_bytes = 
-                RGSTR_SYSTEM_GROUPED_PARAMETER_HOLD_0 - 
-                RGSTR_ANA_CONFIG_VHV_REF_SEL_VDDPIX;
-
-            status |= i2c_encode_dynamic_config(
-                    DYNAMIC_CONFIG_I2C_SIZE_BYTES,
-                    &buffer[i2c_buffer_offset_bytes]);
-
-            i2c_buffer_offset_bytes =
-                RGSTR_POWER_MANAGEMENT_GO1_POWER_FORCE - 
-                RGSTR_ANA_CONFIG_VHV_REF_SEL_VDDPIX;
-
-            status |= i2c_encode_system_control(SYSTEM_CONTROL_I2C_SIZE_BYTES,
-                    &buffer[i2c_buffer_offset_bytes]);
-
-            status |= write_bytes(_device, RGSTR_ANA_CONFIG_VHV_REF_SEL_VDDPIX, 
-                    i2c_buffer_size_bytes, buffer);
-
-            return status;
-        }
-
-        error_t getDistance(uint16_t * distance)
+       error_t getDistance(uint16_t * distance)
         {
             return read_word(RGSTR_RESULT_FINAL_CROSSTALK_CORRECTED_RANGE_MM_SD0, 
                     distance);
@@ -4626,6 +4544,86 @@ class VL53L1X {
             return status;
         }
 
+        error_t stopRanging(void)
+        {
+            return 
+                write_byte(RGSTR_FIRMWARE_ENABLE, 0x01) |
+                write_byte(RGSTR_SYSTEM_INTERRUPT_CLEAR, 0x03) |
+                write_byte(RGSTR_SYSTEM_MODE_START, 0x00); 
+        }
+
+        error_t startRanging()
+        {
+            error_t status = ERROR_NONE;
+
+            uint8_t buffer[MAX_I2C_XFER_SIZE] = {};
+
+            _sys_ctrl.system_mode_start =
+                (_sys_ctrl.system_mode_start &
+                 DEVICEMEASUREMENTMODE_STOP_MASK) |
+                _measurement_mode;
+
+            auto i2c_buffer_size_bytes = (RGSTR_POWER_MANAGEMENT_GO1_POWER_FORCE +
+                    SYSTEM_CONTROL_I2C_SIZE_BYTES) - RGSTR_ANA_CONFIG_VHV_REF_SEL_VDDPIX;
+
+            uint8_t i2c_buffer_offset_bytes = 0;
+
+            status |= i2c_encode_static_nvm_managed(STATIC_NVM_MANAGED_I2C_SIZE_BYTES,
+                    &buffer[i2c_buffer_offset_bytes]);
+
+            i2c_buffer_offset_bytes = RGSTR_GLOBAL_CONFIG_SPAD_ENABLES_REF_0 -
+                RGSTR_ANA_CONFIG_VHV_REF_SEL_VDDPIX;
+
+            status |= i2c_encode_customer_nvm_managed(
+                    CUSTOMER_NVM_MANAGED_I2C_SIZE_BYTES,
+                    &buffer[i2c_buffer_offset_bytes]);
+
+            i2c_buffer_offset_bytes = 
+                RGSTR_DSS_CONFIG_TARGET_TOTAL_RATE_MCPS - 
+                RGSTR_ANA_CONFIG_VHV_REF_SEL_VDDPIX;
+
+            status |= i2c_encode_static_config(
+                    STATIC_CONFIG_I2C_SIZE_BYTES,
+                    &buffer[i2c_buffer_offset_bytes]);
+
+            i2c_buffer_offset_bytes =
+                RGSTR_GPH_CONFIG_STREAM_COUNT_UPDATE_VALUE - 
+                RGSTR_ANA_CONFIG_VHV_REF_SEL_VDDPIX;
+
+            status |= i2c_encode_general_config(
+                    GENERAL_CONFIG_I2C_SIZE_BYTES,
+                    &buffer[i2c_buffer_offset_bytes]);
+
+            i2c_buffer_offset_bytes = 
+                RGSTR_MM_CONFIG_TIMEOUT_MACROP_A_HI - 
+                RGSTR_ANA_CONFIG_VHV_REF_SEL_VDDPIX;
+
+            status |= i2c_encode_timing_config(
+                    TIMING_CONFIG_I2C_SIZE_BYTES,
+                    &buffer[i2c_buffer_offset_bytes]);
+
+            i2c_buffer_offset_bytes = 
+                RGSTR_SYSTEM_GROUPED_PARAMETER_HOLD_0 - 
+                RGSTR_ANA_CONFIG_VHV_REF_SEL_VDDPIX;
+
+            status |= i2c_encode_dynamic_config(
+                    DYNAMIC_CONFIG_I2C_SIZE_BYTES,
+                    &buffer[i2c_buffer_offset_bytes]);
+
+            i2c_buffer_offset_bytes =
+                RGSTR_POWER_MANAGEMENT_GO1_POWER_FORCE - 
+                RGSTR_ANA_CONFIG_VHV_REF_SEL_VDDPIX;
+
+            status |= i2c_encode_system_control(SYSTEM_CONTROL_I2C_SIZE_BYTES,
+                    &buffer[i2c_buffer_offset_bytes]);
+
+            status |= write_bytes(_device, RGSTR_ANA_CONFIG_VHV_REF_SEL_VDDPIX, 
+                    i2c_buffer_size_bytes, buffer);
+
+            return status;
+        }
+
+ 
         // Platform-dependent ------------------------------------------------
 
         error_t read_bytes(void * _device, const uint16_t rgstr, 
