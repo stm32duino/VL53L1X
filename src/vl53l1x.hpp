@@ -47,10 +47,6 @@ class VL53L1X {
 
         typedef uint8_t distanceMode_t;
 
-        VL53L1X(void)
-        {
-        }
-
         error_t begin(
                 const void * device=NULL, 
                 const uint8_t addr=0x29,
@@ -221,7 +217,7 @@ class VL53L1X {
 
             while (true) {
 
-                bool dataReady = false;
+                auto dataReady = false;
 
                 checkForDataReady(&dataReady);
 
@@ -268,23 +264,23 @@ class VL53L1X {
             ERROR_ZONE_GPH_ID_CHECK_FAIL            = -21,
             ERROR_XTALK_EXTRACTION_NO_SAMPLE_FAIL   = -22,
             ERROR_XTALK_EXTRACTION_SIGMA_LIMIT_FAIL = -23,
-            ERROR_OFFSET_CAL_NO_SAMPLE_FAIL           = -24,
-            ERROR_OFFSET_CAL_NO_SPADS_ENABLED_FAIL    = -25,
-            ERROR_ZONE_CAL_NO_SAMPLE_FAIL             = -26,
-            ERROR_TUNING_PARM_KEY_MISMATCH             = -27,
-            WARNING_REF_SPAD_CHAR_NOT_ENOUGH_SPADS   = -28,
-            WARNING_REF_SPAD_CHAR_RATE_TOO_HIGH      = -29,
-            WARNING_REF_SPAD_CHAR_RATE_TOO_LOW       = -30,
-            WARNING_OFFSET_CAL_MISSING_SAMPLES       = -31,
-            WARNING_OFFSET_CAL_SIGMA_TOO_HIGH        = -32,
-            WARNING_OFFSET_CAL_RATE_TOO_HIGH         = -33,
-            WARNING_OFFSET_CAL_SPAD_COUNT_TOO_LOW    = -34,
-            WARNING_ZONE_CAL_MISSING_SAMPLES       = -35,
-            WARNING_ZONE_CAL_SIGMA_TOO_HIGH        = -36,
-            WARNING_ZONE_CAL_RATE_TOO_HIGH         = -37,
-            WARNING_XTALK_MISSING_SAMPLES             = -38,
-            WARNING_XTALK_NO_SAMPLES_FOR_GRADIENT     = -39,
-            WARNING_XTALK_SIGMA_LIMIT_FOR_GRADIENT    = -40,
+            ERROR_OFFSET_CAL_NO_SAMPLE_FAIL         = -24,
+            ERROR_OFFSET_CAL_NO_SPADS_ENABLED_FAIL  = -25,
+            ERROR_ZONE_CAL_NO_SAMPLE_FAIL           = -26,
+            ERROR_TUNING_PARM_KEY_MISMATCH          = -27,
+            WARNING_REF_SPAD_CHAR_NOT_ENOUGH_SPADS  = -28,
+            WARNING_REF_SPAD_CHAR_RATE_TOO_HIGH     = -29,
+            WARNING_REF_SPAD_CHAR_RATE_TOO_LOW      = -30,
+            WARNING_OFFSET_CAL_MISSING_SAMPLES      = -31,
+            WARNING_OFFSET_CAL_SIGMA_TOO_HIGH       = -32,
+            WARNING_OFFSET_CAL_RATE_TOO_HIGH        = -33,
+            WARNING_OFFSET_CAL_SPAD_COUNT_TOO_LOW   = -34,
+            WARNING_ZONE_CAL_MISSING_SAMPLES        = -35,
+            WARNING_ZONE_CAL_SIGMA_TOO_HIGH         = -36,
+            WARNING_ZONE_CAL_RATE_TOO_HIGH          = -37,
+            WARNING_XTALK_MISSING_SAMPLES           = -38,
+            WARNING_XTALK_NO_SAMPLES_FOR_GRADIENT   = -39,
+            WARNING_XTALK_SIGMA_LIMIT_FOR_GRADIENT  = -40,
             ERROR_NOT_IMPLEMENTED                   = -41,
             ERROR_PLATFORM_SPECIFIC_START           = -60,
             ERROR_DEVICE_FIRMWARE_TOO_OLD           = -80,
@@ -294,19 +290,32 @@ class VL53L1X {
             ERROR_FILE_WRITE_FAIL                   = -96,
         };
 
- 
     private:
 
-        enum {
+        // Constants ---------------------------------------------------------
 
-            CHECKENABLE_SIGMA_FINAL_RANGE,
-            CHECKENABLE_SIGNAL_RATE_FINAL_RANGE,
-        };
+        static const uint8_t STATIC_NVM_MANAGED_I2C_SIZE_BYTES           = 11;
+        static const uint8_t CUSTOMER_NVM_MANAGED_I2C_SIZE_BYTES         = 23;
+        static const uint8_t STATIC_CONFIG_I2C_SIZE_BYTES                = 32;
+        static const uint8_t GENERAL_CONFIG_I2C_SIZE_BYTES               = 22;
+        static const uint8_t TIMING_CONFIG_I2C_SIZE_BYTES                = 23;
+        static const uint8_t DYNAMIC_CONFIG_I2C_SIZE_BYTES               = 18;
+        static const uint8_t SYSTEM_CONTROL_I2C_SIZE_BYTES               =  5;
+        static const uint8_t SYSTEM_RESULTS_I2C_SIZE_BYTES               = 44;
+        static const uint8_t CORE_RESULTS_I2C_SIZE_BYTES                 = 33;
+        static const uint8_t DEBUG_RESULTS_I2C_SIZE_BYTES                = 56;
+        static const uint8_t NVM_COPY_DATA_I2C_SIZE_BYTES                = 49;
+        static const uint8_t PREV_SHADOW_SYSTEM_RESULTS_I2C_SIZE_BYTES   = 44;
+        static const uint8_t PREV_SHADOW_CORE_RESULTS_I2C_SIZE_BYTES     = 33;
+        static const uint8_t PATCH_DEBUG_I2C_SIZE_BYTES                  =  2;
+        static const uint8_t GPH_GENERAL_CONFIG_I2C_SIZE_BYTES           =  5;
+        static const uint8_t GPH_STATIC_CONFIG_I2C_SIZE_BYTES            =  6;
+        static const uint8_t GPH_TIMING_CONFIG_I2C_SIZE_BYTES            = 16;
+        static const uint8_t FW_INTERNAL_I2C_SIZE_BYTES                  =  2;
+        static const uint8_t PATCH_RESULTS_I2C_SIZE_BYTES                = 90;
+        static const uint8_t SHADOW_SYSTEM_RESULTS_I2C_SIZE_BYTES        = 82;
+        static const uint8_t SHADOW_CORE_RESULTS_I2C_SIZE_BYTES          = 33;
 
-        enum {
-            SEQUENCESTEP_MM1  = 5,
-            SEQUENCESTEP_MM2  = 6,
-        };
 
         static const uint8_t DEVICESSCARRAY_RTN = 0x00;
         static const uint16_t AMBIENT_WINDOW_VCSEL_PERIODS  = 256;
@@ -396,6 +405,42 @@ class VL53L1X {
         static const uint32_t TUNINGPARM_LOWPOWERAUTO_MM_CONFIG_TIMEOUT_US_DEFAULT =  1;
         static const uint32_t TUNINGPARM_LOWPOWERAUTO_RANGE_CONFIG_TIMEOUT_US_DEFAULT =  8000;
 
+        const uint8_t DEFAULT_CONFIGURATION[91] = { 0x00, 0x01, 0x01,
+            0x01, 0x02, 0x00, 0x02, 0x08, 0x00, 0x08, 0x10, 0x01, 0x01, 0x00,
+            0x00, 0x00, 0x00, 0xff, 0x00, 0x0F, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x20, 0x0b, 0x00, 0x00, 0x02, 0x0a, 0x21, 0x00, 0x00, 0x05, 0x00,
+            0x00, 0x00, 0x00, 0xc8, 0x00, 0x00, 0x38, 0xff, 0x01, 0x00, 0x08,
+            0x00, 0x00, 0x01, 0xdb, 0x0f, 0x01, 0xf1, 0x0d, 0x01, 0x68, 0x00,
+            0x80, 0x08, 0xb8, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x89, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x0f, 0x0d, 0x0e, 0x0e, 0x00,
+            0x00, 0x02, 0xc7, 0xff, 0x9B, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00
+        };
+
+        // Typedefs -----------------------------------------------------------
+
+        enum {
+            DEVICESTATE_POWERDOWN              ,
+            DEVICESTATE_HW_STANDBY             ,
+            DEVICESTATE_FW_COLDBOOT            ,
+            DEVICESTATE_SW_STANDBY             ,
+            DEVICESTATE_RANGING_DSS_AUTO       ,
+            DEVICESTATE_RANGING_DSS_MANUAL     ,
+            DEVICESTATE_RANGING_WAIT_GPH_SYNC  ,
+            DEVICESTATE_RANGING_GATHER_DATA    ,
+            DEVICESTATE_RANGING_OUTPUT_DATA    ,
+        };
+
+        enum {
+
+            CHECKENABLE_SIGMA_FINAL_RANGE,
+            CHECKENABLE_SIGNAL_RATE_FINAL_RANGE,
+        };
+
+        enum {
+            SEQUENCESTEP_MM1  = 5,
+            SEQUENCESTEP_MM2  = 6,
+        };
+
         enum {
             DEVICEREADOUTMODE_SINGLE_SD     = 0x00 << 2,
             DEVICEREADOUTMODE_DUAL_SD       = 0x01 << 2,
@@ -451,17 +496,6 @@ class VL53L1X {
             DEVICEMEASUREMENTMODE_ABORT      =  0x80,
         };
 
-        const uint8_t DEFAULT_CONFIGURATION[91] = { 0x00, 0x01, 0x01,
-            0x01, 0x02, 0x00, 0x02, 0x08, 0x00, 0x08, 0x10, 0x01, 0x01, 0x00,
-            0x00, 0x00, 0x00, 0xff, 0x00, 0x0F, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x20, 0x0b, 0x00, 0x00, 0x02, 0x0a, 0x21, 0x00, 0x00, 0x05, 0x00,
-            0x00, 0x00, 0x00, 0xc8, 0x00, 0x00, 0x38, 0xff, 0x01, 0x00, 0x08,
-            0x00, 0x00, 0x01, 0xdb, 0x0f, 0x01, 0xf1, 0x0d, 0x01, 0x68, 0x00,
-            0x80, 0x08, 0xb8, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x89, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x0f, 0x0d, 0x0e, 0x0e, 0x00,
-            0x00, 0x02, 0xc7, 0xff, 0x9B, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00
-        };
-
         enum {
             RGSTR_I2C_ADDRESS                                    = 0x0001,
             RGSTR_ANA_CONFIG_VHV_REF_SEL_VDDPIX                  = 0x0002,
@@ -481,6 +515,8 @@ class VL53L1X {
             RGSTR_RESULT_FINAL_CROSSTALK_CORRECTED_RANGE_MM_SD0  = 0x0096,
             RGSTR_IDENTIFICATION_MODEL_ID                        = 0x010F,
         };
+
+        typedef uint8_t SequenceStepId;
 
         typedef uint32_t FixedPoint1616_t;
 
@@ -925,52 +961,12 @@ class VL53L1X {
 
         } offsetcal_config_t;
 
-        static const uint8_t RTN_SPAD_BUFFER_SIZE = 32;
-
-        uint8_t   _wait_method;
-        DevicePresetModes        _preset_mode;
-        DeviceMeasurementModes   _measurement_mode;
-        OffsetCalibrationMode    _offset_calibration_mode;
-        OffsetCorrectionMode     _offset_correction_mode;
-        uint32_t  _phasecal_config_timeout_us;
-        uint32_t  _mm_config_timeout_us;
-        uint32_t  _range_config_timeout_us;
-        uint32_t  _inter_measurement_period_ms;
-        uint16_t  _dss_config_target_total_rate_mcps;
-        uint32_t  _fw_ready_poll_duration_ms;
-        uint8_t   _fw_ready;
-        uint8_t   _debug_mode;
-        ll_driver_state_t            _ll_state;
-        customer_nvm_managed_t       _customer;
-        cal_peak_rate_map_t          _cal_peak_rate_map;
-        additional_offset_cal_data_t _add_off_cal_data;
-        gain_calibration_data_t      _gain_cal;
-        user_zone_t                  _mm_roi;
-        optical_centre_t             _optical_centre;
-        tuning_parm_storage_t        _tuning_parms;
-        uint8_t _rtn_good_spads[RTN_SPAD_BUFFER_SIZE];
-        refspadchar_config_t         _refspadchar;
-        ssc_config_t                 _ssc_cfg;
-        xtalk_config_t               _xtalk_cfg;
-        offsetcal_config_t           _offsetcal_cfg;
-        static_nvm_managed_t         _stat_nvm;
-        static_config_t              _stat_cfg;
-        general_config_t             _gen_cfg;
-        timing_config_t              _tim_cfg;
-        dynamic_config_t             _dyn_cfg;
-        system_control_t             _sys_ctrl;
-        nvm_copy_data_t              _nvm_copy_data;
-        offset_range_results_t       _offset_results;
-        debug_results_t              _dbg_results;
-        low_power_auto_data_t		_low_power_auto_data;
-
         typedef uint8_t PresetModes;
         typedef uint8_t XtalkCalibrationModes;
         typedef uint8_t OffsetCalibrationModes;
         typedef uint8_t ThresholdMode;
 
         static const uint8_t CHECKENABLE_NUMBER_OF_CHECKS = 2;
-
         typedef struct {
 
             PresetModes PresetMode;
@@ -985,80 +981,9 @@ class VL53L1X {
 
         } DeviceParameters_t;
 
-        void * _device;
-
         typedef uint8_t State;
 
-        DeviceParameters_t CurrentParameters;
-
-        error_t read_word(const uint16_t rgstr, uint16_t *data)
-        {
-            uint8_t buffer[2] = {};
-
-            auto status = read_bytes(_device, rgstr, 2, buffer);
-
-            if (!status) {
-                *data = (buffer[0] << 8) + buffer[1];
-            }
-
-            return status;
-        }
-
-        error_t write_word(const uint16_t rgstr, const uint16_t data)
-        {
-            uint8_t buffer[2] = {};
-            buffer[0] = data >> 8;
-            buffer[1] = data & 0x00FF;
-            return write_bytes(_device, rgstr, 2, (uint8_t *)buffer);
-        }
-
-        error_t read_byte(const uint16_t rgstr, uint8_t *data)
-        {
-            return read_bytes(_device, rgstr, 1, data);
-        }
-
-        error_t write_byte(const uint16_t rgstr, const uint8_t data)
-        {
-            return write_bytes(_device, rgstr, 1, &data);
-        }
-
-        enum {
-            DEVICESTATE_POWERDOWN              ,
-            DEVICESTATE_HW_STANDBY             ,
-            DEVICESTATE_FW_COLDBOOT            ,
-            DEVICESTATE_SW_STANDBY             ,
-            DEVICESTATE_RANGING_DSS_AUTO       ,
-            DEVICESTATE_RANGING_DSS_MANUAL     ,
-            DEVICESTATE_RANGING_WAIT_GPH_SYNC  ,
-            DEVICESTATE_RANGING_GATHER_DATA    ,
-            DEVICESTATE_RANGING_OUTPUT_DATA    ,
-        };
-
-        static const uint8_t STATIC_NVM_MANAGED_I2C_SIZE_BYTES           = 11;
-        static const uint8_t CUSTOMER_NVM_MANAGED_I2C_SIZE_BYTES         = 23;
-        static const uint8_t STATIC_CONFIG_I2C_SIZE_BYTES                = 32;
-        static const uint8_t GENERAL_CONFIG_I2C_SIZE_BYTES               = 22;
-        static const uint8_t TIMING_CONFIG_I2C_SIZE_BYTES                = 23;
-        static const uint8_t DYNAMIC_CONFIG_I2C_SIZE_BYTES               = 18;
-        static const uint8_t SYSTEM_CONTROL_I2C_SIZE_BYTES               =  5;
-        static const uint8_t SYSTEM_RESULTS_I2C_SIZE_BYTES               = 44;
-        static const uint8_t CORE_RESULTS_I2C_SIZE_BYTES                 = 33;
-        static const uint8_t DEBUG_RESULTS_I2C_SIZE_BYTES                = 56;
-        static const uint8_t NVM_COPY_DATA_I2C_SIZE_BYTES                = 49;
-        static const uint8_t PREV_SHADOW_SYSTEM_RESULTS_I2C_SIZE_BYTES   = 44;
-        static const uint8_t PREV_SHADOW_CORE_RESULTS_I2C_SIZE_BYTES     = 33;
-        static const uint8_t PATCH_DEBUG_I2C_SIZE_BYTES                  =  2;
-        static const uint8_t GPH_GENERAL_CONFIG_I2C_SIZE_BYTES           =  5;
-        static const uint8_t GPH_STATIC_CONFIG_I2C_SIZE_BYTES            =  6;
-        static const uint8_t GPH_TIMING_CONFIG_I2C_SIZE_BYTES            = 16;
-        static const uint8_t FW_INTERNAL_I2C_SIZE_BYTES                  =  2;
-        static const uint8_t PATCH_RESULTS_I2C_SIZE_BYTES                = 90;
-        static const uint8_t SHADOW_SYSTEM_RESULTS_I2C_SIZE_BYTES        = 82;
-        static const uint8_t SHADOW_CORE_RESULTS_I2C_SIZE_BYTES          = 33;
-
-        typedef uint8_t SequenceStepId;
-
-        error_t update_ll_driver_cfg_state(void);
+        // Static methods -----------------------------------------------------
 
         static uint16_t FIXEDPOINT1616TOFIXEDPOINT142(FixedPoint1616_t Value) 
         { 
@@ -1163,6 +1088,399 @@ class VL53L1X {
                 data = data >> 8;
             }
         }
+
+        static void decode_row_col(
+                uint8_t  spad_number,
+                uint8_t  *prow,
+                uint8_t  *pcol)
+        {
+
+            /**
+             *  Decodes the array (row,col) location from
+             *  the input SPAD number
+             */
+
+            if (spad_number > 127) {
+                *prow = 8 + ((255-spad_number) & 0x07);
+                *pcol = (spad_number-128) >> 3;
+            } else {
+                *prow = spad_number & 0x07;
+                *pcol = (127-spad_number) >> 3;
+            }
+        }
+
+        static void copy_rtn_good_spads_to_buffer(
+                nvm_copy_data_t  *pdata,
+                uint8_t                 *pbuffer)
+        {
+            /*
+             * Convenience function to copy return SPAD enables to buffer
+             */
+
+            *(pbuffer +  0) = pdata->global_config_spad_enables_rtn_0;
+            *(pbuffer +  1) = pdata->global_config_spad_enables_rtn_1;
+            *(pbuffer +  2) = pdata->global_config_spad_enables_rtn_2;
+            *(pbuffer +  3) = pdata->global_config_spad_enables_rtn_3;
+            *(pbuffer +  4) = pdata->global_config_spad_enables_rtn_4;
+            *(pbuffer +  5) = pdata->global_config_spad_enables_rtn_5;
+            *(pbuffer +  6) = pdata->global_config_spad_enables_rtn_6;
+            *(pbuffer +  7) = pdata->global_config_spad_enables_rtn_7;
+            *(pbuffer +  8) = pdata->global_config_spad_enables_rtn_8;
+            *(pbuffer +  9) = pdata->global_config_spad_enables_rtn_9;
+            *(pbuffer + 10) = pdata->global_config_spad_enables_rtn_10;
+            *(pbuffer + 11) = pdata->global_config_spad_enables_rtn_11;
+            *(pbuffer + 12) = pdata->global_config_spad_enables_rtn_12;
+            *(pbuffer + 13) = pdata->global_config_spad_enables_rtn_13;
+            *(pbuffer + 14) = pdata->global_config_spad_enables_rtn_14;
+            *(pbuffer + 15) = pdata->global_config_spad_enables_rtn_15;
+            *(pbuffer + 16) = pdata->global_config_spad_enables_rtn_16;
+            *(pbuffer + 17) = pdata->global_config_spad_enables_rtn_17;
+            *(pbuffer + 18) = pdata->global_config_spad_enables_rtn_18;
+            *(pbuffer + 19) = pdata->global_config_spad_enables_rtn_19;
+            *(pbuffer + 20) = pdata->global_config_spad_enables_rtn_20;
+            *(pbuffer + 21) = pdata->global_config_spad_enables_rtn_21;
+            *(pbuffer + 22) = pdata->global_config_spad_enables_rtn_22;
+            *(pbuffer + 23) = pdata->global_config_spad_enables_rtn_23;
+            *(pbuffer + 24) = pdata->global_config_spad_enables_rtn_24;
+            *(pbuffer + 25) = pdata->global_config_spad_enables_rtn_25;
+            *(pbuffer + 26) = pdata->global_config_spad_enables_rtn_26;
+            *(pbuffer + 27) = pdata->global_config_spad_enables_rtn_27;
+            *(pbuffer + 28) = pdata->global_config_spad_enables_rtn_28;
+            *(pbuffer + 29) = pdata->global_config_spad_enables_rtn_29;
+            *(pbuffer + 30) = pdata->global_config_spad_enables_rtn_30;
+            *(pbuffer + 31) = pdata->global_config_spad_enables_rtn_31;
+        }
+
+        static uint32_t decode_timeout(uint16_t encoded_timeout)
+        {
+            /*
+             * Decode 16-bit timeout register value
+             * format (LSByte * 2^MSByte) + 1
+             */
+
+            uint32_t timeout_macro_clks = 0;
+
+            timeout_macro_clks = ((uint32_t) (encoded_timeout & 0x00FF)
+                    << (uint32_t) ((encoded_timeout & 0xFF00) >> 8)) + 1;
+
+            return timeout_macro_clks;
+        }
+
+        static uint32_t calc_decoded_timeout_us(
+                uint16_t timeout_encoded,
+                uint32_t macro_period_us)
+        {
+            /*  Calculates the  timeout in [us] based on the input
+             *  encoded timeout and the macro period in [us]
+             *
+             *  Max timeout supported is 1000000 us (1 sec) -> 20-bits
+             *  Max timeout in 20.12 format = 32-bits
+             *
+             *  Macro period [us] = 12.12 format
+             */
+
+            uint32_t timeout_mclks  = 0;
+            uint32_t timeout_us     = 0;
+
+            timeout_mclks =
+                decode_timeout(timeout_encoded);
+
+            timeout_us    =
+                calc_timeout_us(timeout_mclks, macro_period_us);
+
+            return timeout_us;
+        }
+
+        static uint16_t encode_timeout(uint32_t timeout_mclks)
+        {
+            /*
+             * Encode timeout in macro periods in (LSByte * 2^MSByte) + 1 format
+             */
+
+            uint16_t encoded_timeout = 0;
+            uint32_t ls_byte = 0;
+            uint16_t ms_byte = 0;
+
+            if (timeout_mclks > 0) {
+                ls_byte = timeout_mclks - 1;
+
+                while ((ls_byte & 0xFFFFFF00) > 0) {
+                    ls_byte = ls_byte >> 1;
+                    ms_byte++;
+                }
+
+                encoded_timeout = (ms_byte << 8)
+                    + (uint16_t) (ls_byte & 0x000000FF);
+            }
+
+            return encoded_timeout;
+        }
+
+        static uint32_t calc_timeout_mclks(
+                uint32_t timeout_us,
+                uint32_t macro_period_us)
+        {
+            /*  Calculates the timeout value in macro periods based on the input
+             *  timeout period in milliseconds and the macro period in [us]
+             *
+             *  Max timeout supported is 1000000 us (1 sec) -> 20-bits
+             *  Max timeout in 20.12 format = 32-bits
+             *
+             *  Macro period [us] = 12.12 format
+             */
+
+            uint32_t timeout_mclks   = 0;
+
+
+            timeout_mclks   =
+                ((timeout_us << 12) + (macro_period_us>>1)) /
+                macro_period_us;
+
+
+            return timeout_mclks;
+        }
+
+        static uint16_t calc_encoded_timeout(
+                uint32_t timeout_us,
+                uint32_t macro_period_us)
+        {
+            /*  Calculates the encoded timeout register value based on the input
+             *  timeout period in milliseconds and the macro period in [us]
+             *
+             *  Max timeout supported is 1000000 us (1 sec) -> 20-bits
+             *  Max timeout in 20.12 format = 32-bits
+             *
+             *  Macro period [us] = 12.12 format
+             */
+
+            uint32_t timeout_mclks   = 0;
+            uint16_t timeout_encoded = 0;
+
+
+            timeout_mclks   =
+                calc_timeout_mclks(timeout_us, macro_period_us);
+
+            timeout_encoded =
+                encode_timeout(timeout_mclks);
+
+            return timeout_encoded;
+        }
+
+        static uint32_t calc_timeout_us(
+                uint32_t timeout_mclks,
+                uint32_t macro_period_us)
+        {
+            /*  Calculates the  timeout in [us] based on the input
+             *  encoded timeout and the macro period in [us]
+             *
+             *  Max timeout supported is 1000000 us (1 sec) -> 20-bits
+             *  Max timeout in 20.12 format = 32-bits
+             *
+             *  Macro period [us] = 12.12 format
+             */
+
+            uint32_t timeout_us     = 0;
+            uint64_t tmp            = 0;
+
+
+            tmp  = (uint64_t)timeout_mclks * (uint64_t)macro_period_us;
+            tmp += 0x00800;
+            tmp  = tmp >> 12;
+
+            timeout_us = (uint32_t)tmp;
+
+            return timeout_us;
+        }
+
+        static uint16_t calc_range_ignore_threshold(
+                uint32_t central_rate,
+                int16_t  x_gradient,
+                int16_t  y_gradient,
+                uint8_t  rate_mult)
+        {
+            /* Calculates Range Ignore Threshold rate per spad
+             * in Mcps - 3.13 format
+             *
+             * Calculates worst case xtalk rate per spad in array corner
+             * based on input central xtalk and x and y gradients
+             *
+             * Worst case rate = central rate + (8*(magnitude(xgrad)) +
+             * (8*(magnitude(ygrad)))
+             *
+             * Range ignore threshold rate is then multiplied by user input
+             * rate_mult (in 3.5 fractional format)
+             *
+             */
+
+            int32_t    range_ignore_thresh_int  = 0;
+            uint16_t   range_ignore_thresh_kcps = 0;
+            int32_t    central_rate_int         = 0;
+            int16_t    x_gradient_int           = 0;
+            int16_t    y_gradient_int           = 0;
+
+
+            /* Shift central_rate to .13 fractional for simple addition */
+
+            central_rate_int = ((int32_t)central_rate * (1 << 4)) / (1000);
+
+            if (x_gradient < 0) {
+                x_gradient_int = x_gradient * -1;
+            }
+
+            if (y_gradient < 0) {
+                y_gradient_int = y_gradient * -1;
+            }
+
+            /* Calculate full rate per spad - worst case from measured xtalk */
+            /* Generated here from .11 fractional kcps */
+            /* Additional factor of 4 applied to bring fractional precision to .13 */
+
+            range_ignore_thresh_int = (8 * x_gradient_int * 4) + (8 * y_gradient_int * 4);
+
+            /* Convert Kcps to Mcps */
+
+            range_ignore_thresh_int = range_ignore_thresh_int / 1000;
+
+            /* Combine with Central Rate - Mcps .13 format*/
+
+            range_ignore_thresh_int = range_ignore_thresh_int + central_rate_int;
+
+            /* Mult by user input */
+
+            range_ignore_thresh_int = (int32_t)rate_mult * range_ignore_thresh_int;
+
+            range_ignore_thresh_int = (range_ignore_thresh_int + (1<<4)) / (1<<5);
+
+            /* Finally clip and output in correct format */
+
+            if (range_ignore_thresh_int > 0xFFFF) {
+                range_ignore_thresh_kcps = 0xFFFF;
+            } else {
+                range_ignore_thresh_kcps = (uint16_t)range_ignore_thresh_int;
+            }
+
+            return range_ignore_thresh_kcps;
+        }
+
+        static void encode_row_col(
+                uint8_t  row,
+                uint8_t  col,
+                uint8_t *pspad_number)
+        {
+            /**
+             *  Encodes the input array(row,col) location as SPAD number.
+             */
+
+            if (row > 7) {
+                *pspad_number = 128 + (col << 3) + (15-row);
+            } else {
+                *pspad_number = ((15-col) << 3) + row;
+            }
+        }
+
+        static void encode_zone_size(
+                uint8_t  width,
+                uint8_t  height,
+                uint8_t *pencoded_xy_size)
+        {
+            /* merge x and y sizes
+             *
+             * Important: the sense of the device width and height is swapped
+             * versus the API sense
+             *
+             * MS Nibble = height
+             * LS Nibble = width
+             */
+
+            *pencoded_xy_size = (height << 4) + width;
+
+        }
+
+        static void decode_zone_size( uint8_t  encoded_xy_size, 
+                uint8_t  *pwidth, uint8_t  *pheight)
+        {
+            *pheight = encoded_xy_size >> 4;
+            *pwidth  = encoded_xy_size & 0x0F;
+
+        }
+
+        // Instance variables ------------------------------------------------
+
+        uint8_t   _wait_method;
+        DevicePresetModes        _preset_mode;
+        DeviceMeasurementModes   _measurement_mode;
+        OffsetCalibrationMode    _offset_calibration_mode;
+        OffsetCorrectionMode     _offset_correction_mode;
+        uint32_t  _phasecal_config_timeout_us;
+        uint32_t  _mm_config_timeout_us;
+        uint32_t  _range_config_timeout_us;
+        uint32_t  _inter_measurement_period_ms;
+        uint16_t  _dss_config_target_total_rate_mcps;
+        uint32_t  _fw_ready_poll_duration_ms;
+        uint8_t   _fw_ready;
+        uint8_t   _debug_mode;
+        ll_driver_state_t            _ll_state;
+        customer_nvm_managed_t       _customer;
+        cal_peak_rate_map_t          _cal_peak_rate_map;
+        additional_offset_cal_data_t _add_off_cal_data;
+        gain_calibration_data_t      _gain_cal;
+        user_zone_t                  _mm_roi;
+        optical_centre_t             _optical_centre;
+        tuning_parm_storage_t        _tuning_parms;
+        uint8_t _rtn_good_spads[32];
+        refspadchar_config_t         _refspadchar;
+        ssc_config_t                 _ssc_cfg;
+        xtalk_config_t               _xtalk_cfg;
+        offsetcal_config_t           _offsetcal_cfg;
+        static_nvm_managed_t         _stat_nvm;
+        static_config_t              _stat_cfg;
+        general_config_t             _gen_cfg;
+        timing_config_t              _tim_cfg;
+        dynamic_config_t             _dyn_cfg;
+        system_control_t             _sys_ctrl;
+        nvm_copy_data_t              _nvm_copy_data;
+        offset_range_results_t       _offset_results;
+        debug_results_t              _dbg_results;
+        low_power_auto_data_t		_low_power_auto_data;
+
+        void * _device;
+
+        DeviceParameters_t CurrentParameters;
+
+        // Instance methods ---------------------------------------------------
+
+        error_t read_word(const uint16_t rgstr, uint16_t *data)
+        {
+            uint8_t buffer[2] = {};
+
+            auto status = read_bytes(_device, rgstr, 2, buffer);
+
+            if (!status) {
+                *data = (buffer[0] << 8) + buffer[1];
+            }
+
+            return status;
+        }
+
+        error_t write_word(const uint16_t rgstr, const uint16_t data)
+        {
+            uint8_t buffer[2] = {};
+            buffer[0] = data >> 8;
+            buffer[1] = data & 0x00FF;
+            return write_bytes(_device, rgstr, 2, (uint8_t *)buffer);
+        }
+
+        error_t read_byte(const uint16_t rgstr, uint8_t *data)
+        {
+            return read_bytes(_device, rgstr, 1, data);
+        }
+
+        error_t write_byte(const uint16_t rgstr, const uint8_t data)
+        {
+            return write_bytes(_device, rgstr, 1, &data);
+        }
+
+        error_t update_ll_driver_cfg_state(void);
 
         error_t i2c_decode_static_nvm_managed(
                 uint16_t                   buf_size,
@@ -1820,68 +2138,6 @@ class VL53L1X {
             return vcsel_period_pclks;
         }
 
-        static void decode_row_col(
-                uint8_t  spad_number,
-                uint8_t  *prow,
-                uint8_t  *pcol)
-        {
-
-            /**
-             *  Decodes the array (row,col) location from
-             *  the input SPAD number
-             */
-
-            if (spad_number > 127) {
-                *prow = 8 + ((255-spad_number) & 0x07);
-                *pcol = (spad_number-128) >> 3;
-            } else {
-                *prow = spad_number & 0x07;
-                *pcol = (127-spad_number) >> 3;
-            }
-        }
-
-        static void copy_rtn_good_spads_to_buffer(
-                nvm_copy_data_t  *pdata,
-                uint8_t                 *pbuffer)
-        {
-            /*
-             * Convenience function to copy return SPAD enables to buffer
-             */
-
-            *(pbuffer +  0) = pdata->global_config_spad_enables_rtn_0;
-            *(pbuffer +  1) = pdata->global_config_spad_enables_rtn_1;
-            *(pbuffer +  2) = pdata->global_config_spad_enables_rtn_2;
-            *(pbuffer +  3) = pdata->global_config_spad_enables_rtn_3;
-            *(pbuffer +  4) = pdata->global_config_spad_enables_rtn_4;
-            *(pbuffer +  5) = pdata->global_config_spad_enables_rtn_5;
-            *(pbuffer +  6) = pdata->global_config_spad_enables_rtn_6;
-            *(pbuffer +  7) = pdata->global_config_spad_enables_rtn_7;
-            *(pbuffer +  8) = pdata->global_config_spad_enables_rtn_8;
-            *(pbuffer +  9) = pdata->global_config_spad_enables_rtn_9;
-            *(pbuffer + 10) = pdata->global_config_spad_enables_rtn_10;
-            *(pbuffer + 11) = pdata->global_config_spad_enables_rtn_11;
-            *(pbuffer + 12) = pdata->global_config_spad_enables_rtn_12;
-            *(pbuffer + 13) = pdata->global_config_spad_enables_rtn_13;
-            *(pbuffer + 14) = pdata->global_config_spad_enables_rtn_14;
-            *(pbuffer + 15) = pdata->global_config_spad_enables_rtn_15;
-            *(pbuffer + 16) = pdata->global_config_spad_enables_rtn_16;
-            *(pbuffer + 17) = pdata->global_config_spad_enables_rtn_17;
-            *(pbuffer + 18) = pdata->global_config_spad_enables_rtn_18;
-            *(pbuffer + 19) = pdata->global_config_spad_enables_rtn_19;
-            *(pbuffer + 20) = pdata->global_config_spad_enables_rtn_20;
-            *(pbuffer + 21) = pdata->global_config_spad_enables_rtn_21;
-            *(pbuffer + 22) = pdata->global_config_spad_enables_rtn_22;
-            *(pbuffer + 23) = pdata->global_config_spad_enables_rtn_23;
-            *(pbuffer + 24) = pdata->global_config_spad_enables_rtn_24;
-            *(pbuffer + 25) = pdata->global_config_spad_enables_rtn_25;
-            *(pbuffer + 26) = pdata->global_config_spad_enables_rtn_26;
-            *(pbuffer + 27) = pdata->global_config_spad_enables_rtn_27;
-            *(pbuffer + 28) = pdata->global_config_spad_enables_rtn_28;
-            *(pbuffer + 29) = pdata->global_config_spad_enables_rtn_29;
-            *(pbuffer + 30) = pdata->global_config_spad_enables_rtn_30;
-            *(pbuffer + 31) = pdata->global_config_spad_enables_rtn_31;
-        }
-
         uint32_t calc_macro_period_us(
                 uint16_t  fast_osc_frequency,
                 uint8_t   vcsel_period)
@@ -1934,149 +2190,7 @@ class VL53L1X {
         }
 
 
-        static uint32_t calc_timeout_us(
-                uint32_t timeout_mclks,
-                uint32_t macro_period_us)
-        {
-            /*  Calculates the  timeout in [us] based on the input
-             *  encoded timeout and the macro period in [us]
-             *
-             *  Max timeout supported is 1000000 us (1 sec) -> 20-bits
-             *  Max timeout in 20.12 format = 32-bits
-             *
-             *  Macro period [us] = 12.12 format
-             */
-
-            uint32_t timeout_us     = 0;
-            uint64_t tmp            = 0;
-
-
-            tmp  = (uint64_t)timeout_mclks * (uint64_t)macro_period_us;
-            tmp += 0x00800;
-            tmp  = tmp >> 12;
-
-            timeout_us = (uint32_t)tmp;
-
-            return timeout_us;
-        }
-
-        static uint32_t decode_timeout(uint16_t encoded_timeout)
-        {
-            /*
-             * Decode 16-bit timeout register value
-             * format (LSByte * 2^MSByte) + 1
-             */
-
-            uint32_t timeout_macro_clks = 0;
-
-            timeout_macro_clks = ((uint32_t) (encoded_timeout & 0x00FF)
-                    << (uint32_t) ((encoded_timeout & 0xFF00) >> 8)) + 1;
-
-            return timeout_macro_clks;
-        }
-        static uint32_t calc_decoded_timeout_us(
-                uint16_t timeout_encoded,
-                uint32_t macro_period_us)
-        {
-            /*  Calculates the  timeout in [us] based on the input
-             *  encoded timeout and the macro period in [us]
-             *
-             *  Max timeout supported is 1000000 us (1 sec) -> 20-bits
-             *  Max timeout in 20.12 format = 32-bits
-             *
-             *  Macro period [us] = 12.12 format
-             */
-
-            uint32_t timeout_mclks  = 0;
-            uint32_t timeout_us     = 0;
-
-            timeout_mclks =
-                decode_timeout(timeout_encoded);
-
-            timeout_us    =
-                calc_timeout_us(timeout_mclks, macro_period_us);
-
-            return timeout_us;
-        }
-
-        static uint16_t encode_timeout(uint32_t timeout_mclks)
-        {
-            /*
-             * Encode timeout in macro periods in (LSByte * 2^MSByte) + 1 format
-             */
-
-            uint16_t encoded_timeout = 0;
-            uint32_t ls_byte = 0;
-            uint16_t ms_byte = 0;
-
-            if (timeout_mclks > 0) {
-                ls_byte = timeout_mclks - 1;
-
-                while ((ls_byte & 0xFFFFFF00) > 0) {
-                    ls_byte = ls_byte >> 1;
-                    ms_byte++;
-                }
-
-                encoded_timeout = (ms_byte << 8)
-                    + (uint16_t) (ls_byte & 0x000000FF);
-            }
-
-            return encoded_timeout;
-        }
-
-        static uint32_t calc_timeout_mclks(
-                uint32_t timeout_us,
-                uint32_t macro_period_us)
-        {
-            /*  Calculates the timeout value in macro periods based on the input
-             *  timeout period in milliseconds and the macro period in [us]
-             *
-             *  Max timeout supported is 1000000 us (1 sec) -> 20-bits
-             *  Max timeout in 20.12 format = 32-bits
-             *
-             *  Macro period [us] = 12.12 format
-             */
-
-            uint32_t timeout_mclks   = 0;
-
-
-            timeout_mclks   =
-                ((timeout_us << 12) + (macro_period_us>>1)) /
-                macro_period_us;
-
-
-            return timeout_mclks;
-        }
-
-        static uint16_t calc_encoded_timeout(
-                uint32_t timeout_us,
-                uint32_t macro_period_us)
-        {
-            /*  Calculates the encoded timeout register value based on the input
-             *  timeout period in milliseconds and the macro period in [us]
-             *
-             *  Max timeout supported is 1000000 us (1 sec) -> 20-bits
-             *  Max timeout in 20.12 format = 32-bits
-             *
-             *  Macro period [us] = 12.12 format
-             */
-
-            uint32_t timeout_mclks   = 0;
-            uint16_t timeout_encoded = 0;
-
-
-            timeout_mclks   =
-                calc_timeout_mclks(timeout_us, macro_period_us);
-
-            timeout_encoded =
-                encode_timeout(timeout_mclks);
-
-            return timeout_encoded;
-        }
-
-
-
-        error_t calc_timeout_register_values(
+       error_t calc_timeout_register_values(
                 uint32_t                 phasecal_config_timeout_us,
                 uint32_t                 mm_config_timeout_us,
                 uint32_t                 range_config_timeout_us,
@@ -2175,109 +2289,7 @@ class VL53L1X {
 
         }
 
-        static uint16_t calc_range_ignore_threshold(
-                uint32_t central_rate,
-                int16_t  x_gradient,
-                int16_t  y_gradient,
-                uint8_t  rate_mult)
-        {
-            /* Calculates Range Ignore Threshold rate per spad
-             * in Mcps - 3.13 format
-             *
-             * Calculates worst case xtalk rate per spad in array corner
-             * based on input central xtalk and x and y gradients
-             *
-             * Worst case rate = central rate + (8*(magnitude(xgrad)) +
-             * (8*(magnitude(ygrad)))
-             *
-             * Range ignore threshold rate is then multiplied by user input
-             * rate_mult (in 3.5 fractional format)
-             *
-             */
 
-            int32_t    range_ignore_thresh_int  = 0;
-            uint16_t   range_ignore_thresh_kcps = 0;
-            int32_t    central_rate_int         = 0;
-            int16_t    x_gradient_int           = 0;
-            int16_t    y_gradient_int           = 0;
-
-
-            /* Shift central_rate to .13 fractional for simple addition */
-
-            central_rate_int = ((int32_t)central_rate * (1 << 4)) / (1000);
-
-            if (x_gradient < 0) {
-                x_gradient_int = x_gradient * -1;
-            }
-
-            if (y_gradient < 0) {
-                y_gradient_int = y_gradient * -1;
-            }
-
-            /* Calculate full rate per spad - worst case from measured xtalk */
-            /* Generated here from .11 fractional kcps */
-            /* Additional factor of 4 applied to bring fractional precision to .13 */
-
-            range_ignore_thresh_int = (8 * x_gradient_int * 4) + (8 * y_gradient_int * 4);
-
-            /* Convert Kcps to Mcps */
-
-            range_ignore_thresh_int = range_ignore_thresh_int / 1000;
-
-            /* Combine with Central Rate - Mcps .13 format*/
-
-            range_ignore_thresh_int = range_ignore_thresh_int + central_rate_int;
-
-            /* Mult by user input */
-
-            range_ignore_thresh_int = (int32_t)rate_mult * range_ignore_thresh_int;
-
-            range_ignore_thresh_int = (range_ignore_thresh_int + (1<<4)) / (1<<5);
-
-            /* Finally clip and output in correct format */
-
-            if (range_ignore_thresh_int > 0xFFFF) {
-                range_ignore_thresh_kcps = 0xFFFF;
-            } else {
-                range_ignore_thresh_kcps = (uint16_t)range_ignore_thresh_int;
-            }
-
-            return range_ignore_thresh_kcps;
-        }
-
-        static void encode_row_col(
-                uint8_t  row,
-                uint8_t  col,
-                uint8_t *pspad_number)
-        {
-            /**
-             *  Encodes the input array(row,col) location as SPAD number.
-             */
-
-            if (row > 7) {
-                *pspad_number = 128 + (col << 3) + (15-row);
-            } else {
-                *pspad_number = ((15-col) << 3) + row;
-            }
-        }
-
-        static void encode_zone_size(
-                uint8_t  width,
-                uint8_t  height,
-                uint8_t *pencoded_xy_size)
-        {
-            /* merge x and y sizes
-             *
-             * Important: the sense of the device width and height is swapped
-             * versus the API sense
-             *
-             * MS Nibble = height
-             * LS Nibble = width
-             */
-
-            *pencoded_xy_size = (height << 4) + width;
-
-        }
         error_t config_low_power_auto_mode(
                 general_config_t   *pgeneral,
                 dynamic_config_t   *pdynamic,
@@ -4272,16 +4284,6 @@ class VL53L1X {
             return status;
         }
 
-        static void decode_zone_size(
-                uint8_t  encoded_xy_size,
-                uint8_t  *pwidth,
-                uint8_t  *pheight)
-        {
-            *pheight = encoded_xy_size >> 4;
-            *pwidth  = encoded_xy_size & 0x0F;
-
-        }
-
         error_t get_user_zone(user_zone_t * puser_zone)
         {
             error_t  status = ERROR_NONE;
@@ -4631,7 +4633,6 @@ class VL53L1X {
 
             return status;
         }
-
 
         // Platform-dependent ------------------------------------------------
 
