@@ -39,64 +39,13 @@ class VL53L1X {
 
         typedef int8_t error_t;
 
-        enum {
-            ERROR_NONE                              =  0,
-            ERROR_CALIBRATION_WARNING               = -1,
-            ERROR_MIN_CLIPPED                       = -2,
-            ERROR_UNDEFINED                         = -3,
-            ERROR_INVALID_PARAMS                    = -4,
-            ERROR_NOT_SUPPORTED                     = -5,
-            ERROR_RANGE_ERROR                       = -6,
-            ERROR_TIME_OUT                          = -7,
-            ERROR_MODE_NOT_SUPPORTED                = -8,
-            ERROR_BUFFER_TOO_SMALL                  = -9,
-            ERROR_COMMS_BUFFER_TOO_SMALL            = -10,
-            ERROR_GPIO_NOT_EXISTING                 = -11,
-            ERROR_GPIO_FUNCTIONALITY_NOT_SUPPORTED  = -12,
-            ERROR_CONTROL_INTERFACE                 = -13,
-            ERROR_INVALID_COMMAND                   = -14,
-            ERROR_DIVISION_BY_ZERO                  = -15,
-            ERROR_REF_SPAD_INIT                     = -16,
-            ERROR_GPH_SYNC_CHECK_FAIL               = -17,
-            ERROR_STREAM_COUNT_CHECK_FAIL           = -18,
-            ERROR_GPH_ID_CHECK_FAIL                 = -19,
-            ERROR_ZONE_STREAM_COUNT_CHECK_FAIL      = -20,
-            ERROR_ZONE_GPH_ID_CHECK_FAIL            = -21,
-            ERROR_XTALK_EXTRACTION_NO_SAMPLE_FAIL   = -22,
-            ERROR_XTALK_EXTRACTION_SIGMA_LIMIT_FAIL = -23,
-            ERROR_OFFSET_CAL_NO_SAMPLE_FAIL           = -24,
-            ERROR_OFFSET_CAL_NO_SPADS_ENABLED_FAIL    = -25,
-            ERROR_ZONE_CAL_NO_SAMPLE_FAIL             = -26,
-            ERROR_TUNING_PARM_KEY_MISMATCH             = -27,
-            WARNING_REF_SPAD_CHAR_NOT_ENOUGH_SPADS   = -28,
-            WARNING_REF_SPAD_CHAR_RATE_TOO_HIGH      = -29,
-            WARNING_REF_SPAD_CHAR_RATE_TOO_LOW       = -30,
-            WARNING_OFFSET_CAL_MISSING_SAMPLES       = -31,
-            WARNING_OFFSET_CAL_SIGMA_TOO_HIGH        = -32,
-            WARNING_OFFSET_CAL_RATE_TOO_HIGH         = -33,
-            WARNING_OFFSET_CAL_SPAD_COUNT_TOO_LOW    = -34,
-            WARNING_ZONE_CAL_MISSING_SAMPLES       = -35,
-            WARNING_ZONE_CAL_SIGMA_TOO_HIGH        = -36,
-            WARNING_ZONE_CAL_RATE_TOO_HIGH         = -37,
-            WARNING_XTALK_MISSING_SAMPLES             = -38,
-            WARNING_XTALK_NO_SAMPLES_FOR_GRADIENT     = -39,
-            WARNING_XTALK_SIGMA_LIMIT_FOR_GRADIENT    = -40,
-            ERROR_NOT_IMPLEMENTED                   = -41,
-            ERROR_PLATFORM_SPECIFIC_START           = -60,
-            ERROR_DEVICE_FIRMWARE_TOO_OLD           = -80,
-            ERROR_DEVICE_FIRMWARE_TOO_NEW           = -85,
-            ERROR_UNIT_TEST_FAIL                    = -90,
-            ERROR_FILE_READ_FAIL                    = -95,
-            ERROR_FILE_WRITE_FAIL                   = -96,
-        };
-
-        enum {
+       enum {
             DISTANCEMODE_SHORT = 1,
             DISTANCEMODE_MEDIUM,
             DISTANCEMODE_LONG, 
         };
 
-        typedef uint8_t DistanceModes;
+        typedef uint8_t distanceMode_t;
 
         VL53L1X(void * device = NULL)
         {
@@ -218,7 +167,7 @@ class VL53L1X {
 
                 CurrentParameters.DistanceMode = DISTANCEMODE_LONG;
 
-                DistanceModes DistanceMode = DISTANCEMODE_LONG;
+                distanceMode_t DistanceMode = DISTANCEMODE_LONG;
 
                 PresetModes PresetMode = PRESETMODE_LOWPOWER_AUTONOMOUS;
 
@@ -255,8 +204,7 @@ class VL53L1X {
 
                 return status; 
 
-        } // init
-
+        }
 
         error_t readDistance(uint16_t * distance)
         {
@@ -280,12 +228,6 @@ class VL53L1X {
             stopRanging();
 
             return ERROR_NONE;
-        }
-
-       error_t getDistance(uint16_t * distance)
-        {
-            return read_word(RGSTR_RESULT_FINAL_CROSSTALK_CORRECTED_RANGE_MM_SD0, 
-                    distance);
         }
 
         error_t SetMeasurementTimingBudgetMicroSeconds(
@@ -397,11 +339,11 @@ class VL53L1X {
             return Status;
         }
 
-        error_t SetDistanceMode(DistanceModes DistanceMode)
+        error_t SetDistanceMode(distanceMode_t DistanceMode)
         {
             error_t Status = ERROR_NONE;
             PresetModes PresetMode;
-            DistanceModes InternalDistanceMode;
+            distanceMode_t InternalDistanceMode;
             uint32_t inter_measurement_period_ms;
             uint32_t TimingBudget;
             uint32_t MmTimeoutUs;
@@ -482,6 +424,58 @@ class VL53L1X {
 
         uint8_t _i2c_address;
 
+        enum {
+            ERROR_NONE                              =  0,
+            ERROR_CALIBRATION_WARNING               = -1,
+            ERROR_MIN_CLIPPED                       = -2,
+            ERROR_UNDEFINED                         = -3,
+            ERROR_INVALID_PARAMS                    = -4,
+            ERROR_NOT_SUPPORTED                     = -5,
+            ERROR_RANGE_ERROR                       = -6,
+            ERROR_TIME_OUT                          = -7,
+            ERROR_MODE_NOT_SUPPORTED                = -8,
+            ERROR_BUFFER_TOO_SMALL                  = -9,
+            ERROR_COMMS_BUFFER_TOO_SMALL            = -10,
+            ERROR_GPIO_NOT_EXISTING                 = -11,
+            ERROR_GPIO_FUNCTIONALITY_NOT_SUPPORTED  = -12,
+            ERROR_CONTROL_INTERFACE                 = -13,
+            ERROR_INVALID_COMMAND                   = -14,
+            ERROR_DIVISION_BY_ZERO                  = -15,
+            ERROR_REF_SPAD_INIT                     = -16,
+            ERROR_GPH_SYNC_CHECK_FAIL               = -17,
+            ERROR_STREAM_COUNT_CHECK_FAIL           = -18,
+            ERROR_GPH_ID_CHECK_FAIL                 = -19,
+            ERROR_ZONE_STREAM_COUNT_CHECK_FAIL      = -20,
+            ERROR_ZONE_GPH_ID_CHECK_FAIL            = -21,
+            ERROR_XTALK_EXTRACTION_NO_SAMPLE_FAIL   = -22,
+            ERROR_XTALK_EXTRACTION_SIGMA_LIMIT_FAIL = -23,
+            ERROR_OFFSET_CAL_NO_SAMPLE_FAIL           = -24,
+            ERROR_OFFSET_CAL_NO_SPADS_ENABLED_FAIL    = -25,
+            ERROR_ZONE_CAL_NO_SAMPLE_FAIL             = -26,
+            ERROR_TUNING_PARM_KEY_MISMATCH             = -27,
+            WARNING_REF_SPAD_CHAR_NOT_ENOUGH_SPADS   = -28,
+            WARNING_REF_SPAD_CHAR_RATE_TOO_HIGH      = -29,
+            WARNING_REF_SPAD_CHAR_RATE_TOO_LOW       = -30,
+            WARNING_OFFSET_CAL_MISSING_SAMPLES       = -31,
+            WARNING_OFFSET_CAL_SIGMA_TOO_HIGH        = -32,
+            WARNING_OFFSET_CAL_RATE_TOO_HIGH         = -33,
+            WARNING_OFFSET_CAL_SPAD_COUNT_TOO_LOW    = -34,
+            WARNING_ZONE_CAL_MISSING_SAMPLES       = -35,
+            WARNING_ZONE_CAL_SIGMA_TOO_HIGH        = -36,
+            WARNING_ZONE_CAL_RATE_TOO_HIGH         = -37,
+            WARNING_XTALK_MISSING_SAMPLES             = -38,
+            WARNING_XTALK_NO_SAMPLES_FOR_GRADIENT     = -39,
+            WARNING_XTALK_SIGMA_LIMIT_FOR_GRADIENT    = -40,
+            ERROR_NOT_IMPLEMENTED                   = -41,
+            ERROR_PLATFORM_SPECIFIC_START           = -60,
+            ERROR_DEVICE_FIRMWARE_TOO_OLD           = -80,
+            ERROR_DEVICE_FIRMWARE_TOO_NEW           = -85,
+            ERROR_UNIT_TEST_FAIL                    = -90,
+            ERROR_FILE_READ_FAIL                    = -95,
+            ERROR_FILE_WRITE_FAIL                   = -96,
+        };
+
+ 
     private:
 
         enum {
@@ -1161,9 +1155,9 @@ class VL53L1X {
         typedef struct {
 
             PresetModes PresetMode;
-            DistanceModes DistanceMode;
-            DistanceModes InternalDistanceMode;
-            DistanceModes NewDistanceMode;
+            distanceMode_t DistanceMode;
+            distanceMode_t InternalDistanceMode;
+            distanceMode_t NewDistanceMode;
             uint32_t MeasurementTimingBudgetMicroSeconds;
             uint8_t LimitChecksEnable[CHECKENABLE_NUMBER_OF_CHECKS];
             uint8_t LimitChecksStatus[CHECKENABLE_NUMBER_OF_CHECKS];
@@ -4173,7 +4167,7 @@ class VL53L1X {
 
         error_t ComputeDevicePresetMode(
                 PresetModes PresetMode,
-                DistanceModes DistanceMode,
+                distanceMode_t DistanceMode,
                 DevicePresetModes *pDevicePresetMode)
         {
             error_t Status = ERROR_NONE;
@@ -4230,7 +4224,7 @@ class VL53L1X {
 
         error_t helper_set_preset_mode(
                 PresetModes PresetMode,
-                DistanceModes DistanceMode,
+                distanceMode_t DistanceMode,
                 uint32_t inter_measurement_period_ms)
         {
             error_t Status = ERROR_NONE;
@@ -4623,7 +4617,12 @@ class VL53L1X {
             return status;
         }
 
- 
+        error_t getDistance(uint16_t * distance)
+        {
+            return read_word(RGSTR_RESULT_FINAL_CROSSTALK_CORRECTED_RANGE_MM_SD0, 
+                    distance);
+        }
+
         // Platform-dependent ------------------------------------------------
 
         error_t read_bytes(void * _device, const uint16_t rgstr, 

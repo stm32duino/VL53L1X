@@ -38,13 +38,11 @@ static VL53L1X_Arduino ranger;
 
 void setup(void)
 {
-    int8_t status = VL53L1X::ERROR_NONE;
-
     Wire.begin();
 
     Serial.begin(115200);
 
-    status |= ranger.begin();
+    int8_t status = ranger.begin();
 
     status |= ranger.SetDistanceMode(VL53L1X::DISTANCEMODE_MEDIUM);
 
