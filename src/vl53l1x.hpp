@@ -1989,12 +1989,10 @@ class VL53L1X {
         }
 
        error_t calc_timeout_register_values(
-                uint32_t                 phasecal_config_timeout_us,
-                uint32_t                 mm_config_timeout_us,
-                uint32_t                 range_config_timeout_us,
-                uint16_t                 fast_osc_frequency,
-                general_config_t *pgeneral,
-                timing_config_t  *ptiming)
+                const uint32_t phasecal_config_timeout_us,
+                const uint32_t mm_config_timeout_us,
+                const uint32_t range_config_timeout_us,
+                const uint16_t fast_osc_frequency)
         {
 
             error_t status = ERROR_NONE;
@@ -2010,7 +2008,7 @@ class VL53L1X {
                 macro_period_us =
                     calc_macro_period_us(
                             fast_osc_frequency,
-                            ptiming->range_config_vcsel_period_a);
+                            _tim_cfg.range_config_vcsel_period_a);
 
                 timeout_mclks =
                     calc_timeout_mclks(
@@ -2020,7 +2018,7 @@ class VL53L1X {
                 if (timeout_mclks > 0xFF)
                     timeout_mclks = 0xFF;
 
-                pgeneral->phasecal_config_timeout_macrop =
+                _gen_cfg.phasecal_config_timeout_macrop =
                     (uint8_t)timeout_mclks;
 
                 timeout_encoded =
@@ -2028,9 +2026,9 @@ class VL53L1X {
                             mm_config_timeout_us,
                             macro_period_us);
 
-                ptiming->mm_config_timeout_macrop_a_hi =
+                _tim_cfg.mm_config_timeout_macrop_a_hi =
                     (uint8_t)((timeout_encoded & 0xFF00) >> 8);
-                ptiming->mm_config_timeout_macrop_a_lo =
+                _tim_cfg.mm_config_timeout_macrop_a_lo =
                     (uint8_t) (timeout_encoded & 0x00FF);
 
                 timeout_encoded =
@@ -2038,33 +2036,33 @@ class VL53L1X {
                             range_config_timeout_us,
                             macro_period_us);
 
-                ptiming->range_config_timeout_macrop_a_hi =
+                _tim_cfg.range_config_timeout_macrop_a_hi =
                     (uint8_t)((timeout_encoded & 0xFF00) >> 8);
-                ptiming->range_config_timeout_macrop_a_lo =
+                _tim_cfg.range_config_timeout_macrop_a_lo =
                     (uint8_t) (timeout_encoded & 0x00FF);
 
                 macro_period_us =
                     calc_macro_period_us(
                             fast_osc_frequency,
-                            ptiming->range_config_vcsel_period_b);
+                            _tim_cfg.range_config_vcsel_period_b);
 
                 timeout_encoded =
                     calc_encoded_timeout(
                             mm_config_timeout_us,
                             macro_period_us);
 
-                ptiming->mm_config_timeout_macrop_b_hi =
+                _tim_cfg.mm_config_timeout_macrop_b_hi =
                     (uint8_t)((timeout_encoded & 0xFF00) >> 8);
-                ptiming->mm_config_timeout_macrop_b_lo =
+                _tim_cfg.mm_config_timeout_macrop_b_lo =
                     (uint8_t) (timeout_encoded & 0x00FF);
 
                 timeout_encoded = calc_encoded_timeout(
                         range_config_timeout_us,
                         macro_period_us);
 
-                ptiming->range_config_timeout_macrop_b_hi =
+                _tim_cfg.range_config_timeout_macrop_b_hi =
                     (uint8_t)((timeout_encoded & 0xFF00) >> 8);
-                ptiming->range_config_timeout_macrop_b_lo =
+                _tim_cfg.range_config_timeout_macrop_b_lo =
                     (uint8_t) (timeout_encoded & 0x00FF);
             }
 
@@ -2072,30 +2070,21 @@ class VL53L1X {
 
         }
 
-        error_t config_low_power_auto_mode(
-                general_config_t   *pgeneral,
-                dynamic_config_t   *pdynamic,
-                low_power_auto_data_t *plpadata
-                )
+        void config_low_power_auto_mode(void)
         {
+            _low_power_auto_data.is_low_power_auto_mode = 1;
 
-            error_t  status = ERROR_NONE;
+            _low_power_auto_data.low_power_auto_range_count = 0;
 
-            plpadata->is_low_power_auto_mode = 1;
-
-            plpadata->low_power_auto_range_count = 0;
-
-            pdynamic->system_sequence_config = 
+            _dyn_cfg.system_sequence_config = 
                 SEQUENCE_VHV_EN | 
                 SEQUENCE_PHASECAL_EN | 
                 SEQUENCE_DSS1_EN | 
                 SEQUENCE_RANGE_EN;
 
-            pgeneral->dss_config_manual_effective_spads_select = 200 << 8;
-            pgeneral->dss_config_roi_mode_control =
+            _gen_cfg.dss_config_manual_effective_spads_select = 200 << 8;
+            _gen_cfg.dss_config_roi_mode_control =
                 DEVICEDSSMODE_REQUESTED_EFFFECTIVE_SPADS;
-
-            return status;
         }
 
         error_t get_timeouts_us(
@@ -2467,10 +2456,9 @@ class VL53L1X {
             return status;
         }
 
-        error_t set_timeouts_us(
-                uint32_t            phasecal_config_timeout_us,
-                uint32_t            mm_config_timeout_us,
-                uint32_t            range_config_timeout_us)
+        error_t set_timeouts_us(const uint32_t phasecal_config_timeout_us,
+                const uint32_t mm_config_timeout_us,
+                const uint32_t range_config_timeout_us)
         {
 
             error_t  status = ERROR_NONE;
@@ -2485,26 +2473,16 @@ class VL53L1X {
                 _range_config_timeout_us    = range_config_timeout_us;
 
                 status =
-                    calc_timeout_register_values(
-                            phasecal_config_timeout_us,
-                            mm_config_timeout_us,
-                            range_config_timeout_us,
-                            _stat_nvm.osc_measured_fast_osc_frequency,
-                            &(_gen_cfg),
-                            &(_tim_cfg));
+                    calc_timeout_register_values(phasecal_config_timeout_us,
+                            mm_config_timeout_us, range_config_timeout_us,
+                            _stat_nvm.osc_measured_fast_osc_frequency);
             }
 
             return status;
         }
 
-        error_t preset_mode_standard_ranging(
-                general_config_t   *pgeneral,
-                timing_config_t    *ptiming,
-                dynamic_config_t   *pdynamic,
-                system_control_t   *psystem,
-                tuning_parm_storage_t *ptuning_parms)
+        error_t preset_mode_standard_ranging(void)
         {
-
             error_t  status = ERROR_NONE;
 
             _stat_cfg.dss_config_target_total_rate_mcps               = 0x0A00;
@@ -2531,11 +2509,11 @@ class VL53L1X {
             _stat_cfg.ana_config_fast_osc_config_ctrl                = 0x00;
 
             _stat_cfg.sigma_estimator_effective_pulse_width_ns        =
-                ptuning_parms->tp_lite_sigma_est_pulse_width_ns;
+                _tuning_parms.tp_lite_sigma_est_pulse_width_ns;
             _stat_cfg.sigma_estimator_effective_ambient_width_ns      =
-                ptuning_parms->tp_lite_sigma_est_amb_width_ns;
+                _tuning_parms.tp_lite_sigma_est_amb_width_ns;
             _stat_cfg.sigma_estimator_sigma_ref_mm                    =
-                ptuning_parms->tp_lite_sigma_ref_mm;
+                _tuning_parms.tp_lite_sigma_ref_mm;
 
             _stat_cfg.algo_crosstalk_compensation_valid_height_mm     = 0x01;
             _stat_cfg.spare_host_config_static_config_spare_0         = 0x00;
@@ -2545,97 +2523,97 @@ class VL53L1X {
 
             _stat_cfg.algo_range_ignore_valid_height_mm               = 0xff;
             _stat_cfg.algo_range_min_clip                             =
-                ptuning_parms->tp_lite_min_clip;
+                _tuning_parms.tp_lite_min_clip;
 
             _stat_cfg.algo_consistency_check_tolerance               =
-                ptuning_parms->tp_consistency_lite_phase_tolerance;
+                _tuning_parms.tp_consistency_lite_phase_tolerance;
             _stat_cfg.spare_host_config_static_config_spare_2         = 0x00;
             _stat_cfg.sd_config_reset_stages_msb                      = 0x00;
             _stat_cfg.sd_config_reset_stages_lsb                      = 0x00;
 
-            pgeneral->gph_config_stream_count_update_value           = 0x00;
-            pgeneral->global_config_stream_divider                   = 0x00;
-            pgeneral->system_interrupt_config_gpio =
+            _gen_cfg.gph_config_stream_count_update_value           = 0x00;
+            _gen_cfg.global_config_stream_divider                   = 0x00;
+            _gen_cfg.system_interrupt_config_gpio =
                 INTERRUPT_CONFIG_NEW_SAMPLE_READY;
-            pgeneral->cal_config_vcsel_start                         = 0x0B;
+            _gen_cfg.cal_config_vcsel_start                         = 0x0B;
 
-            pgeneral->cal_config_repeat_rate                         =
-                ptuning_parms->tp_cal_repeat_rate;
-            pgeneral->global_config_vcsel_width                      = 0x02;
+            _gen_cfg.cal_config_repeat_rate                         =
+                _tuning_parms.tp_cal_repeat_rate;
+            _gen_cfg.global_config_vcsel_width                      = 0x02;
 
-            pgeneral->phasecal_config_timeout_macrop                 = 0x0D;
+            _gen_cfg.phasecal_config_timeout_macrop                 = 0x0D;
 
-            pgeneral->phasecal_config_target                         =
-                ptuning_parms->tp_phasecal_target;
-            pgeneral->phasecal_config_override                       = 0x00;
-            pgeneral->dss_config_roi_mode_control =
+            _gen_cfg.phasecal_config_target                         =
+                _tuning_parms.tp_phasecal_target;
+            _gen_cfg.phasecal_config_override                       = 0x00;
+            _gen_cfg.dss_config_roi_mode_control =
                 DEVICEDSSMODE_TARGET_RATE;
 
-            pgeneral->system_thresh_rate_high                        = 0x0000;
-            pgeneral->system_thresh_rate_low                         = 0x0000;
+            _gen_cfg.system_thresh_rate_high                        = 0x0000;
+            _gen_cfg.system_thresh_rate_low                         = 0x0000;
 
-            pgeneral->dss_config_manual_effective_spads_select       = 0x8C00;
-            pgeneral->dss_config_manual_block_select                 = 0x00;
+            _gen_cfg.dss_config_manual_effective_spads_select       = 0x8C00;
+            _gen_cfg.dss_config_manual_block_select                 = 0x00;
 
-            pgeneral->dss_config_aperture_attenuation                = 0x38;
-            pgeneral->dss_config_max_spads_limit                     = 0xFF;
-            pgeneral->dss_config_min_spads_limit                     = 0x01;
+            _gen_cfg.dss_config_aperture_attenuation                = 0x38;
+            _gen_cfg.dss_config_max_spads_limit                     = 0xFF;
+            _gen_cfg.dss_config_min_spads_limit                     = 0x01;
 
-            ptiming->mm_config_timeout_macrop_a_hi                   = 0x00;
-            ptiming->mm_config_timeout_macrop_a_lo                   = 0x1a;
-            ptiming->mm_config_timeout_macrop_b_hi                   = 0x00;
-            ptiming->mm_config_timeout_macrop_b_lo                   = 0x20;
+            _tim_cfg.mm_config_timeout_macrop_a_hi                   = 0x00;
+            _tim_cfg.mm_config_timeout_macrop_a_lo                   = 0x1a;
+            _tim_cfg.mm_config_timeout_macrop_b_hi                   = 0x00;
+            _tim_cfg.mm_config_timeout_macrop_b_lo                   = 0x20;
 
-            ptiming->range_config_timeout_macrop_a_hi                = 0x01;
-            ptiming->range_config_timeout_macrop_a_lo                = 0xCC;
+            _tim_cfg.range_config_timeout_macrop_a_hi                = 0x01;
+            _tim_cfg.range_config_timeout_macrop_a_lo                = 0xCC;
 
-            ptiming->range_config_vcsel_period_a                     = 0x0B;
+            _tim_cfg.range_config_vcsel_period_a                     = 0x0B;
 
-            ptiming->range_config_timeout_macrop_b_hi                = 0x01;
-            ptiming->range_config_timeout_macrop_b_lo                = 0xF5;
+            _tim_cfg.range_config_timeout_macrop_b_hi                = 0x01;
+            _tim_cfg.range_config_timeout_macrop_b_lo                = 0xF5;
 
-            ptiming->range_config_vcsel_period_b                     = 0x09;
+            _tim_cfg.range_config_vcsel_period_b                     = 0x09;
 
-            ptiming->range_config_sigma_thresh                       =
-                ptuning_parms->tp_lite_med_sigma_thresh_mm;
+            _tim_cfg.range_config_sigma_thresh                       =
+                _tuning_parms.tp_lite_med_sigma_thresh_mm;
 
-            ptiming->range_config_min_count_rate_rtn_limit_mcps      =
-                ptuning_parms->tp_lite_med_min_count_rate_rtn_mcps;
+            _tim_cfg.range_config_min_count_rate_rtn_limit_mcps      =
+                _tuning_parms.tp_lite_med_min_count_rate_rtn_mcps;
 
-            ptiming->range_config_valid_phase_low                    = 0x08;
-            ptiming->range_config_valid_phase_high                   = 0x78;
-            ptiming->system_intermeasurement_period                  = 0x00000000;
-            ptiming->system_fractional_enable                        = 0x00;
+            _tim_cfg.range_config_valid_phase_low                    = 0x08;
+            _tim_cfg.range_config_valid_phase_high                   = 0x78;
+            _tim_cfg.system_intermeasurement_period                  = 0x00000000;
+            _tim_cfg.system_fractional_enable                        = 0x00;
 
-            pdynamic->system_grouped_parameter_hold_0                 = 0x01;
+            _dyn_cfg.system_grouped_parameter_hold_0                 = 0x01;
 
-            pdynamic->system_thresh_high                              = 0x0000;
-            pdynamic->system_thresh_low                               = 0x0000;
-            pdynamic->system_enable_xtalk_per_quadrant                = 0x00;
-            pdynamic->system_seed_config =
-                ptuning_parms->tp_lite_seed_cfg;
+            _dyn_cfg.system_thresh_high                              = 0x0000;
+            _dyn_cfg.system_thresh_low                               = 0x0000;
+            _dyn_cfg.system_enable_xtalk_per_quadrant                = 0x00;
+            _dyn_cfg.system_seed_config =
+                _tuning_parms.tp_lite_seed_cfg;
 
-            pdynamic->sd_config_woi_sd0                               = 0x0B;
+            _dyn_cfg.sd_config_woi_sd0                               = 0x0B;
 
-            pdynamic->sd_config_woi_sd1                               = 0x09;
+            _dyn_cfg.sd_config_woi_sd1                               = 0x09;
 
-            pdynamic->sd_config_initial_phase_sd0                     =
-                ptuning_parms->tp_init_phase_rtn_lite_med;
-            pdynamic->sd_config_initial_phase_sd1                     =
-                ptuning_parms->tp_init_phase_ref_lite_med;;
+            _dyn_cfg.sd_config_initial_phase_sd0                     =
+                _tuning_parms.tp_init_phase_rtn_lite_med;
+            _dyn_cfg.sd_config_initial_phase_sd1                     =
+                _tuning_parms.tp_init_phase_ref_lite_med;;
 
-            pdynamic->system_grouped_parameter_hold_1                 = 0x01;
+            _dyn_cfg.system_grouped_parameter_hold_1                 = 0x01;
 
-            pdynamic->sd_config_first_order_select =
-                ptuning_parms->tp_lite_first_order_select;
-            pdynamic->sd_config_quantifier         =
-                ptuning_parms->tp_lite_quantifier;
+            _dyn_cfg.sd_config_first_order_select =
+                _tuning_parms.tp_lite_first_order_select;
+            _dyn_cfg.sd_config_quantifier         =
+                _tuning_parms.tp_lite_quantifier;
 
-            pdynamic->roi_config_user_roi_centre_spad              = 0xC7;
+            _dyn_cfg.roi_config_user_roi_centre_spad              = 0xC7;
 
-            pdynamic->roi_config_user_roi_requested_global_xy_size = 0xFF;
+            _dyn_cfg.roi_config_user_roi_requested_global_xy_size = 0xFF;
 
-            pdynamic->system_sequence_config = 
+            _dyn_cfg.system_sequence_config = 
                 SEQUENCE_VHV_EN | 
                 SEQUENCE_PHASECAL_EN | 
                 SEQUENCE_DSS1_EN | 
@@ -2643,13 +2621,13 @@ class VL53L1X {
                 SEQUENCE_MM2_EN | 
                 SEQUENCE_RANGE_EN;
 
-            pdynamic->system_grouped_parameter_hold                   = 0x02;
+            _dyn_cfg.system_grouped_parameter_hold                   = 0x02;
 
-            psystem->system_stream_count_ctrl                         = 0x00;
-            psystem->firmware_enable                                  = 0x01;
-            psystem->system_interrupt_clear                           = CLEAR_RANGE_INT;
+            _sys_ctrl.system_stream_count_ctrl                         = 0x00;
+            _sys_ctrl.firmware_enable                                  = 0x01;
+            _sys_ctrl.system_interrupt_clear                           = CLEAR_RANGE_INT;
 
-            psystem->system_mode_start = 
+            _sys_ctrl.system_mode_start = 
                 DEVICESCHEDULERMODE_STREAMING | 
                 DEVICEREADOUTMODE_SINGLE_SD | 
                 DEVICEMEASUREMENTMODE_BACKTOBACK;
@@ -2657,107 +2635,70 @@ class VL53L1X {
             return status;
         }
 
-        error_t preset_mode_standard_ranging_short_range(
-                general_config_t   *pgeneral,
-                timing_config_t    *ptiming,
-                dynamic_config_t   *pdynamic,
-                system_control_t   *psystem,
-                tuning_parm_storage_t *ptuning_parms)
+        error_t preset_mode_standard_ranging_short_range(void)
         {
-
             error_t  status = ERROR_NONE;
 
-            status = preset_mode_standard_ranging(
-                    pgeneral,
-                    ptiming,
-                    pdynamic,
-                    psystem,
-                    ptuning_parms);
+            status = preset_mode_standard_ranging();
 
             if (status == ERROR_NONE) {
 
-                ptiming->range_config_vcsel_period_a                = 0x07;
-                ptiming->range_config_vcsel_period_b                = 0x05;
-                ptiming->range_config_sigma_thresh                  =
-                    ptuning_parms->tp_lite_short_sigma_thresh_mm;
-                ptiming->range_config_min_count_rate_rtn_limit_mcps =
-                    ptuning_parms->tp_lite_short_min_count_rate_rtn_mcps;
-                ptiming->range_config_valid_phase_low               = 0x08;
-                ptiming->range_config_valid_phase_high              = 0x38;
+                _tim_cfg.range_config_vcsel_period_a                = 0x07;
+                _tim_cfg.range_config_vcsel_period_b                = 0x05;
+                _tim_cfg.range_config_sigma_thresh                  =
+                    _tuning_parms.tp_lite_short_sigma_thresh_mm;
+                _tim_cfg.range_config_min_count_rate_rtn_limit_mcps =
+                    _tuning_parms.tp_lite_short_min_count_rate_rtn_mcps;
+                _tim_cfg.range_config_valid_phase_low               = 0x08;
+                _tim_cfg.range_config_valid_phase_high              = 0x38;
 
-                pdynamic->sd_config_woi_sd0                         = 0x07;
-                pdynamic->sd_config_woi_sd1                         = 0x05;
-                pdynamic->sd_config_initial_phase_sd0               =
-                    ptuning_parms->tp_init_phase_rtn_lite_short;
-                pdynamic->sd_config_initial_phase_sd1               =
-                    ptuning_parms->tp_init_phase_ref_lite_short;
+                _dyn_cfg.sd_config_woi_sd0                         = 0x07;
+                _dyn_cfg.sd_config_woi_sd1                         = 0x05;
+                _dyn_cfg.sd_config_initial_phase_sd0               =
+                    _tuning_parms.tp_init_phase_rtn_lite_short;
+                _dyn_cfg.sd_config_initial_phase_sd1               =
+                    _tuning_parms.tp_init_phase_ref_lite_short;
             }
 
             return status;
         }
 
-        error_t preset_mode_standard_ranging_long_range(
-                general_config_t   *pgeneral,
-                timing_config_t    *ptiming,
-                dynamic_config_t   *pdynamic,
-                system_control_t   *psystem,
-                tuning_parm_storage_t *ptuning_parms)
+        error_t preset_mode_standard_ranging_long_range(void)
         {
-
-            error_t  status = ERROR_NONE;
-
-            status = preset_mode_standard_ranging(
-                    pgeneral,
-                    ptiming,
-                    pdynamic,
-                    psystem,
-                    ptuning_parms);
+            error_t  status = preset_mode_standard_ranging();
 
             if (status == ERROR_NONE) {
 
-                ptiming->range_config_vcsel_period_a                = 0x0F;
-                ptiming->range_config_vcsel_period_b                = 0x0D;
-                ptiming->range_config_sigma_thresh                  =
-                    ptuning_parms->tp_lite_long_sigma_thresh_mm;
-                ptiming->range_config_min_count_rate_rtn_limit_mcps =
-                    ptuning_parms->tp_lite_long_min_count_rate_rtn_mcps;
-                ptiming->range_config_valid_phase_low               = 0x08;
-                ptiming->range_config_valid_phase_high              = 0xB8;
+                _tim_cfg.range_config_vcsel_period_a                = 0x0F;
+                _tim_cfg.range_config_vcsel_period_b                = 0x0D;
+                _tim_cfg.range_config_sigma_thresh                  =
+                    _tuning_parms.tp_lite_long_sigma_thresh_mm;
+                _tim_cfg.range_config_min_count_rate_rtn_limit_mcps =
+                    _tuning_parms.tp_lite_long_min_count_rate_rtn_mcps;
+                _tim_cfg.range_config_valid_phase_low               = 0x08;
+                _tim_cfg.range_config_valid_phase_high              = 0xB8;
 
-                pdynamic->sd_config_woi_sd0                         = 0x0F;
-                pdynamic->sd_config_woi_sd1                         = 0x0D;
-                pdynamic->sd_config_initial_phase_sd0               =
-                    ptuning_parms->tp_init_phase_rtn_lite_long;
-                pdynamic->sd_config_initial_phase_sd1               =
-                    ptuning_parms->tp_init_phase_ref_lite_long;
+                _dyn_cfg.sd_config_woi_sd0                         = 0x0F;
+                _dyn_cfg.sd_config_woi_sd1                         = 0x0D;
+                _dyn_cfg.sd_config_initial_phase_sd0               =
+                    _tuning_parms.tp_init_phase_rtn_lite_long;
+                _dyn_cfg.sd_config_initial_phase_sd1               =
+                    _tuning_parms.tp_init_phase_ref_lite_long;
             }
 
             return status;
         }
 
-        error_t preset_mode_standard_ranging_mm1_cal(
-                general_config_t   *pgeneral,
-                timing_config_t    *ptiming,
-                dynamic_config_t   *pdynamic,
-                system_control_t   *psystem,
-                tuning_parm_storage_t *ptuning_parms)
+        error_t preset_mode_standard_ranging_mm1_cal(void)
         {
-
-            error_t  status = ERROR_NONE;
-
-            status = preset_mode_standard_ranging(
-                    pgeneral,
-                    ptiming,
-                    pdynamic,
-                    psystem,
-                    ptuning_parms);
+            error_t  status =  preset_mode_standard_ranging();
 
             if (status == ERROR_NONE) {
 
-                pgeneral->dss_config_roi_mode_control =
+                _gen_cfg.dss_config_roi_mode_control =
                     DEVICEDSSMODE_REQUESTED_EFFFECTIVE_SPADS;
 
-                pdynamic->system_sequence_config  = 
+                _dyn_cfg.system_sequence_config  = 
                     SEQUENCE_VHV_EN | 
                     SEQUENCE_PHASECAL_EN |
                     SEQUENCE_DSS1_EN | 
@@ -2768,29 +2709,18 @@ class VL53L1X {
             return status;
         }
 
-        error_t preset_mode_standard_ranging_mm2_cal(
-                general_config_t   *pgeneral,
-                timing_config_t    *ptiming,
-                dynamic_config_t   *pdynamic,
-                system_control_t   *psystem,
-                tuning_parm_storage_t *ptuning_parms)
+        error_t preset_mode_standard_ranging_mm2_cal(void)
         {
-
             error_t  status = ERROR_NONE;
 
-            status = preset_mode_standard_ranging(
-                    pgeneral,
-                    ptiming,
-                    pdynamic,
-                    psystem,
-                    ptuning_parms);
+            status = preset_mode_standard_ranging();
 
             if (status == ERROR_NONE) {
 
-                pgeneral->dss_config_roi_mode_control =
+                _gen_cfg.dss_config_roi_mode_control =
                     DEVICEDSSMODE_REQUESTED_EFFFECTIVE_SPADS;
 
-                pdynamic->system_sequence_config  = 
+                _dyn_cfg.system_sequence_config  = 
                     SEQUENCE_VHV_EN | 
                     SEQUENCE_PHASECAL_EN | 
                     SEQUENCE_DSS1_EN | 
@@ -2801,39 +2731,27 @@ class VL53L1X {
             return status;
         }
 
-        error_t preset_mode_timed_ranging(
-
-                general_config_t   *pgeneral,
-                timing_config_t    *ptiming,
-                dynamic_config_t   *pdynamic,
-                system_control_t   *psystem,
-                tuning_parm_storage_t *ptuning_parms)
+        error_t preset_mode_timed_ranging(void)
         {
-
             error_t  status = ERROR_NONE;
 
-            status = preset_mode_standard_ranging(
-                    pgeneral,
-                    ptiming,
-                    pdynamic,
-                    psystem,
-                    ptuning_parms);
+            status = preset_mode_standard_ranging();
 
             if (status == ERROR_NONE) {
 
-                pdynamic->system_grouped_parameter_hold = 0x00;
+                _dyn_cfg.system_grouped_parameter_hold = 0x00;
 
-                ptiming->range_config_timeout_macrop_a_hi                = 0x00;
-                ptiming->range_config_timeout_macrop_a_lo                = 0xB1;
+                _tim_cfg.range_config_timeout_macrop_a_hi                = 0x00;
+                _tim_cfg.range_config_timeout_macrop_a_lo                = 0xB1;
 
-                ptiming->range_config_timeout_macrop_b_hi                = 0x00;
-                ptiming->range_config_timeout_macrop_b_lo                = 0xD4;
+                _tim_cfg.range_config_timeout_macrop_b_hi                = 0x00;
+                _tim_cfg.range_config_timeout_macrop_b_lo                = 0xD4;
 
-                ptiming->system_intermeasurement_period = 0x00000600;
-                pdynamic->system_seed_config =
-                    ptuning_parms->tp_timed_seed_cfg;
+                _tim_cfg.system_intermeasurement_period = 0x00000600;
+                _dyn_cfg.system_seed_config =
+                    _tuning_parms.tp_timed_seed_cfg;
 
-                psystem->system_mode_start =
+                _sys_ctrl.system_mode_start =
                     DEVICESCHEDULERMODE_PSEUDO_SOLO | 
                     DEVICEREADOUTMODE_SINGLE_SD     | 
                     DEVICEMEASUREMENTMODE_TIMED;
@@ -2842,39 +2760,27 @@ class VL53L1X {
             return status;
         }
 
-        error_t preset_mode_timed_ranging_short_range(
-
-                general_config_t   *pgeneral,
-                timing_config_t    *ptiming,
-                dynamic_config_t   *pdynamic,
-                system_control_t   *psystem,
-                tuning_parm_storage_t *ptuning_parms)
+        error_t preset_mode_timed_ranging_short_range(void)
         {
-
             error_t  status = ERROR_NONE;
 
-            status = preset_mode_standard_ranging_short_range(
-                    pgeneral,
-                    ptiming,
-                    pdynamic,
-                    psystem,
-                    ptuning_parms);
+            status = preset_mode_standard_ranging_short_range();
 
             if (status == ERROR_NONE) {
 
-                pdynamic->system_grouped_parameter_hold = 0x00;
+                _dyn_cfg.system_grouped_parameter_hold = 0x00;
 
-                ptiming->range_config_timeout_macrop_a_hi                = 0x01;
-                ptiming->range_config_timeout_macrop_a_lo                = 0x84;
+                _tim_cfg.range_config_timeout_macrop_a_hi                = 0x01;
+                _tim_cfg.range_config_timeout_macrop_a_lo                = 0x84;
 
-                ptiming->range_config_timeout_macrop_b_hi                = 0x01;
-                ptiming->range_config_timeout_macrop_b_lo                = 0xB1;
+                _tim_cfg.range_config_timeout_macrop_b_hi                = 0x01;
+                _tim_cfg.range_config_timeout_macrop_b_lo                = 0xB1;
 
-                ptiming->system_intermeasurement_period = 0x00000600;
-                pdynamic->system_seed_config =
-                    ptuning_parms->tp_timed_seed_cfg;
+                _tim_cfg.system_intermeasurement_period = 0x00000600;
+                _dyn_cfg.system_seed_config =
+                    _tuning_parms.tp_timed_seed_cfg;
 
-                psystem->system_mode_start =
+                _sys_ctrl.system_mode_start =
                     DEVICESCHEDULERMODE_PSEUDO_SOLO | 
                     DEVICEREADOUTMODE_SINGLE_SD     | 
                     DEVICEMEASUREMENTMODE_TIMED;
@@ -2883,39 +2789,25 @@ class VL53L1X {
             return status;
         }
 
-        error_t preset_mode_timed_ranging_long_range(
-
-                general_config_t   *pgeneral,
-                timing_config_t    *ptiming,
-                dynamic_config_t   *pdynamic,
-                system_control_t   *psystem,
-                tuning_parm_storage_t *ptuning_parms)
+        error_t preset_mode_timed_ranging_long_range(void)
         {
-
-            error_t  status = ERROR_NONE;
-
-            status = preset_mode_standard_ranging_long_range(
-                    pgeneral,
-                    ptiming,
-                    pdynamic,
-                    psystem,
-                    ptuning_parms);
+            error_t  status = preset_mode_standard_ranging_long_range();
 
             if (status == ERROR_NONE) {
 
-                pdynamic->system_grouped_parameter_hold = 0x00;
+                _dyn_cfg.system_grouped_parameter_hold = 0x00;
 
-                ptiming->range_config_timeout_macrop_a_hi                = 0x00;
-                ptiming->range_config_timeout_macrop_a_lo                = 0x97;
+                _tim_cfg.range_config_timeout_macrop_a_hi                = 0x00;
+                _tim_cfg.range_config_timeout_macrop_a_lo                = 0x97;
 
-                ptiming->range_config_timeout_macrop_b_hi                = 0x00;
-                ptiming->range_config_timeout_macrop_b_lo                = 0xB1;
+                _tim_cfg.range_config_timeout_macrop_b_hi                = 0x00;
+                _tim_cfg.range_config_timeout_macrop_b_lo                = 0xB1;
 
-                ptiming->system_intermeasurement_period = 0x00000600;
-                pdynamic->system_seed_config =
-                    ptuning_parms->tp_timed_seed_cfg;
+                _tim_cfg.system_intermeasurement_period = 0x00000600;
+                _dyn_cfg.system_seed_config =
+                    _tuning_parms.tp_timed_seed_cfg;
 
-                psystem->system_mode_start =
+                _sys_ctrl.system_mode_start =
                     DEVICESCHEDULERMODE_PSEUDO_SOLO | 
                     DEVICEREADOUTMODE_SINGLE_SD     | 
                     DEVICEMEASUREMENTMODE_TIMED;
@@ -2924,128 +2816,61 @@ class VL53L1X {
             return status;
         }
 
-        error_t preset_mode_low_power_auto_ranging(
-
-                general_config_t   *pgeneral,
-                timing_config_t    *ptiming,
-                dynamic_config_t   *pdynamic,
-                system_control_t   *psystem,
-                tuning_parm_storage_t *ptuning_parms,
-                low_power_auto_data_t *plpadata)
+        error_t preset_mode_low_power_auto_ranging(void)
         {
-
-            error_t  status = ERROR_NONE;
-
-            status = preset_mode_timed_ranging(
-                    pgeneral,
-                    ptiming,
-                    pdynamic,
-                    psystem,
-                    ptuning_parms);
+            error_t  status = preset_mode_timed_ranging();
 
             if (status == ERROR_NONE) {
-                status = config_low_power_auto_mode(
-                        pgeneral,
-                        pdynamic,
-                        plpadata
-                        );
+                config_low_power_auto_mode();
             }
 
             return status;
         }
 
-        error_t preset_mode_low_power_auto_short_ranging(
-
-                general_config_t   *pgeneral,
-                timing_config_t    *ptiming,
-                dynamic_config_t   *pdynamic,
-                system_control_t   *psystem,
-                tuning_parm_storage_t *ptuning_parms,
-                low_power_auto_data_t *plpadata)
+        error_t preset_mode_low_power_auto_short_ranging(void)
         {
 
-            error_t  status = ERROR_NONE;
-
-            status = preset_mode_timed_ranging_short_range(
-                    pgeneral,
-                    ptiming,
-                    pdynamic,
-                    psystem,
-                    ptuning_parms);
+            error_t status = preset_mode_timed_ranging_short_range();
 
             if (status == ERROR_NONE) {
-                status = config_low_power_auto_mode(
-                        pgeneral,
-                        pdynamic,
-                        plpadata
-                        );
+                config_low_power_auto_mode();
             }
 
             return status;
         }
 
-        error_t preset_mode_low_power_auto_long_ranging(
-
-                general_config_t   *pgeneral,
-                timing_config_t    *ptiming,
-                dynamic_config_t   *pdynamic,
-                system_control_t   *psystem,
-                tuning_parm_storage_t *ptuning_parms,
-                low_power_auto_data_t *plpadata)
+        error_t preset_mode_low_power_auto_long_ranging(void)
         {
 
-            error_t  status = ERROR_NONE;
-
-            status = preset_mode_timed_ranging_long_range(
-                    pgeneral,
-                    ptiming,
-                    pdynamic,
-                    psystem,
-                    ptuning_parms);
+            error_t  status = preset_mode_timed_ranging_long_range();
 
             if (status == ERROR_NONE) {
-                status = config_low_power_auto_mode(
-                        pgeneral,
-                        pdynamic,
-                        plpadata
-                        );
+                config_low_power_auto_mode();
             }
 
             return status;
         }
 
-        error_t preset_mode_singleshot_ranging(
-
-                general_config_t   *pgeneral,
-                timing_config_t    *ptiming,
-                dynamic_config_t   *pdynamic,
-                system_control_t   *psystem,
-                tuning_parm_storage_t *ptuning_parms)
+        error_t preset_mode_singleshot_ranging(void)
         {
-
             error_t  status = ERROR_NONE;
 
-            status = preset_mode_standard_ranging(
-                    pgeneral,
-                    ptiming,
-                    pdynamic,
-                    psystem,
-                    ptuning_parms);
+            status = preset_mode_standard_ranging();
 
             if (status == ERROR_NONE) {
 
-                pdynamic->system_grouped_parameter_hold = 0x00;
+                _dyn_cfg.system_grouped_parameter_hold = 0x00;
 
-                ptiming->range_config_timeout_macrop_a_hi                = 0x00;
-                ptiming->range_config_timeout_macrop_a_lo                = 0xB1;
+                _tim_cfg.range_config_timeout_macrop_a_hi                = 0x00;
+                _tim_cfg.range_config_timeout_macrop_a_lo                = 0xB1;
 
-                ptiming->range_config_timeout_macrop_b_hi                = 0x00;
-                ptiming->range_config_timeout_macrop_b_lo                = 0xD4;
+                _tim_cfg.range_config_timeout_macrop_b_hi                = 0x00;
+                _tim_cfg.range_config_timeout_macrop_b_lo                = 0xD4;
 
-                pdynamic->system_seed_config =
-                    ptuning_parms->tp_timed_seed_cfg;
+                _dyn_cfg.system_seed_config =
+                    _tuning_parms.tp_timed_seed_cfg;
 
-                psystem->system_mode_start = 
+                _sys_ctrl.system_mode_start = 
                     DEVICESCHEDULERMODE_PSEUDO_SOLO | 
                     DEVICEREADOUTMODE_SINGLE_SD     | 
                     DEVICEMEASUREMENTMODE_SINGLESHOT;
@@ -3054,26 +2879,14 @@ class VL53L1X {
             return status;
         }
 
-        error_t preset_mode_olt(
-                general_config_t   *pgeneral,
-                timing_config_t    *ptiming,
-                dynamic_config_t   *pdynamic,
-                system_control_t   *psystem,
-                tuning_parm_storage_t *ptuning_parms)
+        error_t preset_mode_olt(void)
         {
 
-            error_t  status = ERROR_NONE;
-
-            status = preset_mode_standard_ranging(
-                    pgeneral,
-                    ptiming,
-                    pdynamic,
-                    psystem,
-                    ptuning_parms);
+            error_t  status = preset_mode_standard_ranging();
 
             if (status == ERROR_NONE) {
 
-                psystem->system_stream_count_ctrl  = 0x01;
+                _sys_ctrl.system_stream_count_ctrl  = 0x01;
             }
 
             return status;
@@ -3106,14 +2919,6 @@ class VL53L1X {
         {
             error_t  status = ERROR_NONE;
 
-            general_config_t       *pgeneral      = &(_gen_cfg);
-            timing_config_t        *ptiming       = &(_tim_cfg);
-            dynamic_config_t       *pdynamic      = &(_dyn_cfg);
-            system_control_t       *psystem       = &(_sys_ctrl);
-            tuning_parm_storage_t  *ptuning_parms = &(_tuning_parms);
-            low_power_auto_data_t  *plpadata      =
-                &(_low_power_auto_data);
-
             _preset_mode                 = device_preset_mode;
             _mm_config_timeout_us        = mm_config_timeout_us;
             _range_config_timeout_us     = range_config_timeout_us;
@@ -3124,80 +2929,55 @@ class VL53L1X {
             switch (device_preset_mode) {
 
                 case DEVICEPRESETMODE_STANDARD_RANGING:
-                    status = preset_mode_standard_ranging(pgeneral,
-                            ptiming, pdynamic, psystem, ptuning_parms);
+                    status = preset_mode_standard_ranging();
                     break;
 
                 case DEVICEPRESETMODE_STANDARD_RANGING_SHORT_RANGE:
-                    status = preset_mode_standard_ranging_short_range(
-                            pgeneral, ptiming, pdynamic, psystem,
-                            ptuning_parms);
+                    status = preset_mode_standard_ranging_short_range();
                     break;
 
                 case DEVICEPRESETMODE_STANDARD_RANGING_LONG_RANGE:
-                    status = preset_mode_standard_ranging_long_range(
-                            pgeneral, ptiming, pdynamic, psystem,
-                            ptuning_parms);
+                    status = preset_mode_standard_ranging_long_range();
                     break;
 
                 case DEVICEPRESETMODE_STANDARD_RANGING_MM1_CAL:
-                    status = preset_mode_standard_ranging_mm1_cal(
-                            pgeneral, ptiming, pdynamic, psystem,
-                            ptuning_parms);
+                    status = preset_mode_standard_ranging_mm1_cal();
                     break;
 
                 case DEVICEPRESETMODE_STANDARD_RANGING_MM2_CAL:
-                    status = preset_mode_standard_ranging_mm2_cal(
-                            pgeneral, ptiming, pdynamic, psystem,
-                            ptuning_parms);
+                    status = preset_mode_standard_ranging_mm2_cal();
                     break;
 
                 case DEVICEPRESETMODE_TIMED_RANGING:
-                    status = preset_mode_timed_ranging(
-                            pgeneral, ptiming, pdynamic, psystem,
-                            ptuning_parms);
+                    status = preset_mode_timed_ranging();
                     break;
 
                 case DEVICEPRESETMODE_TIMED_RANGING_SHORT_RANGE:
-                    status = preset_mode_timed_ranging_short_range(
-                            pgeneral, ptiming, pdynamic, psystem,
-                            ptuning_parms);
+                    status = preset_mode_timed_ranging_short_range();
                     break;
 
                 case DEVICEPRESETMODE_TIMED_RANGING_LONG_RANGE:
-                    status = preset_mode_timed_ranging_long_range(
-                            pgeneral, ptiming, pdynamic, psystem,
-                            ptuning_parms);
+                    status = preset_mode_timed_ranging_long_range();
                     break;
 
                 case DEVICEPRESETMODE_OLT:
-                    status = preset_mode_olt(
-                            pgeneral, ptiming, pdynamic, psystem,
-                            ptuning_parms);
+                    status = preset_mode_olt();
                     break;
 
                 case DEVICEPRESETMODE_SINGLESHOT_RANGING:
-                    status = preset_mode_singleshot_ranging(
-                            pgeneral, ptiming, pdynamic, psystem,
-                            ptuning_parms);
+                    status = preset_mode_singleshot_ranging();
                     break;
 
                 case DEVICEPRESETMODE_LOWPOWERAUTO_SHORT_RANGE:
-                    status = preset_mode_low_power_auto_short_ranging(
-                            pgeneral, ptiming, pdynamic, psystem,
-                            ptuning_parms, plpadata);
+                    status = preset_mode_low_power_auto_short_ranging();
                     break;
 
                 case DEVICEPRESETMODE_LOWPOWERAUTO_MEDIUM_RANGE:
-                    status = preset_mode_low_power_auto_ranging(
-                            pgeneral, ptiming, pdynamic, psystem,
-                            ptuning_parms, plpadata);
+                    status = preset_mode_low_power_auto_ranging();
                     break;
 
                 case DEVICEPRESETMODE_LOWPOWERAUTO_LONG_RANGE:
-                    status = preset_mode_low_power_auto_long_ranging(
-                            pgeneral, ptiming, pdynamic, psystem,
-                            ptuning_parms, plpadata);
+                    status = preset_mode_low_power_auto_long_ranging();
                     break;
 
                 default:
