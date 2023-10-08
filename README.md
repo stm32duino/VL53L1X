@@ -1,15 +1,15 @@
 <a href="https://www.tindie.com/products/onehorse/vl53l1-long-range-proximity-sensor"><img src="vl53l1.jpg" width=500></a>
 
 This library derives from the 
-[Stm32Duino VL53L1X Arduino Library](https://github.com/stm32duino/VL53L1X), q.v. for details.
+[VL53L1X ULD API](https://www.st.com/en/embedded-software/stsw-img009.html), q.v. for details.
 
-I made the following modifications:
+The library has two three important features:
 
-* Made the library header-only
+1. Multi-platform
 
-* Replaced ```#define``` with typed static constants
+2. Header-only
 
-* Added support for non-Arduino platforms via subclassing
+3. Extremely simple: just ```begin()``` and ```readDistance()``` methods
 
 Using the [Pesky Products Vl53L1 sensor](https://www.tindie.com/products/onehorse/vl53l1-long-range-proximity-sensor)
 I have tested this library with the following MCUs:
