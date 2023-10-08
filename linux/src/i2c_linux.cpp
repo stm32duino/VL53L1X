@@ -1,7 +1,7 @@
 /*
    Linux I2C support
 
-   Copyright (c) 2023, Simon D. Levy
+   Copyright (c) 2023 Simon D. Levy
 
    All Rights Reserved
 

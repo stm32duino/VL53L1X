@@ -1,7 +1,10 @@
-/*
-   Simple VL53L1X distance-reading example
+#pragma once
 
-   Copyright (c) 2023 Simon D. Levy
+/*
+   Linux support for VL53L1X
+
+   Copyright (c) 2023, Simon D. Levy
+
    All Rights Reserved
 
    Redistribution and use in source and binary forms, with or without
@@ -30,40 +33,33 @@
    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <Wire.h>
 
-#include "vl53l1x_arduino.hpp"
+#include <vl53l1x.hpp>
 
-static VL53L1X_Arduino ranger;
+#include <stdio.h>
+#include <string.h>
+#include <fcntl.h>
+#include <stdlib.h>
 
-void setup(void)
+class VL53L1X_Linux : public VL53L1X
 {
-    Wire.begin();
+    private:
 
-    Serial.begin(115200);
+        int8_t _fd;
 
-    auto status = ranger.begin();
+    public:
 
-    while (status) {
-        Serial.println("sensor failed to begin: status = ");
-        Serial.println(status);
-        delay(500);
-    }
-}
+        error_t begin(const uint8_t bus=1)
+        {
+            // Attempt to open /dev/i2c-<BUS>
+            char fname[32] = {};
+            sprintf(fname,"/dev/i2c-%d", bus);
+            _fd = open(fname, O_RDWR);
+            if (_fd < 0) {
+                fprintf(stderr, "Unable to open %s\n", fname);
+                exit(1);
+            }
 
-void loop(void)
-{
-    uint16_t distance = 0;
-
-    auto status = ranger.readDistance(&distance);
-
-    if (status) {
-        Serial.print("Error reading from sensor: ");
-        Serial.println(status);
-    }
-
-    else{ 
-        Serial.print(distance);
-        Serial.println(" mm");
-    }
-}
+            return VL53L1X::begin((void *)&_fd);
+        }
+};
