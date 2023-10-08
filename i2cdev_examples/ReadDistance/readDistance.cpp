@@ -1,7 +1,8 @@
 /*
-   Simple VL53L1X distance-reading example
+   Linux I2Cdev example for VL53L1X
 
    Copyright (c) 2023, Simon D. Levy
+
    All Rights Reserved
 
    Redistribution and use in source and binary forms, with or without
@@ -30,40 +31,34 @@
    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <Wire.h>
+#include <stdio.h>
 
-#include "vl53l1x_arduino.hpp"
+#include <vl53l1x_i2cdev.hpp>
 
-static VL53L1X_Arduino ranger;
-
-void setup(void)
+int main(int argc, char ** argv)
 {
-    Wire.begin();
-
-    Serial.begin(115200);
+    static VL53L1X ranger;
 
     auto status = ranger.begin();
 
-    while (status) {
-        Serial.println("sensor failed to begin: status = ");
-        Serial.println(status);
-        delay(500);
-    }
-}
-
-void loop(void)
-{
-    uint16_t distance = 0;
-
-    auto status = ranger.readDistance(&distance);
-
     if (status) {
-        Serial.print("Error reading from sensor: ");
-        Serial.println(status);
+        printf("sensor failed to begin: status = %d\n", status);
+        exit(0);
     }
 
-    else{ 
-        Serial.print(distance);
-        Serial.println(" mm");
+    while (true) {
+
+        uint16_t distance = 0;
+
+        auto status = ranger.readDistance(&distance);
+
+        if (status) {
+            printf("Error reading from sensor: %d\n", status);
+            exit(0);
+        }
+
+        printf("%d mm\n", distance);
     }
+
+    return 0;
 }
