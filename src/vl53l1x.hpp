@@ -141,7 +141,7 @@ class VL53L1X {
 
             if (status == ERROR_NONE) {
 
-                CurrentParameters.PresetMode = PRESETMODE_LOWPOWER_AUTONOMOUS;
+                _current_parameters.presetMode = PRESETMODE_LOWPOWER_AUTONOMOUS;
             }
 
             for (uint8_t i=0; i<CHECKENABLE_NUMBER_OF_CHECKS; i++) {
@@ -167,30 +167,30 @@ class VL53L1X {
 
             _measurement_mode = measurement_mode;
 
-            CurrentParameters.NewDistanceMode = DISTANCEMODE_LONG;
+            _current_parameters.new_distance_mode = DISTANCEMODE_LONG;
 
-            CurrentParameters.InternalDistanceMode = DISTANCEMODE_LONG;
+            _current_parameters.internal_distance_mode = DISTANCEMODE_LONG;
 
-            CurrentParameters.DistanceMode = DISTANCEMODE_LONG;
+            _current_parameters.distance_mode = DISTANCEMODE_LONG;
 
-            distanceMode_t DistanceMode = DISTANCEMODE_LONG;
+            distanceMode_t distance_mode = DISTANCEMODE_LONG;
 
-            preset_mode_t PresetMode = PRESETMODE_LOWPOWER_AUTONOMOUS;
+            preset_mode_t presetMode = PRESETMODE_LOWPOWER_AUTONOMOUS;
 
-            status = helper_set_preset_mode(PresetMode, DistanceMode, 1000);
+            status = helper_set_preset_mode(presetMode, distance_mode, 1000);
 
             if (status == ERROR_NONE) {
 
-                CurrentParameters.InternalDistanceMode = DistanceMode;
+                _current_parameters.internal_distance_mode = distance_mode;
 
-                CurrentParameters.NewDistanceMode = DistanceMode;
+                _current_parameters.new_distance_mode = distance_mode;
 
-                if ((PresetMode == PRESETMODE_LITE_RANGING) ||
-                        (PresetMode == PRESETMODE_AUTONOMOUS) ||
-                        (PresetMode == PRESETMODE_LOWPOWER_AUTONOMOUS))
-                    status = SetMeasurementTimingBudgetMicroSeconds(41000);
+                if ((presetMode == PRESETMODE_LITE_RANGING) ||
+                        (presetMode == PRESETMODE_AUTONOMOUS) ||
+                        (presetMode == PRESETMODE_LOWPOWER_AUTONOMOUS))
+                    status = set_measurement_timing_budget_usec(41000);
                 else
-                    status = SetMeasurementTimingBudgetMicroSeconds(33333);
+                    status = set_measurement_timing_budget_usec(33333);
             }
 
             if (status == ERROR_NONE) {
@@ -208,9 +208,9 @@ class VL53L1X {
 
             status |= write_byte(0x0B, 0);											
 
-            status |= SetMeasurementTimingBudgetMicroSeconds(timingBudgetMsec * 1000);
+            status |= set_measurement_timing_budget_usec(timingBudgetMsec * 1000);
 
-            status |= SetDistanceMode(distanceMode);
+            status |= set_distance_mode(distanceMode);
 
             return status; 
 
@@ -218,13 +218,13 @@ class VL53L1X {
 
         error_t readDistance(uint16_t * distance)
         {
-            startRanging();
+            start_ranging();
 
             while (true) {
 
                 auto dataReady = false;
 
-                checkForDataReady(&dataReady);
+                check_for_data_ready(&dataReady);
 
                 if (dataReady) {
                     break;
@@ -233,9 +233,9 @@ class VL53L1X {
                 delay_msec(1);
             }
 
-            getDistance(distance);
+            get_distance(distance);
 
-            stopRanging();
+            stop_ranging();
 
             return ERROR_NONE;
         }
@@ -927,15 +927,15 @@ class VL53L1X {
 
         static const uint8_t CHECKENABLE_NUMBER_OF_CHECKS = 2;
         typedef struct {
-            preset_mode_t PresetMode;
-            distanceMode_t DistanceMode;
-            distanceMode_t InternalDistanceMode;
-            distanceMode_t NewDistanceMode;
-            uint32_t MeasurementTimingBudgetMicroSeconds;
-            uint8_t LimitChecksEnable[CHECKENABLE_NUMBER_OF_CHECKS];
-            uint8_t LimitChecksStatus[CHECKENABLE_NUMBER_OF_CHECKS];
-            fixed_point_1616_t LimitChecksValue[CHECKENABLE_NUMBER_OF_CHECKS];
-            fixed_point_1616_t LimitChecksCurrent[CHECKENABLE_NUMBER_OF_CHECKS];
+            preset_mode_t presetMode;
+            distanceMode_t distance_mode;
+            distanceMode_t internal_distance_mode;
+            distanceMode_t new_distance_mode;
+            uint32_t measurement_timing_budget_usec;
+            uint8_t limit_checks_enable[CHECKENABLE_NUMBER_OF_CHECKS];
+            uint8_t limit_checks_status[CHECKENABLE_NUMBER_OF_CHECKS];
+            fixed_point_1616_t limit_checks_value[CHECKENABLE_NUMBER_OF_CHECKS];
+            fixed_point_1616_t limit_checks_current[CHECKENABLE_NUMBER_OF_CHECKS];
         } device_parameters_t;
 
         // Static methods -----------------------------------------------------
@@ -1180,21 +1180,21 @@ class VL53L1X {
             *pwidth  = encoded_xy_size & 0x0F;
         }
 
-        // Instanc variables --------------------------------------------------
+        // Instance variables --------------------------------------------------
 
-        uint8_t   _wait_method;
-        device_preset_mode_t        _preset_mode;
-        device_measurement_mode_t   _measurement_mode;
+        uint8_t                      _wait_method;
+        device_preset_mode_t         _preset_mode;
+        device_measurement_mode_t    _measurement_mode;
         offset_calibration_mode_t    _offset_calibration_mode;
         offset_correction_mode_t     _offset_correction_mode;
-        uint32_t  _phasecal_config_timeout_us;
-        uint32_t  _mm_config_timeout_us;
-        uint32_t  _range_config_timeout_us;
-        uint32_t  _inter_measurement_period_ms;
-        uint16_t  _dss_config_target_total_rate_mcps;
-        uint32_t  _fw_ready_poll_duration_ms;
-        uint8_t   _fw_ready;
-        uint8_t   _debug_mode;
+        uint32_t                     _phasecal_config_timeout_us;
+        uint32_t                     _mm_config_timeout_us;
+        uint32_t                     _range_config_timeout_us;
+        uint32_t                     _inter_measurement_period_ms;
+        uint16_t                     _dss_config_target_total_rate_mcps;
+        uint32_t                     _fw_ready_poll_duration_ms;
+        uint8_t                      _fw_ready;
+        uint8_t                      _debug_mode;
         ll_driver_state_t            _ll_state;
         customer_nvm_managed_t       _customer;
         cal_peak_rate_map_t          _cal_peak_rate_map;
@@ -1203,7 +1203,7 @@ class VL53L1X {
         user_zone_t                  _mm_roi;
         optical_centre_t             _optical_centre;
         tuning_parm_storage_t        _tuning_params;
-        uint8_t _rtn_good_spads[32];
+        uint8_t                      _rtn_good_spads[32];
         refspadchar_config_t         _refspadchar;
         ssc_config_t                 _ssc_cfg;
         xtalk_config_t               _xtalk_cfg;
@@ -1217,13 +1217,13 @@ class VL53L1X {
         nvm_copy_data_t              _nvm_copy_data;
         offset_range_results_t       _offset_results;
         debug_results_t              _dbg_results;
-        low_power_auto_data_t		_low_power_auto_data;
+        low_power_auto_data_t		 _low_power_auto_data;
+        device_parameters_t          _current_parameters;
 
+        // Platform-specific
         void * _device;
 
-        device_parameters_t CurrentParameters;
-
-        // Instanc methods ---------------------------------------------------
+        // Instance methods ---------------------------------------------------
 
         error_t read_word(const uint16_t rgstr, uint16_t *data)
         {
@@ -2816,10 +2816,10 @@ class VL53L1X {
             return status;
         }
 
-        error_t Computedevice_PresetMode(
-                const preset_mode_t PresetMode,
-                const distanceMode_t DistanceMode,
-                device_preset_mode_t *pdevice_PresetMode)
+        error_t compute_device_preset_mode(
+                const preset_mode_t presetMode,
+                const distanceMode_t distance_mode,
+                device_preset_mode_t *pdevice_presetMode)
         {
             error_t status = ERROR_NONE;
 
@@ -2838,10 +2838,10 @@ class VL53L1X {
                 DEVICEPRESETMODE_LOWPOWERAUTO_MEDIUM_RANGE,
                 DEVICEPRESETMODE_LOWPOWERAUTO_LONG_RANGE};
 
-            *pdevice_PresetMode = DEVICEPRESETMODE_STANDARD_RANGING;
+            *pdevice_presetMode = DEVICEPRESETMODE_STANDARD_RANGING;
 
             uint8_t DistIdx = 0;
-            switch (DistanceMode) {
+            switch (distance_mode) {
                 case DISTANCEMODE_SHORT:
                     DistIdx = 0;
                     break;
@@ -2852,17 +2852,17 @@ class VL53L1X {
                     DistIdx = 2;
             }
 
-            switch (PresetMode) {
+            switch (presetMode) {
                 case PRESETMODE_LITE_RANGING:
-                    *pdevice_PresetMode = LightModes[DistIdx];
+                    *pdevice_presetMode = LightModes[DistIdx];
                     break;
 
                 case PRESETMODE_AUTONOMOUS:
-                    *pdevice_PresetMode = TimedModes[DistIdx];
+                    *pdevice_presetMode = TimedModes[DistIdx];
                     break;
 
                 case PRESETMODE_LOWPOWER_AUTONOMOUS:
-                    *pdevice_PresetMode = LowPowerTimedModes[DistIdx];
+                    *pdevice_presetMode = LowPowerTimedModes[DistIdx];
                     break;
 
                 default:
@@ -2873,20 +2873,20 @@ class VL53L1X {
         }
 
         error_t helper_set_preset_mode(
-                const preset_mode_t PresetMode,
-                const distanceMode_t DistanceMode,
+                const preset_mode_t presetMode,
+                const distanceMode_t distance_mode,
                 const uint32_t inter_measurement_period_ms)
         {
             error_t status = ERROR_NONE;
 
             auto measurement_mode = 
-                (PresetMode == PRESETMODE_AUTONOMOUS ||
-                 PresetMode == PRESETMODE_LOWPOWER_AUTONOMOUS) ?
+                (presetMode == PRESETMODE_AUTONOMOUS ||
+                 presetMode == PRESETMODE_LOWPOWER_AUTONOMOUS) ?
                 DEVICEMEASUREMENTMODE_TIMED :
                 DEVICEMEASUREMENTMODE_BACKTOBACK;
 
             device_preset_mode_t  device_preset_mode = {};
-            status = Computedevice_PresetMode(PresetMode, DistanceMode,
+            status = compute_device_preset_mode(presetMode, distance_mode,
                     &device_preset_mode);
 
             uint16_t dss_config_target_total_rate_mcps = 0;
@@ -2918,7 +2918,7 @@ class VL53L1X {
             }
 
             if (status == ERROR_NONE) {
-                CurrentParameters.PresetMode = PresetMode;
+                _current_parameters.presetMode = presetMode;
             }
 
             return status;
@@ -2995,18 +2995,18 @@ class VL53L1X {
                 const fixed_point_1616_t LimitCheckValue)
         {
             error_t status = ERROR_NONE;
-            uint8_t LimitChecksEnable;
+            uint8_t limit_checks_enable;
 
             if (LimitCheckId >= CHECKENABLE_NUMBER_OF_CHECKS) {
                 status = ERROR_INVALID_PARAMS;
             } 
             else {
 
-                LimitChecksEnable = CurrentParameters.LimitChecksEnable[LimitCheckId];
+                limit_checks_enable = _current_parameters.limit_checks_enable[LimitCheckId];
 
-                if (LimitChecksEnable == 0) {
+                if (limit_checks_enable == 0) {
 
-                    CurrentParameters.LimitChecksValue[LimitCheckId] = 
+                    _current_parameters.limit_checks_value[LimitCheckId] = 
                         LimitCheckValue;
 
                 } else {
@@ -3015,7 +3015,7 @@ class VL53L1X {
 
                     if (status == ERROR_NONE) {
 
-                        CurrentParameters.LimitChecksValue[LimitCheckId] = 
+                        _current_parameters.limit_checks_value[LimitCheckId] = 
                             LimitCheckValue; 
                     }
                 }
@@ -3039,14 +3039,14 @@ class VL53L1X {
                     TempFix1616 = 0;
                 }
                 else {
-                    TempFix1616 = CurrentParameters.LimitChecksValue[LimitCheckId];
+                    TempFix1616 = _current_parameters.limit_checks_value[LimitCheckId];
                 }
 
                 status = set_limit_value(LimitCheckId, TempFix1616); }
 
             if (status == ERROR_NONE) {
 
-                CurrentParameters.LimitChecksEnable[LimitCheckId] = 
+                _current_parameters.limit_checks_enable[LimitCheckId] = 
                     LimitCheckEnable == 0 ? 0 : 1;
 
             }
@@ -3115,7 +3115,7 @@ class VL53L1X {
             pmm_roi->width  = xy_size & 0x0F;
         }
 
-        error_t stopRanging(void)
+        error_t stop_ranging(void)
         {
             return 
                 write_byte(RGSTR_FIRMWARE_ENABLE, 0x01) |
@@ -3123,7 +3123,7 @@ class VL53L1X {
                 write_byte(RGSTR_SYSTEM_MODE_START, 0x00); 
         }
 
-        error_t startRanging()
+        error_t start_ranging()
         {
             error_t status = ERROR_NONE;
 
@@ -3196,13 +3196,13 @@ class VL53L1X {
             return status;
         }
 
-        error_t getDistance(uint16_t * distance)
+        error_t get_distance(uint16_t * distance)
         {
             return read_word(RGSTR_RESULT_FINAL_CROSSTALK_CORRECTED_RANGE_MM_SD0, 
                     distance);
         }
 
-        error_t SetMeasurementTimingBudgetMicroSeconds(const uint32_t usec)
+        error_t set_measurement_timing_budget_usec(const uint32_t usec)
         {
             if (usec > 10000000) {
                 return ERROR_INVALID_PARAMS;
@@ -3227,13 +3227,13 @@ class VL53L1X {
 
             if (status == ERROR_NONE) {
 
-                auto PresetMode = CurrentParameters.PresetMode;
+                auto presetMode = _current_parameters.presetMode;
 
                 auto FDAMaxTimingBudgetUs = FDA_MAX_TIMING_BUDGET_US;
 
                 TimingGuard = 0;
                 uint32_t divisor = 1;
-                switch (PresetMode) {
+                switch (presetMode) {
                     case PRESETMODE_LITE_RANGING:
                         if ((Mm1Enabled == 1) || (Mm2Enabled == 1))
                             TimingGuard = 5000;
@@ -3293,25 +3293,25 @@ class VL53L1X {
                 }
             }
             if (status == ERROR_NONE) {
-                CurrentParameters.MeasurementTimingBudgetMicroSeconds = usec;
+                _current_parameters.measurement_timing_budget_usec = usec;
             }
 
             return status;
         }
 
-        error_t SetDistanceMode(const distanceMode_t DistanceMode)
+        error_t set_distance_mode(const distanceMode_t distance_mode)
         {
-            auto PresetMode = CurrentParameters.PresetMode;
+            auto presetMode = _current_parameters.presetMode;
 
-            if ((DistanceMode != DISTANCEMODE_SHORT) &&
-                    (DistanceMode != DISTANCEMODE_MEDIUM) &&
-                    (DistanceMode != DISTANCEMODE_LONG))
+            if ((distance_mode != DISTANCEMODE_SHORT) &&
+                    (distance_mode != DISTANCEMODE_MEDIUM) &&
+                    (distance_mode != DISTANCEMODE_LONG))
                 return ERROR_INVALID_PARAMS;
 
-            auto InternalDistanceMode = 
-                (DistanceMode == DISTANCEMODE_SHORT ||
-                 DistanceMode == DISTANCEMODE_MEDIUM) ?
-                DistanceMode :
+            auto internal_distance_mode = 
+                (distance_mode == DISTANCEMODE_SHORT ||
+                 distance_mode == DISTANCEMODE_MEDIUM) ?
+                distance_mode :
                 DISTANCEMODE_LONG;
 
             user_zone_t user_zone = {};
@@ -3326,14 +3326,14 @@ class VL53L1X {
                     &TimingBudget);
 
             if (status == ERROR_NONE) {
-                status = helper_set_preset_mode(PresetMode,
-                        InternalDistanceMode, inter_measurement_period_ms);
+                status = helper_set_preset_mode(presetMode,
+                        internal_distance_mode, inter_measurement_period_ms);
             }
 
             if (status == ERROR_NONE) {
-                CurrentParameters.InternalDistanceMode = InternalDistanceMode;
-                CurrentParameters.NewDistanceMode = InternalDistanceMode;
-                CurrentParameters.DistanceMode = DistanceMode;
+                _current_parameters.internal_distance_mode = internal_distance_mode;
+                _current_parameters.new_distance_mode = internal_distance_mode;
+                _current_parameters.distance_mode = distance_mode;
             }
 
             if (status == ERROR_NONE) {
@@ -3351,7 +3351,7 @@ class VL53L1X {
             return status;
         }
 
-        error_t checkForDataReady(bool *isDataReady)
+        error_t check_for_data_ready(bool *isDataReady)
         {
             uint8_t tmp = 0;
             auto status = read_byte(RGSTR_GPIO_HV_MUX_CTRL, &tmp);
@@ -3376,5 +3376,4 @@ class VL53L1X {
                 const uint8_t count, const uint8_t *data);
 
         void delay_msec(const uint32_t msec);
-
 }; 
