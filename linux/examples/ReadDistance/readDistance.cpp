@@ -1,7 +1,7 @@
 /*
    Linux I2Cdev example for VL53L1X
 
-   Copyright (c) 2023, Simon D. Levy
+   Copyright (c) 2023 Simon D. Levy
 
    All Rights Reserved
 

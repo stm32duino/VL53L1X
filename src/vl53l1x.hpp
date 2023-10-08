@@ -4,7 +4,7 @@
    VL53L1X class
 
    Copyright (c) 2017, STMicroelectronics
-   Copyright (c) 2023, Simon D. Levy
+   Copyright (c) 2023 Simon D. Levy
 
    All Rights Reserved
 
