@@ -3,7 +3,7 @@
 This library derives from the 
 [VL53L1X ULD API](https://www.st.com/en/embedded-software/stsw-img009.html), q.v. for details.
 
-The library has two three important features:
+The library has three important features:
 
 1. Multi-platform
 
