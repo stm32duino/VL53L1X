@@ -1,9 +1,9 @@
 #pragma once
 
 /*
-   Arduino support for VL53L1X
+   Arduino I^2C support
 
-   Copyright (c) 2023, Simon D. Levy
+   Copyright (c) 2023 Simon D. Levy
 
    All Rights Reserved
 
@@ -33,18 +33,12 @@
    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdint.h>
 
-#include "vl53l1x.hpp"
+int8_t read_bytes( void * device, const uint8_t addr, const uint16_t rgstr, 
+        const uint8_t count, uint8_t *data);
 
-#include <Wire.h>
+int8_t write_bytes( void * device, const uint8_t addr, const uint16_t rgstr, 
+        const uint8_t count, const uint8_t *data);
 
-class VL53L1X_Arduino : public VL53L1X
-{
-
-    public:
-
-        error_t begin(TwoWire * twoWire = &Wire) 
-        {
-            return VL53L1X::begin((const void *)twoWire);
-        }
-};
+void delay_msec(const uint32_t msec);

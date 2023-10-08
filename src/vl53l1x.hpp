@@ -36,19 +36,72 @@
 
 #include <stdint.h>
 
+#include "i2c_helpers.h"
+
 class VL53L1X {
 
     public:
-
-        typedef int8_t error_t;
-
-        typedef uint8_t distanceMode_t;
 
         enum {
             DISTANCEMODE_SHORT = 1,
             DISTANCEMODE_MEDIUM,
             DISTANCEMODE_LONG, 
         };
+
+        enum {
+            ERROR_NONE                              =  0,
+            ERROR_CALIBRATION_WARNING               = -1,
+            ERROR_MIN_CLIPPED                       = -2,
+            ERROR_UNDEFINED                         = -3,
+            ERROR_INVALID_PARAMS                    = -4,
+            ERROR_NOT_SUPPORTED                     = -5,
+            ERROR_RANGE_ERROR                       = -6,
+            ERROR_TIME_OUT                          = -7,
+            ERROR_MODE_NOT_SUPPORTED                = -8,
+            ERROR_BUFFER_TOO_SMALL                  = -9,
+            ERROR_COMMS_BUFFER_TOO_SMALL            = -10,
+            ERROR_GPIO_NOT_EXISTING                 = -11,
+            ERROR_GPIO_FUNCTIONALITY_NOT_SUPPORTED  = -12,
+            ERROR_CONTROL_INTERFACE                 = -13,
+            ERROR_INVALID_COMMAND                   = -14,
+            ERROR_DIVISION_BY_ZERO                  = -15,
+            ERROR_REF_SPAD_INIT                     = -16,
+            ERROR_GPH_SYNC_CHECK_FAIL               = -17,
+            ERROR_STREAM_COUNT_CHECK_FAIL           = -18,
+            ERROR_GPH_ID_CHECK_FAIL                 = -19,
+            ERROR_ZONE_STREAM_COUNT_CHECK_FAIL      = -20,
+            ERROR_ZONE_GPH_ID_CHECK_FAIL            = -21,
+            ERROR_XTALK_EXTRACTION_NO_SAMPLE_FAIL   = -22,
+            ERROR_XTALK_EXTRACTION_SIGMA_LIMIT_FAIL = -23,
+            ERROR_OFFSET_CAL_NO_SAMPLE_FAIL         = -24,
+            ERROR_OFFSET_CAL_NO_SPADS_ENABLED_FAIL  = -25,
+            ERROR_ZONE_CAL_NO_SAMPLE_FAIL           = -26,
+            ERROR_TUNING_PARAM_KEY_MISMATCH          = -27,
+            WARNING_REF_SPAD_CHAR_NOT_ENOUGH_SPADS  = -28,
+            WARNING_REF_SPAD_CHAR_RATE_TOO_HIGH     = -29,
+            WARNING_REF_SPAD_CHAR_RATE_TOO_LOW      = -30,
+            WARNING_OFFSET_CAL_MISSING_SAMPLES      = -31,
+            WARNING_OFFSET_CAL_SIGMA_TOO_HIGH       = -32,
+            WARNING_OFFSET_CAL_RATE_TOO_HIGH        = -33,
+            WARNING_OFFSET_CAL_SPAD_COUNT_TOO_LOW   = -34,
+            WARNING_ZONE_CAL_MISSING_SAMPLES        = -35,
+            WARNING_ZONE_CAL_SIGMA_TOO_HIGH         = -36,
+            WARNING_ZONE_CAL_RATE_TOO_HIGH          = -37,
+            WARNING_XTALK_MISSING_SAMPLES           = -38,
+            WARNING_XTALK_NO_SAMPLES_FOR_GRADIENT   = -39,
+            WARNING_XTALK_SIGMA_LIMIT_FOR_GRADIENT  = -40,
+            ERROR_NOT_IMPLEMENTED                   = -41,
+            ERROR_PLATFORM_SPECIFIC_START           = -60,
+            ERROR_DEVICE_FIRMWARE_TOO_OLD           = -80,
+            ERROR_DEVICE_FIRMWARE_TOO_NEW           = -85,
+            ERROR_UNIT_TEST_FAIL                    = -90,
+            ERROR_FILE_READ_FAIL                    = -95,
+            ERROR_FILE_WRITE_FAIL                   = -96,
+        };
+
+        typedef int8_t error_t;
+
+        typedef uint8_t distanceMode_t;
 
         error_t begin(
                 const void * device=NULL, 
@@ -239,61 +292,6 @@ class VL53L1X {
 
             return ERROR_NONE;
         }
-
-    protected:
-
-        uint8_t _i2c_address;
-
-        enum {
-            ERROR_NONE                              =  0,
-            ERROR_CALIBRATION_WARNING               = -1,
-            ERROR_MIN_CLIPPED                       = -2,
-            ERROR_UNDEFINED                         = -3,
-            ERROR_INVALID_PARAMS                    = -4,
-            ERROR_NOT_SUPPORTED                     = -5,
-            ERROR_RANGE_ERROR                       = -6,
-            ERROR_TIME_OUT                          = -7,
-            ERROR_MODE_NOT_SUPPORTED                = -8,
-            ERROR_BUFFER_TOO_SMALL                  = -9,
-            ERROR_COMMS_BUFFER_TOO_SMALL            = -10,
-            ERROR_GPIO_NOT_EXISTING                 = -11,
-            ERROR_GPIO_FUNCTIONALITY_NOT_SUPPORTED  = -12,
-            ERROR_CONTROL_INTERFACE                 = -13,
-            ERROR_INVALID_COMMAND                   = -14,
-            ERROR_DIVISION_BY_ZERO                  = -15,
-            ERROR_REF_SPAD_INIT                     = -16,
-            ERROR_GPH_SYNC_CHECK_FAIL               = -17,
-            ERROR_STREAM_COUNT_CHECK_FAIL           = -18,
-            ERROR_GPH_ID_CHECK_FAIL                 = -19,
-            ERROR_ZONE_STREAM_COUNT_CHECK_FAIL      = -20,
-            ERROR_ZONE_GPH_ID_CHECK_FAIL            = -21,
-            ERROR_XTALK_EXTRACTION_NO_SAMPLE_FAIL   = -22,
-            ERROR_XTALK_EXTRACTION_SIGMA_LIMIT_FAIL = -23,
-            ERROR_OFFSET_CAL_NO_SAMPLE_FAIL         = -24,
-            ERROR_OFFSET_CAL_NO_SPADS_ENABLED_FAIL  = -25,
-            ERROR_ZONE_CAL_NO_SAMPLE_FAIL           = -26,
-            ERROR_TUNING_PARAM_KEY_MISMATCH          = -27,
-            WARNING_REF_SPAD_CHAR_NOT_ENOUGH_SPADS  = -28,
-            WARNING_REF_SPAD_CHAR_RATE_TOO_HIGH     = -29,
-            WARNING_REF_SPAD_CHAR_RATE_TOO_LOW      = -30,
-            WARNING_OFFSET_CAL_MISSING_SAMPLES      = -31,
-            WARNING_OFFSET_CAL_SIGMA_TOO_HIGH       = -32,
-            WARNING_OFFSET_CAL_RATE_TOO_HIGH        = -33,
-            WARNING_OFFSET_CAL_SPAD_COUNT_TOO_LOW   = -34,
-            WARNING_ZONE_CAL_MISSING_SAMPLES        = -35,
-            WARNING_ZONE_CAL_SIGMA_TOO_HIGH         = -36,
-            WARNING_ZONE_CAL_RATE_TOO_HIGH          = -37,
-            WARNING_XTALK_MISSING_SAMPLES           = -38,
-            WARNING_XTALK_NO_SAMPLES_FOR_GRADIENT   = -39,
-            WARNING_XTALK_SIGMA_LIMIT_FOR_GRADIENT  = -40,
-            ERROR_NOT_IMPLEMENTED                   = -41,
-            ERROR_PLATFORM_SPECIFIC_START           = -60,
-            ERROR_DEVICE_FIRMWARE_TOO_OLD           = -80,
-            ERROR_DEVICE_FIRMWARE_TOO_NEW           = -85,
-            ERROR_UNIT_TEST_FAIL                    = -90,
-            ERROR_FILE_READ_FAIL                    = -95,
-            ERROR_FILE_WRITE_FAIL                   = -96,
-        };
 
     private:
 
@@ -1182,6 +1180,7 @@ class VL53L1X {
 
         // Instance variables --------------------------------------------------
 
+        uint8_t                      _i2c_address;
         uint8_t                      _wait_method;
         device_preset_mode_t         _preset_mode;
         device_measurement_mode_t    _measurement_mode;
@@ -1221,6 +1220,7 @@ class VL53L1X {
         device_parameters_t          _current_parameters;
 
         // Platform-specific
+
         void * _device;
 
         // Instance methods ---------------------------------------------------
@@ -1229,7 +1229,7 @@ class VL53L1X {
         {
             uint8_t buffer[2] = {};
 
-            auto status = read_bytes(_device, rgstr, 2, buffer);
+            auto status = read_bytes(_device, _i2c_address, rgstr, 2, buffer);
 
             if (!status) {
                 *data = (buffer[0] << 8) + buffer[1];
@@ -1243,17 +1243,18 @@ class VL53L1X {
             uint8_t buffer[2] = {};
             buffer[0] = data >> 8;
             buffer[1] = data & 0x00FF;
-            return write_bytes(_device, rgstr, 2, (uint8_t *)buffer);
+            return write_bytes(_device, _i2c_address, rgstr, 2, 
+                    (uint8_t *)buffer);
         }
 
         error_t read_byte(const uint16_t rgstr, uint8_t *data)
         {
-            return read_bytes(_device, rgstr, 1, data);
+            return read_bytes(_device, _i2c_address, rgstr, 1, data);
         }
 
         error_t write_byte(const uint16_t rgstr, const uint8_t data)
         {
-            return write_bytes(_device, rgstr, 1, &data);
+            return write_bytes(_device, _i2c_address, rgstr, 1, &data);
         }
 
         error_t i2c_decode_static_nvm_managed(const uint16_t buf_size,
@@ -1291,7 +1292,7 @@ class VL53L1X {
         {
             uint8_t comms_buffer[STATIC_NVM_MANAGED_I2C_SIZE_BYTES] = {};
 
-            auto status = read_bytes(_device, RGSTR_I2C_ADDRESS, 
+            auto status = read_bytes(_device, _i2c_address, RGSTR_I2C_ADDRESS, 
                     STATIC_NVM_MANAGED_I2C_SIZE_BYTES, comms_buffer);
 
             if (status == ERROR_NONE) {
@@ -1413,7 +1414,7 @@ class VL53L1X {
             uint8_t comms_buffer[CUSTOMER_NVM_MANAGED_I2C_SIZE_BYTES] = {};
 
             if (status == ERROR_NONE) 
-                status = read_bytes(_device,
+                status = read_bytes(_device, _i2c_address,
                         RGSTR_GLOBAL_CONFIG_SPAD_ENABLES_REF_0,
                         CUSTOMER_NVM_MANAGED_I2C_SIZE_BYTES, comms_buffer);
 
@@ -1762,7 +1763,8 @@ class VL53L1X {
         {
             uint8_t comms_buffer[NVM_COPY_DATA_I2C_SIZE_BYTES] = {};
 
-            auto status = read_bytes(_device, RGSTR_IDENTIFICATION_MODEL_ID,
+            auto status = read_bytes(_device, _i2c_address, 
+                    RGSTR_IDENTIFICATION_MODEL_ID, 
                     NVM_COPY_DATA_I2C_SIZE_BYTES, comms_buffer);
 
             if (status == ERROR_NONE) {
@@ -2941,7 +2943,8 @@ class VL53L1X {
         {
             static uint16_t r16data = 0;
 
-            error_t status = read_bytes(_device, index, 2, (uint8_t *)&r16data);
+            error_t status = read_bytes(_device, _i2c_address, index, 2, 
+                    (uint8_t *)&r16data);
 
             *pdata = r16data;
 
@@ -3190,7 +3193,8 @@ class VL53L1X {
             status |= i2c_encode_system_control(SYSTEM_CONTROL_I2C_SIZE_BYTES,
                     &buffer[i2c_buffer_offset_bytes]);
 
-            status |= write_bytes(_device, RGSTR_ANA_CONFIG_VHV_REF_SEL_VDDPIX, 
+            status |= write_bytes(_device, _i2c_address,
+                    RGSTR_ANA_CONFIG_VHV_REF_SEL_VDDPIX, 
                     i2c_buffer_size_bytes, buffer);
 
             return status;
@@ -3369,11 +3373,4 @@ class VL53L1X {
             return status;
         }
 
-        error_t read_bytes(void * _device, const uint16_t rgstr, 
-                const uint8_t count, uint8_t *data);
-
-        error_t write_bytes(void * device, const uint16_t rgstr, 
-                const uint8_t count, const uint8_t *data);
-
-        void delay_msec(const uint32_t msec);
 }; 

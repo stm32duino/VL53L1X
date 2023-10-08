@@ -1,7 +1,5 @@
-#pragma once
-
 /*
-   Linux I2Cdev support for VL53L1X
+   Linux I2C support
 
    Copyright (c) 2023, Simon D. Levy
 
@@ -41,40 +39,14 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/time.h>
-
-extern "C" {
 #include <i2c/smbus.h>
-}
 
-#include "vl53l1x.hpp"
-
-class VL53L1X_Linux : public VL53L1X
-{
-    private:
-
-        int8_t _fd;
-
-    public:
-
-        error_t begin(const uint8_t bus=1)
-        {
-            // Attempt to open /dev/i2c-<BUS>
-            char fname[32] = {};
-            sprintf(fname,"/dev/i2c-%d", bus);
-            _fd = open(fname, O_RDWR);
-            if (_fd < 0) {
-                fprintf(stderr, "Unable to open %s\n", fname);
-                exit(1);
-            }
-
-            return VL53L1X::begin((void *)&_fd);
-        }
-};
+#include <i2c_helpers.h>
 
 // Adapted from 
 //  https://github.com/mjbogusz/vl53l1x-linux/blob/master/src/I2CBus.cpp
 
-VL53L1X::error_t VL53L1X::read_bytes(void * device, const uint16_t rgstr, 
+int8_t read_bytes(void * device, const uint8_t addr, const uint16_t rgstr, 
         const uint8_t count, uint8_t * data)
 {
     const int8_t fd = *((int8_t *)device);
@@ -83,7 +55,7 @@ VL53L1X::error_t VL53L1X::read_bytes(void * device, const uint16_t rgstr,
     writeBuffer[0] = (rgstr >> 8) & 0xFF;
     writeBuffer[1] = rgstr & 0xFF;
     i2c_msg registerSelectMsgs[1] = {{
-        .addr = _i2c_address,
+        .addr = addr,
             .flags = 0,
             .len = 2,
             .buf = writeBuffer
@@ -93,7 +65,7 @@ VL53L1X::error_t VL53L1X::read_bytes(void * device, const uint16_t rgstr,
         .nmsgs = 1,
     };
     i2c_msg registerReadMsgs[1] = {{
-        .addr = _i2c_address,
+        .addr = addr,
             .flags = I2C_M_RD,
             .len = count,
             .buf = data,
@@ -110,7 +82,7 @@ VL53L1X::error_t VL53L1X::read_bytes(void * device, const uint16_t rgstr,
 }
 
 
-VL53L1X::error_t VL53L1X::write_bytes(void * device, const uint16_t rgstr, 
+int8_t write_bytes(void * device, const uint8_t addr, const uint16_t rgstr, 
         const uint8_t count, const uint8_t * data)
 {
     const int8_t fd = *((int8_t *)device);
@@ -123,7 +95,7 @@ VL53L1X::error_t VL53L1X::write_bytes(void * device, const uint16_t rgstr,
     }
 
     i2c_msg msgs[1] = {{
-        .addr = _i2c_address,
+        .addr = addr,
             .flags = 0,
             .len = static_cast<uint16_t>(count + 2),
             .buf = writeBuffer,
@@ -138,7 +110,7 @@ VL53L1X::error_t VL53L1X::write_bytes(void * device, const uint16_t rgstr,
     return 0;
 }
 
-void VL53L1X::delay_msec(const uint32_t msec)
+void delay_msec(const uint32_t msec)
 {
     usleep(1000 * msec);
 }
