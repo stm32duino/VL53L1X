@@ -103,6 +103,32 @@ class VL53L1X {
 
         typedef uint8_t distanceMode_t;
 
+        error_t readDistance(uint16_t * distance)
+        {
+            start_ranging();
+
+            while (true) {
+
+                auto dataReady = false;
+
+                check_for_data_ready(&dataReady);
+
+                if (dataReady) {
+                    break;
+                }
+
+                delay_msec(1);
+            }
+
+            get_distance(distance);
+
+            stop_ranging();
+
+            return ERROR_NONE;
+        }
+
+    protected:
+
         error_t begin(
                 const void * device=NULL, 
                 const uint8_t addr=0x29,
@@ -267,30 +293,6 @@ class VL53L1X {
 
             return status; 
 
-        }
-
-        error_t readDistance(uint16_t * distance)
-        {
-            start_ranging();
-
-            while (true) {
-
-                auto dataReady = false;
-
-                check_for_data_ready(&dataReady);
-
-                if (dataReady) {
-                    break;
-                }
-
-                delay_msec(1);
-            }
-
-            get_distance(distance);
-
-            stop_ranging();
-
-            return ERROR_NONE;
         }
 
     private:

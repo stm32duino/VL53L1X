@@ -4,7 +4,7 @@ readDistance: readDistance.o i2c_linux.o
 readDistance.o: readDistance.cpp
 	g++ -std=c++11 -Wall -I../../src/ -I../../../src/ -c readDistance.cpp
 
-i2c_linux.o: ../../src/i2c_linux.cpp
+i2c_linux.o: ../../src/*.*
 	g++ -std=c++11 -Wall -I../../src/ -I../../../src/ -c ../../src/i2c_linux.cpp
 
 run: readDistance

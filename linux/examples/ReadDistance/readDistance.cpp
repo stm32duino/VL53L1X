@@ -37,7 +37,7 @@
 
 int main(int argc, char ** argv)
 {
-    static VL53L1X ranger;
+    static VL53L1X_Linux ranger;
 
     auto status = ranger.begin();
 
